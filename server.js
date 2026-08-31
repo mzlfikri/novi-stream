@@ -8,67 +8,104 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database memori sementara
+// Database Akun (Default sudah ada 1 Owner utama)
+let users = [
+    { username: 'owner', password: '123', role: 'owner' }
+];
+
+// Database Video & Series
 let videos = [
     { 
         id: 1, 
-        title: "Upin & Ipin Pilihan", 
-        src: "https://www.youtube.com/embed/5qap5aO4i9A", // Contoh link embed YouTube
-        description: "Nonton keseruan Upin & Ipin di platform NOVI!", 
+        title: "Upin & Ipin Musim Terbaru", 
+        description: "Koleksi episode seru petualangan Upin dan Ipin di Kampung Durian Runtuh.", 
         category: "Animasi", 
-        badge: "HD", 
-        likes: 12, 
-        comments: [{ text: "Seru banget kartunnya!", date: "31/08/2026" }] 
+        thumbnail: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=600&q=80",
+        likes: 25, 
+        comments: [],
+        episodes: [
+            { epNum: 1, title: "Episode 1", src: "https://www.youtube.com/embed/5qap5aO4i9A" }
+        ]
     }
 ];
+
+// 1. Route: Login (Mengecek role: owner atau admin)
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    const foundUser = users.find(u => u.username === username && u.password === password);
+
+    if (foundUser) {
+        res.json({ 
+            success: true, 
+            role: foundUser.role, 
+            token: "token-sesi-aman-999", 
+            message: "Login Berhasil!" 
+        });
+    } else {
+        res.status(401).json({ success: false, message: "Username atau Password salah!" });
+    }
+});
+
+// 2. Route: Owner Membuat Akun Admin Baru (Hanya Owner yang boleh akses)
+app.post('/api/create-admin', (req, res) => {
+    const adminKey = req.headers['x-admin-key'];
+    if (adminKey !== 'token-sesi-aman-999') {
+        return res.status(403).json({ success: false, message: "Akses ditolak!" });
+    }
+
+    const { newUsername, newPassword } = req.body;
+    if (!newUsername || !newPassword) {
+        return res.status(400).json({ success: false, message: "Username dan password baru wajib diisi!" });
+    }
+
+    // Cek apakah username sudah ada
+    if (users.some(u => u.username === newUsername)) {
+        return res.status(400).json({ success: false, message: "Username sudah digunakan!" });
+    }
+
+    users.push({ username: newUsername, password: newPassword, role: 'admin' });
+    res.json({ success: true, message: `Akun Admin '${newUsername}' berhasil dibuat!` });
+});
 
 // Route: Ambil Semua Video
 app.get('/api/videos', (req, res) => {
     res.json(videos);
 });
 
-// Route: Login Admin
-app.post('/api/login', (req, res) => {
-    res.json({ success: true, message: "Login Berhasil!" });
-});
-
-// Route: Tambah Video (Mendukung Link YouTube & Link MP4)
+// Route: Tambah Series (Bisa diakses Owner & Admin yang sudah login)
 app.post('/api/upload', (req, res) => {
-    let { title, category, badge, description, src, thumbnail } = req.body;
-    
-    if (!src) {
-        return res.status(400).json({ success: false, message: "Link video wajib diisi!" });
+    const adminKey = req.headers['x-admin-key'];
+    if (adminKey !== 'token-sesi-aman-999') {
+        return res.status(403).json({ success: false, message: "Akses ditolak!" });
     }
 
-    // Ubah otomatis link YouTube biasa (watch?v=) menjadi link embed agar bisa diputar
-    if (src.includes('youtube.com/watch?v=')) {
-        const videoId = src.split('v=')[1]?.split('&')[0];
-        if (videoId) {
-            src = `https://www.youtube.com/embed/${videoId}`;
-            if (!thumbnail) {
-                thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-            }
-        }
-    } else if (src.includes('youtu.be/')) {
-        const videoId = src.split('youtu.be/')[1]?.split('?')[0];
-        if (videoId) {
-            src = `https://www.youtube.com/embed/${videoId}`;
-            if (!thumbnail) {
-                thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-            }
-        }
+    let { title, category, description, thumbnail, episodes } = req.body;
+    
+    if (!title || !episodes || episodes.length === 0) {
+        return res.status(400).json({ success: false, message: "Judul dan minimal 1 episode wajib diisi!" });
     }
+
+    const formattedEpisodes = episodes.map((ep, index) => {
+        let videoSrc = ep.src;
+        if (videoSrc.includes('youtube.com/watch?v=')) {
+            const videoId = videoSrc.split('v=')[1]?.split('&')[0];
+            if (videoId) videoSrc = `https://www.youtube.com/embed/${videoId}`;
+        } else if (videoSrc.includes('youtu.be/')) {
+            const videoId = videoSrc.split('youtu.be/')[1]?.split('?')[0];
+            if (videoId) videoSrc = `https://www.youtube.com/embed/${videoId}`;
+        }
+        return { epNum: index + 1, title: `Episode ${index + 1}`, src: videoSrc };
+    });
 
     const newVideo = {
         id: videos.length > 0 ? videos[videos.length - 1].id + 1 : 1,
-        title: title || "Tanpa Judul",
+        title: title,
         category: category || "Animasi",
-        badge: badge || "HD",
         description: description || "",
-        src: src,
         thumbnail: thumbnail || "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=600&q=80",
         likes: 0,
-        comments: []
+        comments: [],
+        episodes: formattedEpisodes
     };
 
     videos.push(newVideo);
@@ -77,9 +114,14 @@ app.post('/api/upload', (req, res) => {
 
 // Route: Hapus Video
 app.delete('/api/videos/:id', (req, res) => {
+    const adminKey = req.headers['x-admin-key'];
+    if (adminKey !== 'token-sesi-aman-999') {
+        return res.status(403).json({ success: false, message: "Akses ditolak!" });
+    }
+
     const id = parseInt(req.params.id);
     videos = videos.filter(v => v.id !== id);
-    res.json({ success: true, message: "Video berhasil dihapus" });
+    res.json({ success: true, message: "Series berhasil dihapus" });
 });
 
 app.listen(PORT, () => {

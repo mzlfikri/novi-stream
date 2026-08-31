@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NOVI - Premium Streaming Platform</title>
+  <title>NOVI - Series & Streaming Platform</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
@@ -56,6 +56,7 @@
     .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px var(--accent-glow); }
     .btn-glass { background: rgba(255,255,255,0.06); border: 1px solid var(--border); box-shadow: none; }
     .btn-glass:hover { background: rgba(255,255,255,0.15); }
+    .btn-owner { background: #8e44ad; box-shadow: 0 4px 18px rgba(142, 68, 173, 0.45); }
 
     .content-container { max-width: 1500px; margin: 0 auto; padding: 32px 48px; }
 
@@ -111,14 +112,18 @@
     .btn-delete-card { position: absolute; top: 10px; right: 10px; z-index: 10; background: rgba(231, 76, 60, 0.9); color: white; border: none; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: none; }
 
     .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(12px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
-    .modal-box-wide { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; }
+    .modal-box-wide { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 950px; max-height: 90vh; overflow-y: auto; }
     .video-viewport { width: 100%; aspect-ratio: 16/9; background: #000; }
     
-    /* Mendukung video HTML5 maupun Iframe YouTube */
     video, iframe { width: 100%; height: 100%; border: none; outline: none; }
 
     .modal-body-padding { padding: 24px; }
     .form-input-dark { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); background: #090a0f; color: white; margin-bottom: 12px; outline: none; font-size: 0.88rem; }
+
+    .episodes-container { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .ep-btn { background: #161922; border: 1px solid var(--border); color: var(--text-sub); padding: 8px 16px; border-radius: 10px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .ep-btn:hover, .ep-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .ep-input-group { background: #0c0e14; border: 1px solid var(--border); padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; gap: 8px; align-items: center; }
   </style>
 </head>
 <body>
@@ -128,27 +133,28 @@
       <a href="#" class="logo">NOV<span>I</span></a>
       <ul class="nav-menu">
         <li><a href="#" class="active">Beranda</a></li>
-        <li><a href="#">Trending</a></li>
+        <li><a href="#">Series</a></li>
         <li><a href="#">Kategori</a></li>
       </ul>
     </div>
 
     <div class="search-input-group">
       <i class="fa-solid fa-magnifying-glass" style="color: var(--text-sub);"></i>
-      <input type="text" id="searchInput" placeholder="Cari film atau kartun..." oninput="filterVideos()">
+      <input type="text" id="searchInput" placeholder="Cari serial atau kartun..." oninput="filterVideos()">
     </div>
 
     <div style="display: flex; gap: 12px;">
-      <button class="btn" id="btnUpload" style="display: none;"><i class="fa-solid fa-plus"></i> Tambah Video</button>
-      <button class="btn btn-glass" id="btnAdmin"><i class="fa-solid fa-user-lock"></i> Admin Login</button>
+      <button class="btn btn-owner" id="btnCreateAdmin" style="display: none;"><i class="fa-solid fa-user-plus"></i> Buat Admin</button>
+      <button class="btn" id="btnUpload" style="display: none;"><i class="fa-solid fa-plus"></i> Tambah Series</button>
+      <button class="btn btn-glass" id="btnAdmin"><i class="fa-solid fa-user-lock"></i> Login</button>
     </div>
   </header>
 
   <div class="content-container">
     <div class="hero-featured">
-      <span class="hero-badge">FEATURED</span>
+      <span class="hero-badge" id="roleBadge">PENGUNJUNG</span>
       <h1 class="hero-title">Platform Streaming NOVI</h1>
-      <p class="hero-subtitle">Tonton koleksi film dan kartun favorit Anda dengan mudah dan cepat.</p>
+      <p class="hero-subtitle">Tonton koleksi serial dan kartun favorit lengkap dengan pilihan episode.</p>
     </div>
 
     <div class="filter-chips">
@@ -159,22 +165,25 @@
       <div class="chip" onclick="filterCategory(event, 'Hiburan')">Hiburan</div>
     </div>
 
-    <div style="font-size: 1.3rem; font-weight: 800; margin-bottom: 20px;">Koleksi Video</div>
+    <div style="font-size: 1.3rem; font-weight: 800; margin-bottom: 20px;">Daftar Series & Kartun</div>
     <div class="poster-grid" id="videoGrid"></div>
   </div>
 
   <div class="modal-backdrop" id="playerModal">
     <div class="modal-box-wide">
       <div style="padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
-        <h3 id="mTitle" style="font-size: 1rem; font-weight: 700;">NOVI Player</h3>
+        <h3 id="mTitle" style="font-size: 1rem; font-weight: 700;">NOVI Series Player</h3>
         <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.2rem;" onclick="closeModal('playerModal')"></i>
       </div>
-      <div class="video-viewport" id="videoContainer">
-        </div>
+      <div class="video-viewport" id="videoContainer"></div>
+      
       <div class="modal-body-padding">
         <h2 id="mHeader" style="font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;"></h2>
         <p id="mDesc" style="color: var(--text-sub); font-size: 0.9rem; margin-bottom: 20px; line-height: 1.4;"></p>
         
+        <h4 style="margin-bottom: 10px; font-weight: 700; font-size: 0.95rem;"><i class="fa-solid fa-list-ul" style="color: var(--accent);"></i> Pilih Episode:</h4>
+        <div class="episodes-container" id="episodesListContainer"></div>
+
         <button class="btn btn-glass" id="btnLike" style="margin-bottom: 20px;"><i class="fa-solid fa-heart" style="color: var(--accent);"></i> <span id="likeNum">0</span> Suka</button>
 
         <h4 style="margin-bottom: 10px; font-weight: 700;">Komentar</h4>
@@ -189,33 +198,54 @@
 
   <div class="modal-backdrop" id="loginModal">
     <div class="modal-box-wide" style="max-width: 400px; padding: 24px;">
-      <h3 style="margin-bottom: 16px;">Login Admin</h3>
+      <h3 style="margin-bottom: 16px;">Login Owner / Admin</h3>
       <form id="loginForm">
-        <input type="text" id="userInput" class="form-input-dark" placeholder="Username (bebas)" required />
-        <input type="password" id="passInput" class="form-input-dark" placeholder="Password (bebas)" required />
+        <input type="text" id="userInput" class="form-input-dark" placeholder="Username (Cth: owner)" required />
+        <input type="password" id="passInput" class="form-input-dark" placeholder="Password (Cth: 123)" required />
         <button type="submit" class="btn" style="width: 100%; justify-content: center;">Masuk</button>
       </form>
     </div>
   </div>
 
+  <div class="modal-backdrop" id="createAdminModal">
+    <div class="modal-box-wide" style="max-width: 400px; padding: 24px;">
+      <h3 style="margin-bottom: 16px; color: #8e44ad;">Buat Akun Admin Baru</h3>
+      <form id="createAdminForm">
+        <input type="text" id="newUserInput" class="form-input-dark" placeholder="Username Admin Baru" required />
+        <input type="password" id="newPassInput" class="form-input-dark" placeholder="Password Admin Baru" required />
+        <button type="submit" class="btn btn-owner" style="width: 100%; justify-content: center;">Buat Akun</button>
+      </form>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="uploadModal">
-    <div class="modal-box-wide" style="max-width: 450px; padding: 24px;">
-      <h3 style="margin-bottom: 16px;">Tambah Video YouTube</h3>
+    <div class="modal-box-wide" style="max-width: 500px; padding: 24px;">
+      <h3 style="margin-bottom: 16px;">Tambah Series & Episode Baru</h3>
       <form id="uploadForm">
-        <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Video (Misal: Upin & Ipin Terbaru)" required />
+        <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Series" required />
         <select id="uCat" class="form-input-dark">
           <option value="Animasi">Animasi</option>
           <option value="Drama">Drama</option>
           <option value="Action">Action</option>
           <option value="Hiburan">Hiburan</option>
         </select>
-        <input type="text" id="uBadge" class="form-input-dark" placeholder="Badge (Contoh: HD / EP 01)" value="HD" />
-        <textarea id="uDesc" class="form-input-dark" style="height: 70px; resize: none;" placeholder="Deskripsi Singkat"></textarea>
-        
-        <input type="text" id="uSrc" class="form-input-dark" placeholder="Tempel Link YouTube (Cth: https://youtube.com/watch?v=...)" required />
-        <input type="text" id="uThumb" class="form-input-dark" placeholder="Link Cover Thumbnail (Opsional, boleh dikosongkan)" />
+        <textarea id="uDesc" class="form-input-dark" style="height: 60px; resize: none;" placeholder="Deskripsi Singkat"></textarea>
+        <input type="text" id="uThumb" class="form-input-dark" placeholder="Link Gambar Cover Poster (Opsional)" />
 
-        <button type="submit" class="btn" style="width: 100%; justify-content: center; margin-top: 6px;">Simpan Video</button>
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0;">
+        
+        <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 8px;">Daftar Link YouTube Episode:</label>
+        <div id="dynamicEpisodesContainer">
+          <div class="ep-input-group">
+            <input type="text" class="form-input-dark ep-url" style="margin:0;" placeholder="Link YouTube Episode 1" required />
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-glass" onclick="addEpisodeInput()" style="width: 100%; justify-content: center; margin-bottom: 16px; font-size: 0.8rem;">
+          <i class="fa-solid fa-plus"></i> Tambah Episode Lain
+        </button>
+
+        <button type="submit" class="btn" style="width: 100%; justify-content: center;">Simpan Series</button>
       </form>
     </div>
   </div>
@@ -229,32 +259,54 @@
     const mDesc = document.getElementById('mDesc');
     const likeNum = document.getElementById('likeNum');
     const cList = document.getElementById('cList');
+    const episodesListContainer = document.getElementById('episodesListContainer');
 
     const btnUpload = document.getElementById('btnUpload');
+    const btnCreateAdmin = document.getElementById('btnCreateAdmin');
     const btnAdmin = document.getElementById('btnAdmin');
     const loginModal = document.getElementById('loginModal');
+    const createAdminModal = document.getElementById('createAdminModal');
     const uploadModal = document.getElementById('uploadModal');
+    const roleBadge = document.getElementById('roleBadge');
 
     let allVideos = [];
     let activeVid = null;
     let selectedCategory = 'All';
-    let isAdmin = localStorage.getItem('isAdmin') === 'true';
+    
+    let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    let userRole = localStorage.getItem('userRole') || 'guest';
+    const adminToken = "token-sesi-aman-999";
 
     function renderUI() {
-      if (isAdmin) {
+      if (isLoggedIn) {
         btnUpload.style.display = 'flex';
         btnAdmin.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> Logout';
+        
+        if (userRole === 'owner') {
+          btnCreateAdmin.style.display = 'flex';
+          roleBadge.innerText = 'STATUS: OWNER UTAMA';
+          roleBadge.style.background = '#8e44ad';
+        } else {
+          btnCreateAdmin.style.display = 'none';
+          roleBadge.innerText = 'STATUS: ADMIN';
+          roleBadge.style.background = '#e67e22';
+        }
       } else {
         btnUpload.style.display = 'none';
-        btnAdmin.innerHTML = '<i class="fa-solid fa-user-lock"></i> Admin Login';
+        btnCreateAdmin.style.display = 'none';
+        btnAdmin.innerHTML = '<i class="fa-solid fa-user-lock"></i> Login';
+        roleBadge.innerText = 'STATUS: PENGUNJUNG';
+        roleBadge.style.background = 'var(--accent)';
       }
       filterVideos();
     }
 
     btnAdmin.onclick = () => {
-      if (isAdmin) {
-        isAdmin = false;
-        localStorage.removeItem('isAdmin');
+      if (isLoggedIn) {
+        isLoggedIn = false;
+        userRole = 'guest';
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userRole');
         renderUI();
       } else {
         loginModal.style.display = 'flex';
@@ -262,30 +314,79 @@
     };
 
     btnUpload.onclick = () => { uploadModal.style.display = 'flex'; };
+    btnCreateAdmin.onclick = () => { createAdminModal.style.display = 'flex'; };
 
     function closeModal(id) {
       document.getElementById(id).style.display = 'none';
       if (id === 'playerModal') {
-        videoContainer.innerHTML = ''; // Hentikan pemutaran video saat modal ditutup
+        videoContainer.innerHTML = '';
       }
     }
 
+    function addEpisodeInput() {
+      const container = document.getElementById('dynamicEpisodesContainer');
+      const count = container.children.length + 1;
+      const div = document.createElement('div');
+      div.className = 'ep-input-group';
+      div.innerHTML = `<input type="text" class="form-input-dark ep-url" style="margin:0;" placeholder="Link YouTube Episode ${count}" required />`;
+      container.appendChild(div);
+    }
+
+    // Proses Login
     document.getElementById('loginForm').onsubmit = async (e) => {
       e.preventDefault();
+      const u = document.getElementById('userInput').value;
+      const p = document.getElementById('passInput').value;
+
       try {
         const res = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})
+          body: JSON.stringify({ username: u, password: p })
         });
-        if (res.ok) {
-          isAdmin = true;
-          localStorage.setItem('isAdmin', 'true');
+        const data = await res.json();
+        if (res.ok && data.success) {
+          isLoggedIn = true;
+          userRole = data.role; // 'owner' atau 'admin'
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('userRole', data.role);
           closeModal('loginModal');
+          document.getElementById('loginForm').reset();
           renderUI();
+          alert(`Berhasil login sebagai ${data.role.toUpperCase()}!`);
+        } else {
+          alert(data.message || 'Login gagal!');
         }
       } catch (err) {
-        alert('Gagal login.');
+        alert('Kesalahan koneksi.');
+      }
+    };
+
+    // Proses Owner Membuat Akun Admin Baru
+    document.getElementById('createAdminForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const newU = document.getElementById('newUserInput').value;
+      const newP = document.getElementById('newPassInput').value;
+
+      try {
+        const res = await fetch('/api/create-admin', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-admin-key': adminToken 
+          },
+          body: JSON.stringify({ newUsername: newU, newPassword: newP })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert(data.message);
+          closeModal('createAdminModal');
+          document.getElementById('createAdminForm').reset();
+        } else {
+          alert(data.message || 'Gagal membuat akun.');
+        }
+      } catch (err) {
+        alert('Kesalahan koneksi.');
       }
     };
 
@@ -309,21 +410,23 @@
     function displayGrid(videos) {
       grid.innerHTML = '';
       if (!videos || videos.length === 0) {
-        grid.innerHTML = '<p style="color: var(--text-sub); font-size: 0.9rem;">Belum ada video.</p>';
+        grid.innerHTML = '<p style="color: var(--text-sub); font-size: 0.9rem;">Belum ada series.</p>';
         return;
       }
 
       videos.forEach(v => {
         const card = document.createElement('div');
         card.className = 'poster-card';
-        card.onclick = () => play(v);
+        card.onclick = () => playSeries(v);
+
+        const totalEp = v.episodes ? v.episodes.length : 0;
 
         card.innerHTML = `
-          ${isAdmin ? `<button class="btn-delete-card" style="display:block;" onclick="delVid(event, ${v.id})"><i class="fa-solid fa-trash"></i></button>` : ''}
+          ${isLoggedIn ? `<button class="btn-delete-card" style="display:block;" onclick="delVid(event, ${v.id})"><i class="fa-solid fa-trash"></i></button>` : ''}
           <div class="poster-frame">
             <img src="${v.thumbnail}" class="poster-img" />
             <div class="hover-overlay"><div class="play-glow-btn"><i class="fa-solid fa-play"></i></div></div>
-            <span class="tag-badge">${v.badge || 'HD'}</span>
+            <span class="tag-badge">${totalEp} Episode</span>
           </div>
           <div class="poster-meta">
             <div class="poster-title">${v.title}</div>
@@ -338,7 +441,7 @@
       });
     }
 
-    function play(v) {
+    function playSeries(v) {
       activeVid = v;
       mTitle.innerText = v.title;
       mHeader.innerText = v.title;
@@ -346,14 +449,31 @@
       likeNum.innerText = v.likes || 0;
       renderComments(v.comments || []);
 
-      // Cek apakah link YouTube atau file biasa
-      if (v.src.includes('youtube.com/embed')) {
-        videoContainer.innerHTML = `<iframe src="${v.src}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-      } else {
-        videoContainer.innerHTML = `<video src="${v.src}" controls autoplay preload="metadata"></video>`;
+      episodesListContainer.innerHTML = '';
+      if (v.episodes && v.episodes.length > 0) {
+        v.episodes.forEach((ep, index) => {
+          const btn = document.createElement('button');
+          btn.className = `ep-btn ${index === 0 ? 'active' : ''}`;
+          btn.innerText = `Ep ${ep.epNum}`;
+          btn.onclick = () => {
+            document.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            loadEpisodePlayer(ep.src);
+          };
+          episodesListContainer.appendChild(btn);
+        });
+        loadEpisodePlayer(v.episodes[0].src);
       }
 
       playerModal.style.display = 'flex';
+    }
+
+    function loadEpisodePlayer(src) {
+      if (src.includes('youtube.com/embed')) {
+        videoContainer.innerHTML = `<iframe src="${src}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      } else {
+        videoContainer.innerHTML = `<video src="${src}" controls autoplay preload="metadata"></video>`;
+      }
     }
 
     function renderComments(comments) {
@@ -399,10 +519,14 @@
 
     async function delVid(e, id) {
       e.stopPropagation();
-      if (!confirm("Hapus video ini?")) return;
+      if (!confirm("Hapus series ini?")) return;
       try {
-        const res = await fetch(`/api/videos/${id}`, { method: 'DELETE' });
+        const res = await fetch(`/api/videos/${id}`, { 
+          method: 'DELETE',
+          headers: { 'x-admin-key': adminToken }
+        });
         if (res.ok) fetchVideos();
+        else alert("Akses ditolak.");
       } catch (err) {
         alert("Gagal menghapus.");
       }
@@ -410,28 +534,39 @@
 
     document.getElementById('uploadForm').onsubmit = async (e) => {
       e.preventDefault();
+      
+      const epInputs = document.querySelectorAll('.ep-url');
+      let episodes = [];
+      epInputs.forEach((inp, idx) => {
+        if (inp.value.trim() !== '') {
+          episodes.push({ epNum: idx + 1, src: inp.value.trim() });
+        }
+      });
+
       const payload = {
         title: document.getElementById('uTitle').value,
         category: document.getElementById('uCat').value,
-        badge: document.getElementById('uBadge').value,
         description: document.getElementById('uDesc').value,
-        src: document.getElementById('uSrc').value,
-        thumbnail: document.getElementById('uThumb').value
+        thumbnail: document.getElementById('uThumb').value,
+        episodes: episodes
       };
 
       try {
         const res = await fetch('/api/upload', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-admin-key': adminToken 
+          },
           body: JSON.stringify(payload)
         });
         if (res.ok) {
-          alert('Video YouTube Berhasil Ditambahkan!');
+          alert('Series & Episode Berhasil Ditambahkan!');
           closeModal('uploadModal');
           document.getElementById('uploadForm').reset();
           fetchVideos();
         } else {
-          alert('Gagal menambah video.');
+          alert('Gagal menambah series.');
         }
       } catch (err) {
         alert('Kesalahan koneksi.');
