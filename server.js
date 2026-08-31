@@ -8,17 +8,17 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database memori sementara yang stabil dan anti-error di server cloud
+// Database memori sementara
 let videos = [
     { 
         id: 1, 
-        title: "Video Contoh Pertama", 
-        src: "https://www.w3schools.com/html/mov_bbb.mp4", 
-        description: "Selamat datang di platform streaming NOVI!", 
-        category: "Drama", 
+        title: "Upin & Ipin Pilihan", 
+        src: "https://www.youtube.com/embed/5qap5aO4i9A", // Contoh link embed YouTube
+        description: "Nonton keseruan Upin & Ipin di platform NOVI!", 
+        category: "Animasi", 
         badge: "HD", 
-        likes: 0, 
-        comments: [] 
+        likes: 12, 
+        comments: [{ text: "Seru banget kartunnya!", date: "31/08/2026" }] 
     }
 ];
 
@@ -27,23 +27,42 @@ app.get('/api/videos', (req, res) => {
     res.json(videos);
 });
 
-// Route: Login Admin (Otomatis Sukses Tanpa Ribet Password)
+// Route: Login Admin
 app.post('/api/login', (req, res) => {
     res.json({ success: true, message: "Login Berhasil!" });
 });
 
-// Route: Tambah Video via Link URL (Solusi agar tidak pernah gagal upload)
+// Route: Tambah Video (Mendukung Link YouTube & Link MP4)
 app.post('/api/upload', (req, res) => {
-    const { title, category, badge, description, src, thumbnail } = req.body;
+    let { title, category, badge, description, src, thumbnail } = req.body;
     
     if (!src) {
         return res.status(400).json({ success: false, message: "Link video wajib diisi!" });
     }
 
+    // Ubah otomatis link YouTube biasa (watch?v=) menjadi link embed agar bisa diputar
+    if (src.includes('youtube.com/watch?v=')) {
+        const videoId = src.split('v=')[1]?.split('&')[0];
+        if (videoId) {
+            src = `https://www.youtube.com/embed/${videoId}`;
+            if (!thumbnail) {
+                thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            }
+        }
+    } else if (src.includes('youtu.be/')) {
+        const videoId = src.split('youtu.be/')[1]?.split('?')[0];
+        if (videoId) {
+            src = `https://www.youtube.com/embed/${videoId}`;
+            if (!thumbnail) {
+                thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            }
+        }
+    }
+
     const newVideo = {
         id: videos.length > 0 ? videos[videos.length - 1].id + 1 : 1,
         title: title || "Tanpa Judul",
-        category: category || "Drama",
+        category: category || "Animasi",
         badge: badge || "HD",
         description: description || "",
         src: src,
