@@ -56,7 +56,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Password Admin diatur "123456"
+// Kredensial Admin Resmi (Username & Password)
+const ADMIN_USER = "admin";
 const ADMIN_PASS = "123456";
 
 // Route: Ambil Semua Video
@@ -65,13 +66,13 @@ app.get('/api/videos', (req, res) => {
     res.json(videos);
 });
 
-// Route: Login Admin
+// Route: Login Admin dengan Username & Password
 app.post('/api/login', (req, res) => {
-    const { password } = req.body;
-    if (password === ADMIN_PASS) {
+    const { username, password } = req.body;
+    if (username === ADMIN_USER && password === ADMIN_PASS) {
         res.json({ success: true, message: "Login berhasil!" });
     } else {
-        res.status(401).json({ success: false, message: "Password salah!" });
+        res.status(401).json({ success: false, message: "Username atau Password salah!" });
     }
 });
 
