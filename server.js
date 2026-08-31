@@ -8,7 +8,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database Akun (Default sudah ada 1 Owner utama)
+// Database Akun (Default Owner utama)
 let users = [
     { username: 'owner', password: '123', role: 'owner' }
 ];
@@ -29,7 +29,7 @@ let videos = [
     }
 ];
 
-// 1. Route: Login (Mengecek role: owner atau admin)
+// Route: Login
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     const foundUser = users.find(u => u.username === username && u.password === password);
@@ -46,7 +46,7 @@ app.post('/api/login', (req, res) => {
     }
 });
 
-// 2. Route: Owner Membuat Akun Admin Baru (Hanya Owner yang boleh akses)
+// Route: Buat Admin Baru (Khusus Owner)
 app.post('/api/create-admin', (req, res) => {
     const adminKey = req.headers['x-admin-key'];
     if (adminKey !== 'token-sesi-aman-999') {
@@ -55,10 +55,9 @@ app.post('/api/create-admin', (req, res) => {
 
     const { newUsername, newPassword } = req.body;
     if (!newUsername || !newPassword) {
-        return res.status(400).json({ success: false, message: "Username dan password baru wajib diisi!" });
+        return res.status(400).json({ success: false, message: "Username dan password wajib diisi!" });
     }
 
-    // Cek apakah username sudah ada
     if (users.some(u => u.username === newUsername)) {
         return res.status(400).json({ success: false, message: "Username sudah digunakan!" });
     }
@@ -72,7 +71,7 @@ app.get('/api/videos', (req, res) => {
     res.json(videos);
 });
 
-// Route: Tambah Series (Bisa diakses Owner & Admin yang sudah login)
+// Route: Tambah Series (Anti-Crash / Aman dari error undefined)
 app.post('/api/upload', (req, res) => {
     const adminKey = req.headers['x-admin-key'];
     if (adminKey !== 'token-sesi-aman-999') {
@@ -81,12 +80,14 @@ app.post('/api/upload', (req, res) => {
 
     let { title, category, description, thumbnail, episodes } = req.body;
     
-    if (!title || !episodes || episodes.length === 0) {
+    if (!title || !episodes || !Array.isArray(episodes) || episodes.length === 0) {
         return res.status(400).json({ success: false, message: "Judul dan minimal 1 episode wajib diisi!" });
     }
 
+    // Format aman untuk link YouTube atau Google Drive
     const formattedEpisodes = episodes.map((ep, index) => {
-        let videoSrc = ep.src;
+        let videoSrc = ep && ep.src ? ep.src.trim() : '';
+        
         if (videoSrc.includes('youtube.com/watch?v=')) {
             const videoId = videoSrc.split('v=')[1]?.split('&')[0];
             if (videoId) videoSrc = `https://www.youtube.com/embed/${videoId}`;
@@ -94,7 +95,12 @@ app.post('/api/upload', (req, res) => {
             const videoId = videoSrc.split('youtu.be/')[1]?.split('?')[0];
             if (videoId) videoSrc = `https://www.youtube.com/embed/${videoId}`;
         }
-        return { epNum: index + 1, title: `Episode ${index + 1}`, src: videoSrc };
+
+        return {
+            epNum: index + 1,
+            title: `Episode ${index + 1}`,
+            src: videoSrc
+        };
     });
 
     const newVideo = {
