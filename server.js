@@ -6,10 +6,31 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Pastikan folder uploads dan public ada agar tidak error
+// Pastikan folder uploads dan public ada
 const uploadDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadDir)){
     fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// File database JSON untuk menyimpan daftar video secara permanen di server
+const dbFile = path.join(__dirname, 'videos.json');
+
+// Fungsi untuk membaca data video
+function getVideos() {
+    if (!fs.existsSync(dbFile)) {
+        const initialVideos = [
+            { id: 1, title: "Video Contoh Pertama", filename: "sample.mp4", description: "Selamat datang di NOVI Stream!" }
+        ];
+        fs.writeFileSync(dbFile, JSON.stringify(initialVideos, null, 2));
+        return initialVideos;
+    }
+    const data = fs.readFileSync(dbFile, 'utf8');
+    return JSON.parse(data);
+}
+
+// Fungsi untuk menyimpan data video
+function saveVideos(videos) {
+    fs.writeFileSync(dbFile, JSON.stringify(videos, null, 2));
 }
 
 // Konfigurasi Multer untuk Upload Video
@@ -27,17 +48,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Simulasi Database Sederhana untuk Menyimpan Daftar Video & Akun
-let videos = [
-    { id: 1, title: "Video Contoh Pertama", filename: "sample.mp4", description: "Selamat datang di NOVI Stream!" }
-];
-
-// Data Admin (Bisa diubah di sini)
+// Data Admin
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "novi123";
 
 // Route: Halaman Utama (Menampilkan daftar video)
 app.get('/api/videos', (req, res) => {
+    const videos = getVideos();
     res.json(videos);
 });
 
@@ -57,14 +74,17 @@ app.post('/api/upload', upload.single('video'), (req, res) => {
         return res.status(400).json({ success: false, message: "Tidak ada file video yang di-upload!" });
     }
     
+    const videos = getVideos();
     const newVideo = {
-        id: videos.length + 1,
+        id: videos.length > 0 ? videos[videos.length - 1].id + 1 : 1,
         title: req.body.title || "Video Tanpa Judul",
         filename: req.file.filename,
         description: req.body.description || ""
     };
     
     videos.push(newVideo);
+    saveVideos(videos); // Simpan ke file JSON permanen
+    
     res.json({ success: true, message: "Video berhasil di-upload!", video: newVideo });
 });
 
