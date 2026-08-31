@@ -102,7 +102,7 @@ app.post('/api/upload', (req, res) => {
         };
     });
 
-    // Jika ada ID, berarti ini adalah proses EDIT (Memperbarui data lama)
+    // Jika ada ID, berarti proses EDIT
     if (id) {
         const index = videos.findIndex(v => v.id === parseInt(id));
         if (index !== -1) {
@@ -115,7 +115,7 @@ app.post('/api/upload', (req, res) => {
         }
     }
 
-    // Jika tidak ada ID, berarti ini TAMBAH BARU (Upload)
+    // Jika tidak ada ID, berarti TAMBAH BARU
     const newVideo = {
         id: videos.length > 0 ? videos[videos.length - 1].id + 1 : 1,
         title: title,

@@ -57,7 +57,7 @@
     .btn-glass { background: rgba(255,255,255,0.06); border: 1px solid var(--border); box-shadow: none; }
     .btn-glass:hover { background: rgba(255,255,255,0.15); }
     .btn-owner { background: #8e44ad; box-shadow: 0 4px 18px rgba(142, 68, 173, 0.45); }
-    .btn-edit { background: #f39c12; color: white; border: none; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: none; }
+    .btn-edit { background: #f39c12; color: white; border: none; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
 
     .content-container { max-width: 1500px; margin: 0 auto; padding: 32px 48px; }
 
@@ -171,6 +171,7 @@
     <div class="poster-grid" id="videoGrid"></div>
   </div>
 
+  <!-- Modal Pemutar Video -->
   <div class="modal-backdrop" id="playerModal">
     <div class="modal-box-wide">
       <div style="padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
@@ -198,6 +199,7 @@
     </div>
   </div>
 
+  <!-- Modal Login -->
   <div class="modal-backdrop" id="loginModal">
     <div class="modal-box-wide" style="max-width: 400px; padding: 24px;">
       <h3 style="margin-bottom: 16px;">Login Owner / Admin</h3>
@@ -209,6 +211,7 @@
     </div>
   </div>
 
+  <!-- Modal Buat Admin Baru -->
   <div class="modal-backdrop" id="createAdminModal">
     <div class="modal-box-wide" style="max-width: 400px; padding: 24px;">
       <h3 style="margin-bottom: 16px; color: #8e44ad;">Buat Akun Admin Baru</h3>
@@ -220,6 +223,7 @@
     </div>
   </div>
 
+  <!-- Modal Tambah / Edit Series -->
   <div class="modal-backdrop" id="uploadModal">
     <div class="modal-box-wide" style="max-width: 500px; padding: 24px;">
       <h3 id="modalUploadTitle" style="margin-bottom: 16px;">Tambah Series & Episode Baru</h3>
@@ -318,7 +322,6 @@
     };
 
     btnUpload.onclick = () => {
-      // Reset form untuk mode tambah baru
       document.getElementById('uploadForm').reset();
       document.getElementById('editSeriesId').value = '';
       modalUploadTitle.innerText = 'Tambah Series & Episode Baru';
@@ -536,7 +539,6 @@
       displayGrid(filtered);
     }
 
-    // Fungsi Membuka Form Edit Series
     function editVid(e, id) {
       e.stopPropagation();
       const v = allVideos.find(item => item.id === id);
@@ -548,7 +550,6 @@
       document.getElementById('uDesc').value = v.description;
       document.getElementById('uThumb').value = v.thumbnail;
 
-      // Masukkan episode yang sudah ada ke form
       const container = document.getElementById('dynamicEpisodesContainer');
       container.innerHTML = '';
       if (v.episodes && v.episodes.length > 0) {
