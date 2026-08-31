@@ -57,6 +57,7 @@
     .btn-glass { background: rgba(255,255,255,0.06); border: 1px solid var(--border); box-shadow: none; }
     .btn-glass:hover { background: rgba(255,255,255,0.15); }
     .btn-owner { background: #8e44ad; box-shadow: 0 4px 18px rgba(142, 68, 173, 0.45); }
+    .btn-edit { background: #f39c12; color: white; border: none; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: none; }
 
     .content-container { max-width: 1500px; margin: 0 auto; padding: 32px 48px; }
 
@@ -109,7 +110,8 @@
 
     .card-footer-stats { margin-top: auto; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-sub); }
 
-    .btn-delete-card { position: absolute; top: 10px; right: 10px; z-index: 10; background: rgba(231, 76, 60, 0.9); color: white; border: none; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: none; }
+    .card-actions { position: absolute; top: 10px; right: 10px; z-index: 10; display: none; gap: 4px; }
+    .btn-delete-card { background: rgba(231, 76, 60, 0.9); color: white; border: none; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
 
     .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(12px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
     .modal-box-wide { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 950px; max-height: 90vh; overflow-y: auto; }
@@ -220,8 +222,9 @@
 
   <div class="modal-backdrop" id="uploadModal">
     <div class="modal-box-wide" style="max-width: 500px; padding: 24px;">
-      <h3 style="margin-bottom: 16px;">Tambah Series & Episode Baru</h3>
+      <h3 id="modalUploadTitle" style="margin-bottom: 16px;">Tambah Series & Episode Baru</h3>
       <form id="uploadForm">
+        <input type="hidden" id="editSeriesId" value="" />
         <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Series" required />
         <select id="uCat" class="form-input-dark">
           <option value="Animasi">Animasi</option>
@@ -268,6 +271,7 @@
     const createAdminModal = document.getElementById('createAdminModal');
     const uploadModal = document.getElementById('uploadModal');
     const roleBadge = document.getElementById('roleBadge');
+    const modalUploadTitle = document.getElementById('modalUploadTitle');
 
     let allVideos = [];
     let activeVid = null;
@@ -313,7 +317,19 @@
       }
     };
 
-    btnUpload.onclick = () => { uploadModal.style.display = 'flex'; };
+    btnUpload.onclick = () => {
+      // Reset form untuk mode tambah baru
+      document.getElementById('uploadForm').reset();
+      document.getElementById('editSeriesId').value = '';
+      modalUploadTitle.innerText = 'Tambah Series & Episode Baru';
+      document.getElementById('dynamicEpisodesContainer').innerHTML = `
+        <div class="ep-input-group">
+          <input type="text" class="form-input-dark ep-url" style="margin:0;" placeholder="Link YouTube Episode 1" required />
+        </div>
+      `;
+      uploadModal.style.display = 'flex';
+    };
+
     btnCreateAdmin.onclick = () => { createAdminModal.style.display = 'flex'; };
 
     function closeModal(id) {
@@ -323,16 +339,15 @@
       }
     }
 
-    function addEpisodeInput() {
+    function addEpisodeInput(value = '') {
       const container = document.getElementById('dynamicEpisodesContainer');
       const count = container.children.length + 1;
       const div = document.createElement('div');
       div.className = 'ep-input-group';
-      div.innerHTML = `<input type="text" class="form-input-dark ep-url" style="margin:0;" placeholder="Link YouTube Episode ${count}" required />`;
+      div.innerHTML = `<input type="text" class="form-input-dark ep-url" style="margin:0;" value="${value}" placeholder="Link YouTube Episode ${count}" required />`;
       container.appendChild(div);
     }
 
-    // Proses Login
     document.getElementById('loginForm').onsubmit = async (e) => {
       e.preventDefault();
       const u = document.getElementById('userInput').value;
@@ -347,7 +362,7 @@
         const data = await res.json();
         if (res.ok && data.success) {
           isLoggedIn = true;
-          userRole = data.role; // 'owner' atau 'admin'
+          userRole = data.role;
           localStorage.setItem('isLoggedIn', 'true');
           localStorage.setItem('userRole', data.role);
           closeModal('loginModal');
@@ -362,7 +377,6 @@
       }
     };
 
-    // Proses Owner Membuat Akun Admin Baru
     document.getElementById('createAdminForm').onsubmit = async (e) => {
       e.preventDefault();
       const newU = document.getElementById('newUserInput').value;
@@ -422,7 +436,12 @@
         const totalEp = v.episodes ? v.episodes.length : 0;
 
         card.innerHTML = `
-          ${isLoggedIn ? `<button class="btn-delete-card" style="display:block;" onclick="delVid(event, ${v.id})"><i class="fa-solid fa-trash"></i></button>` : ''}
+          ${isLoggedIn ? `
+            <div class="card-actions" style="display:flex;">
+              <button class="btn-edit" onclick="editVid(event, ${v.id})"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-delete-card" onclick="delVid(event, ${v.id})"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          ` : ''}
           <div class="poster-frame">
             <img src="${v.thumbnail}" class="poster-img" />
             <div class="hover-overlay"><div class="play-glow-btn"><i class="fa-solid fa-play"></i></div></div>
@@ -517,6 +536,33 @@
       displayGrid(filtered);
     }
 
+    // Fungsi Membuka Form Edit Series
+    function editVid(e, id) {
+      e.stopPropagation();
+      const v = allVideos.find(item => item.id === id);
+      if (!v) return;
+
+      document.getElementById('editSeriesId').value = v.id;
+      document.getElementById('uTitle').value = v.title;
+      document.getElementById('uCat').value = v.category || 'Animasi';
+      document.getElementById('uDesc').value = v.description;
+      document.getElementById('uThumb').value = v.thumbnail;
+
+      // Masukkan episode yang sudah ada ke form
+      const container = document.getElementById('dynamicEpisodesContainer');
+      container.innerHTML = '';
+      if (v.episodes && v.episodes.length > 0) {
+        v.episodes.forEach(ep => {
+          addEpisodeInput(ep.src);
+        });
+      } else {
+        addEpisodeInput();
+      }
+
+      modalUploadTitle.innerText = 'Edit Series & Episode';
+      uploadModal.style.display = 'flex';
+    }
+
     async function delVid(e, id) {
       e.stopPropagation();
       if (!confirm("Hapus series ini?")) return;
@@ -535,6 +581,7 @@
     document.getElementById('uploadForm').onsubmit = async (e) => {
       e.preventDefault();
       
+      const id = document.getElementById('editSeriesId').value;
       const epInputs = document.querySelectorAll('.ep-url');
       let episodes = [];
       epInputs.forEach((inp, idx) => {
@@ -544,6 +591,7 @@
       });
 
       const payload = {
+        id: id ? parseInt(id) : null,
         title: document.getElementById('uTitle').value,
         category: document.getElementById('uCat').value,
         description: document.getElementById('uDesc').value,
@@ -561,12 +609,12 @@
           body: JSON.stringify(payload)
         });
         if (res.ok) {
-          alert('Series & Episode Berhasil Ditambahkan!');
+          alert(id ? 'Series Berhasil Diperbarui!' : 'Series & Episode Berhasil Ditambahkan!');
           closeModal('uploadModal');
           document.getElementById('uploadForm').reset();
           fetchVideos();
         } else {
-          alert('Gagal menambah series.');
+          alert('Gagal menyimpan series.');
         }
       } catch (err) {
         alert('Kesalahan koneksi.');

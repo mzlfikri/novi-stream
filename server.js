@@ -71,20 +71,19 @@ app.get('/api/videos', (req, res) => {
     res.json(videos);
 });
 
-// Route: Tambah Series (Anti-Crash / Aman dari error undefined)
+// Route: Tambah atau Update (Edit) Series
 app.post('/api/upload', (req, res) => {
     const adminKey = req.headers['x-admin-key'];
     if (adminKey !== 'token-sesi-aman-999') {
         return res.status(403).json({ success: false, message: "Akses ditolak!" });
     }
 
-    let { title, category, description, thumbnail, episodes } = req.body;
+    let { id, title, category, description, thumbnail, episodes } = req.body;
     
     if (!title || !episodes || !Array.isArray(episodes) || episodes.length === 0) {
         return res.status(400).json({ success: false, message: "Judul dan minimal 1 episode wajib diisi!" });
     }
 
-    // Format aman untuk link YouTube atau Google Drive
     const formattedEpisodes = episodes.map((ep, index) => {
         let videoSrc = ep && ep.src ? ep.src.trim() : '';
         
@@ -103,6 +102,20 @@ app.post('/api/upload', (req, res) => {
         };
     });
 
+    // Jika ada ID, berarti ini adalah proses EDIT (Memperbarui data lama)
+    if (id) {
+        const index = videos.findIndex(v => v.id === parseInt(id));
+        if (index !== -1) {
+            videos[index].title = title;
+            videos[index].category = category || "Animasi";
+            videos[index].description = description || "";
+            videos[index].thumbnail = thumbnail || videos[index].thumbnail;
+            videos[index].episodes = formattedEpisodes;
+            return res.json({ success: true, video: videos[index] });
+        }
+    }
+
+    // Jika tidak ada ID, berarti ini TAMBAH BARU (Upload)
     const newVideo = {
         id: videos.length > 0 ? videos[videos.length - 1].id + 1 : 1,
         title: title,
