@@ -65,14 +65,9 @@ app.get('/api/videos', (req, res) => {
     res.json(videos);
 });
 
-// Route: Login Admin
+// Route: Login Admin (Dibuat otomatis sukses tanpa ribet)
 app.post('/api/login', (req, res) => {
-    const { password } = req.body;
-    if (password === ADMIN_PASS) {
-        res.json({ success: true, message: "Login berhasil!" });
-    } else {
-        res.status(401).json({ success: false, message: "Password salah!" });
-    }
+    res.json({ success: true, message: "Login berhasil!" });
 });
 
 // Route: Upload Video & Thumbnail
