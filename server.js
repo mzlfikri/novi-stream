@@ -6,13 +6,13 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Pastikan folder uploads ada
+// Pastikan folder uploads dan public ada
 const uploadDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadDir)){
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Database JSON untuk menyimpan data video permanen
+// Database JSON untuk menyimpan data video secara permanen di server
 const dbFile = path.join(__dirname, 'videos.json');
 
 function getVideos() {
@@ -56,7 +56,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Password Admin (Sesuai dengan frontend: "123456")
+// Password Admin diatur "123456"
 const ADMIN_PASS = "123456";
 
 // Route: Ambil Semua Video
@@ -65,9 +65,14 @@ app.get('/api/videos', (req, res) => {
     res.json(videos);
 });
 
-// Route: Login Admin (Dibuat otomatis sukses tanpa ribet)
+// Route: Login Admin
 app.post('/api/login', (req, res) => {
-    res.json({ success: true, message: "Login berhasil!" });
+    const { password } = req.body;
+    if (password === ADMIN_PASS) {
+        res.json({ success: true, message: "Login berhasil!" });
+    } else {
+        res.status(401).json({ success: false, message: "Password salah!" });
+    }
 });
 
 // Route: Upload Video & Thumbnail
@@ -140,7 +145,6 @@ app.delete('/api/videos/:filename', (req, res) => {
     let videos = getVideos();
     const video = videos.find(v => v.filename === req.params.filename);
     if (video) {
-        // Hapus file fisik jika ada
         const videoPath = path.join(uploadDir, video.filename);
         if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
         

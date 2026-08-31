@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "title": "Video Contoh Pertama",
+    "filename": "sample.mp4",
+    "src": "/uploads/sample.mp4",
+    "description": "Selamat datang di NOVI Stream!",
+    "category": "Drama",
+    "badge": "HD",
+    "likes": 5,
+    "comments": [
+      {
+        "text": "Keren banget!",
+        "date": "31/08/2026"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "upin ipin",
+    "category": "Drama",
+    "badge": "HD",
+    "description": "a",
+    "filename": "1788165408691.mp4",
+    "src": "/uploads/1788165408691.mp4",
+    "thumbnail": "/uploads/1788165411558.png",
+    "likes": 0,
+    "comments": [
+      {
+        "text": "kotak",
+        "date": "31/8/2026"
+      }
+    ]
+  }
+]
