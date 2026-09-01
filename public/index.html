@@ -31,7 +31,6 @@
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-    /* Header Navbar */
     header {
       background: rgba(5, 6, 8, 0.85);
       backdrop-filter: blur(16px);
@@ -67,10 +66,8 @@
     .btn-owner { background: #8e44ad; box-shadow: 0 4px 15px rgba(142, 68, 173, 0.4); }
     .btn-edit { background: #f39c12; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
 
-    /* Main Container */
     .content-container { max-width: 1400px; margin: 0 auto; padding: 32px 48px; }
 
-    /* Hero Banner */
     .hero-featured {
       width: 100%; height: 300px; border-radius: 24px;
       background: linear-gradient(180deg, rgba(5,6,8,0.1) 0%, rgba(5,6,8,0.95) 100%), 
@@ -83,7 +80,6 @@
     .hero-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.5px; }
     .hero-subtitle { color: var(--text-muted); font-size: 0.92rem; max-width: 600px; line-height: 1.4; }
 
-    /* Filter Kategori */
     .filter-chips { display: flex; gap: 12px; margin-bottom: 28px; overflow-x: auto; padding-bottom: 6px; }
     .chip {
       background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted);
@@ -91,7 +87,6 @@
     }
     .chip:hover, .chip.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 4px 15px var(--accent-glow); }
 
-    /* Grid Poster Film */
     .poster-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -126,7 +121,6 @@
     .card-actions { position: absolute; top: 12px; right: 12px; z-index: 10; display: none; gap: 6px; }
     .btn-delete-card { background: rgba(231, 76, 60, 0.9); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
 
-    /* Modal Player & Forms */
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; animation: fadeIn 0.2s ease; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
@@ -290,13 +284,35 @@
     const roleBadge = document.getElementById('roleBadge');
     const modalUploadTitle = document.getElementById('modalUploadTitle');
 
-    let allVideos = [];
+    // Default Database awal jika LocalStorage masih kosong
+    const defaultVideos = [
+      { 
+        id: 1, 
+        title: "Upin & Ipin Musim Terbaru", 
+        description: "Koleksi episode seru petualangan Upin dan Ipin di Kampung Durian Runtuh.", 
+        category: "Animasi", 
+        thumbnail: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=600&q=80",
+        likes: 25, 
+        comments: [],
+        episodes: [
+          { epNum: 1, title: "Episode 1", src: "uiegc6m9x2" }
+        ]
+      }
+    ];
+
+    let allVideos = JSON.parse(localStorage.getItem('novi_videos')) || defaultVideos;
+    let users = JSON.parse(localStorage.getItem('novi_users')) || [{ username: 'owner', password: '123', role: 'owner' }];
+    
     let activeVid = null;
     let selectedCategory = 'All';
     
     let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     let userRole = localStorage.getItem('userRole') || 'guest';
-    const adminToken = "token-sesi-aman-999";
+
+    function saveToStorage() {
+      localStorage.setItem('novi_videos', JSON.stringify(allVideos));
+      localStorage.setItem('novi_users', JSON.stringify(users));
+    }
 
     function renderUI() {
       if (isLoggedIn) {
@@ -364,71 +380,42 @@
       container.appendChild(div);
     }
 
-    document.getElementById('loginForm').onsubmit = async (e) => {
+    document.getElementById('loginForm').onsubmit = (e) => {
       e.preventDefault();
       const u = document.getElementById('userInput').value;
       const p = document.getElementById('passInput').value;
+      const foundUser = users.find(user => user.username === u && user.password === p);
 
-      try {
-        const res = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: u, password: p })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          isLoggedIn = true;
-          userRole = data.role;
-          localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('userRole', data.role);
-          closeModal('loginModal');
-          document.getElementById('loginForm').reset();
-          renderUI();
-          alert(`Berhasil login sebagai ${data.role.toUpperCase()}!`);
-        } else {
-          alert(data.message || 'Login gagal!');
-        }
-      } catch (err) {
-        alert('Kesalahan koneksi.');
+      if (foundUser) {
+        isLoggedIn = true;
+        userRole = foundUser.role;
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userRole', foundUser.role);
+        closeModal('loginModal');
+        document.getElementById('loginForm').reset();
+        renderUI();
+        alert(`Berhasil login sebagai ${foundUser.role.toUpperCase()}!`);
+      } else {
+        alert('Username atau Password salah!');
       }
     };
 
-    document.getElementById('createAdminForm').onsubmit = async (e) => {
+    document.getElementById('createAdminForm').onsubmit = (e) => {
       e.preventDefault();
       const newU = document.getElementById('newUserInput').value;
       const newP = document.getElementById('newPassInput').value;
 
-      try {
-        const res = await fetch('/api/create-admin', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'x-admin-key': adminToken 
-          },
-          body: JSON.stringify({ newUsername: newU, newPassword: newP })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          alert(data.message);
-          closeModal('createAdminModal');
-          document.getElementById('createAdminForm').reset();
-        } else {
-          alert(data.message || 'Gagal membuat akun.');
-        }
-      } catch (err) {
-        alert('Kesalahan koneksi.');
+      if (users.some(u => u.username === newU)) {
+        alert('Username sudah digunakan!');
+        return;
       }
-    };
 
-    async function fetchVideos() {
-      try {
-        const res = await fetch('/api/videos');
-        allVideos = await res.json();
-        filterVideos();
-      } catch (err) {
-        console.error('Gagal memuat video:', err);
-      }
-    }
+      users.push({ username: newU, password: newP, role: 'admin' });
+      saveToStorage();
+      alert(`Akun Admin '${newU}' berhasil dibuat!`);
+      closeModal('createAdminModal');
+      document.getElementById('createAdminForm').reset();
+    };
 
     function filterCategory(e, cat) {
       selectedCategory = cat;
@@ -538,6 +525,7 @@
       if (!activeVid) return;
       activeVid.likes = (activeVid.likes || 0) + 1;
       likeNum.innerText = activeVid.likes;
+      saveToStorage();
       filterVideos();
     };
 
@@ -548,6 +536,7 @@
       if (!activeVid.comments) activeVid.comments = [];
       activeVid.comments.push({ text: input.value, date: new Date().toLocaleDateString('id-ID') });
       renderComments(activeVid.comments);
+      saveToStorage();
       input.value = '';
       filterVideos();
     };
@@ -586,66 +575,75 @@
       uploadModal.style.display = 'flex';
     }
 
-    async function delVid(e, id) {
+    function delVid(e, id) {
       e.stopPropagation();
       if (!confirm("Hapus series ini?")) return;
-      try {
-        const res = await fetch(`/api/videos/${id}`, { 
-          method: 'DELETE',
-          headers: { 'x-admin-key': adminToken }
-        });
-        if (res.ok) fetchVideos();
-        else alert("Akses ditolak.");
-      } catch (err) {
-        alert("Gagal menghapus.");
-      }
+      allVideos = allVideos.filter(v => v.id !== id);
+      saveToStorage();
+      filterVideos();
     }
 
-    document.getElementById('uploadForm').onsubmit = async (e) => {
+    document.getElementById('uploadForm').onsubmit = (e) => {
       e.preventDefault();
       
       const id = document.getElementById('editSeriesId').value;
       const epInputs = document.querySelectorAll('.ep-url');
       let episodes = [];
       epInputs.forEach((inp, idx) => {
-        if (inp.value.trim() !== '') {
-          episodes.push({ epNum: idx + 1, src: inp.value.trim() });
+        let val = inp.value.trim();
+        if (val !== '') {
+          if (val.includes('youtube.com/watch?v=')) {
+            const videoId = val.split('v=')[1]?.split('&')[0];
+            if (videoId) val = `https://www.youtube.com/embed/${videoId}`;
+          } else if (val.includes('youtu.be/')) {
+            const videoId = val.split('youtu.be/')[1]?.split('?')[0];
+            if (videoId) val = `https://www.youtube.com/embed/${videoId}`;
+          } else if (val.includes('wistia.com')) {
+            const parts = val.split('/');
+            const wistiaId = parts[parts.length - 1].split('?')[0];
+            if (wistiaId) val = wistiaId;
+          }
+          episodes.push({ epNum: idx + 1, title: `Episode ${idx + 1}`, src: val });
         }
       });
 
-      const payload = {
-        id: id ? parseInt(id) : null,
-        title: document.getElementById('uTitle').value,
-        category: document.getElementById('uCat').value,
-        description: document.getElementById('uDesc').value,
-        thumbnail: document.getElementById('uThumb').value,
-        episodes: episodes
-      };
+      const title = document.getElementById('uTitle').value;
+      const category = document.getElementById('uCat').value;
+      const description = document.getElementById('uDesc').value;
+      const thumbnail = document.getElementById('uThumb').value || "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=600&q=80";
 
-      try {
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'x-admin-key': adminToken 
-          },
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-          alert(id ? 'Series Berhasil Diperbarui!' : 'Series & Episode Berhasil Ditambahkan!');
-          closeModal('uploadModal');
-          document.getElementById('uploadForm').reset();
-          fetchVideos();
-        } else {
-          alert('Gagal menyimpan series.');
+      if (id) {
+        const index = allVideos.findIndex(v => v.id === parseInt(id));
+        if (index !== -1) {
+          allVideos[index].title = title;
+          allVideos[index].category = category;
+          allVideos[index].description = description;
+          allVideos[index].thumbnail = thumbnail;
+          allVideos[index].episodes = episodes;
         }
-      } catch (err) {
-        alert('Kesalahan koneksi.');
+        alert('Series Berhasil Diperbarui!');
+      } else {
+        const newVideo = {
+          id: allVideos.length > 0 ? allVideos[allVideos.length - 1].id + 1 : 1,
+          title: title,
+          category: category,
+          description: description,
+          thumbnail: thumbnail,
+          likes: 0,
+          comments: [],
+          episodes: episodes
+        };
+        allVideos.push(newVideo);
+        alert('Series & Episode Berhasil Ditambahkan!');
       }
+
+      saveToStorage();
+      closeModal('uploadModal');
+      document.getElementById('uploadForm').reset();
+      filterVideos();
     };
 
     renderUI();
-    fetchVideos();
   </script>
 </body>
 </html>
