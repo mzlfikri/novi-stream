@@ -7,6 +7,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
+  <script src="https://fast.wistia.net/player.js" async></script>
+  <script src="https://fast.wistia.net/embed/uiegc6m9x2.js" async type="module"></script>
+  <style>
+    wistia-player[media-id='uiegc6m9x2']:not(:defined) { 
+      background: center / contain no-repeat url('https://fast.wistia.net/embed/medias/uiegc6m9x2/swatch'); 
+      display: block; filter: blur(5px); padding-top:56.25%; 
+    }
+  </style>
+
   <style>
     :root {
       --bg-dark: #060709;
@@ -117,7 +126,7 @@
     .modal-box-wide { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 950px; max-height: 90vh; overflow-y: auto; }
     .video-viewport { width: 100%; aspect-ratio: 16/9; background: #000; }
     
-    video, iframe { width: 100%; height: 100%; border: none; outline: none; }
+    video, iframe, wistia-player { width: 100%; height: 100%; border: none; outline: none; }
 
     .modal-body-padding { padding: 24px; }
     .form-input-dark { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); background: #090a0f; color: white; margin-bottom: 12px; outline: none; font-size: 0.88rem; }
@@ -237,10 +246,10 @@
 
         <hr style="border: 0; border-top: 1px solid var(--border); margin: 16px 0;">
         
-        <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 8px;">Daftar Link Video (YouTube / Wistia / MP4):</label>
+        <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 8px;">Daftar Link / Media ID Wistia / YouTube:</label>
         <div id="dynamicEpisodesContainer">
           <div class="ep-input-group">
-            <input type="text" class="form-input-dark ep-url" style="margin:0;" placeholder="Link Video Episode 1" required />
+            <input type="text" class="form-input-dark ep-url" style="margin:0;" placeholder="Cth: uiegc6m9x2 atau link Wistia" required />
           </div>
         </div>
 
@@ -323,7 +332,7 @@
       modalUploadTitle.innerText = 'Tambah Series & Episode Baru';
       document.getElementById('dynamicEpisodesContainer').innerHTML = `
         <div class="ep-input-group">
-          <input type="text" class="form-input-dark ep-url" style="margin:0;" placeholder="Link Video Episode 1" required />
+          <input type="text" class="form-input-dark ep-url" style="margin:0;" placeholder="Cth: uiegc6m9x2 atau link Wistia" required />
         </div>
       `;
       uploadModal.style.display = 'flex';
@@ -487,8 +496,18 @@
     }
 
     function loadEpisodePlayer(src) {
-      if (src.includes('youtube.com/embed') || src.includes('wistia.net/embed')) {
+      if (src.includes('youtube.com/embed')) {
         videoContainer.innerHTML = `<iframe src="${src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      } else if (src.length === 10 || src.includes('wistia')) {
+        // Mendukung langsung Media ID Wistia seperti uiegc6m9x2
+        let wistiaId = src;
+        if (src.includes('/')) {
+          const parts = src.split('/');
+          wistiaId = parts[parts.length - 1].split('?')[0];
+        }
+        videoContainer.innerHTML = `
+          <wistia-player media-id="${wistiaId}" aspect="1.7777777777777777" style="width:100%; height:100%;"></wistia-player>
+        `;
       } else {
         videoContainer.innerHTML = `<video src="${src}" controls autoplay preload="metadata"></video>`;
       }
