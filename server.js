@@ -1,146 +1,102 @@
 const express = require('express');
-const path = require('path');
 const fs = require('fs');
-
+const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const DB_FILE = path.join(__dirname, 'database.json');
+const ADMIN_FILE = path.join(__dirname, 'admin.json');
 
-function loadDatabase() {
-    if (!fs.existsSync(DB_FILE)) {
-        const defaultData = {
-            users: [
-                { username: 'owner', password: '123', role: 'owner' }
-            ],
-            videos: [
-                { 
-                    id: 1, 
-                    title: "Upin & Ipin Musim Terbaru", 
-                    description: "Koleksi episode seru petualangan Upin dan Ipin di Kampung Durian Runtuh.", 
-                    category: "Animasi", 
-                    thumbnail: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=600&q=80",
-                    likes: 25, 
-                    comments: [],
-                    episodes: [
-                        { epNum: 1, title: "Episode 1", src: "uiegc6m9x2" }
-                    ]
-                }
-            ]
-        };
-        fs.writeFileSync(DB_FILE, JSON.stringify(defaultData, null, 2));
-    }
-    const data = fs.readFileSync(DB_FILE, 'utf8');
-    return JSON.parse(data);
+// Inisialisasi database jika belum ada sama sekali
+if (!fs.existsSync(DB_FILE)) {
+  fs.writeFileSync(DB_FILE, JSON.stringify([], null, 2));
 }
 
-function saveDatabase(data) {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+if (!fs.existsSync(ADMIN_FILE)) {
+  const defaultAdmin = { username: "owner", password: "123", role: "owner" };
+  fs.writeFileSync(ADMIN_FILE, JSON.stringify([defaultAdmin], null, 2));
 }
 
-app.post('/api/login', (req, res) => {
-    const { username, password } = req.body;
-    const db = loadDatabase();
-    const foundUser = db.users.find(u => u.username === username && u.password === password);
-
-    if (foundUser) {
-        res.json({ success: true, role: foundUser.role, token: "token-sesi-aman-999" });
-    } else {
-        res.status(401).json({ success: false, message: "Username atau Password salah!" });
-    }
-});
-
-app.post('/api/create-admin', (req, res) => {
-    const adminKey = req.headers['x-admin-key'];
-    if (adminKey !== 'token-sesi-aman-999') return res.status(403).json({ success: false, message: "Akses ditolak!" });
-
-    const { newUsername, newPassword } = req.body;
-    const db = loadDatabase();
-    if (db.users.some(u => u.username === newUsername)) {
-        return res.status(400).json({ success: false, message: "Username sudah digunakan!" });
-    }
-
-    db.users.push({ username: newUsername, password: newPassword, role: 'admin' });
-    saveDatabase(db);
-    res.json({ success: true, message: `Akun Admin '${newUsername}' berhasil dibuat!` });
-});
-
+// API untuk Ambil Daftar Video (Dijamin aman membaca database.json)
 app.get('/api/videos', (req, res) => {
-    const db = loadDatabase();
-    res.json(db.videos);
+  try {
+    const data = fs.readFileSync(DB_FILE, 'utf8');
+    res.json(JSON.parse(data));
+  } catch (err) {
+    res.json([]);
+  }
 });
 
+// API untuk Upload / Tambah / Edit Series (Menyimpan data tanpa menghapus data lama yang tidak terkait)
 app.post('/api/upload', (req, res) => {
-    const adminKey = req.headers['x-admin-key'];
-    if (adminKey !== 'token-sesi-aman-999') return res.status(403).json({ success: false, message: "Akses ditolak!" });
+  const { id, title, category, description, thumbnail, episodes } = req.body;
+  
+  try {
+    const fileData = fs.readFileSync(DB_FILE, 'utf8');
+    let videos = JSON.parse(fileData);
 
-    let { id, title, category, description, thumbnail, episodes } = req.body;
-    if (!title || !episodes || !Array.isArray(episodes)) {
-        return res.status(400).json({ success: false, message: "Data tidak valid!" });
+    let thumbFinal = thumbnail;
+    if (!thumbFinal || thumbFinal.trim() === '') {
+      thumbFinal = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
     }
-
-    const formattedEpisodes = episodes.map((ep, index) => {
-        let val = ep && ep.src ? ep.src.trim() : '';
-        if (val.includes('youtube.com/watch?v=')) {
-            const videoId = val.split('v=')[1]?.split('&')[0];
-            if (videoId) val = `https://www.youtube.com/embed/${videoId}`;
-        } else if (val.includes('youtu.be/')) {
-            const videoId = val.split('youtu.be/')[1]?.split('?')[0];
-            if (videoId) val = `https://www.youtube.com/embed/${videoId}`;
-        } else if (val.includes('wistia.com')) {
-            const parts = val.split('/');
-            const wistiaId = parts[parts.length - 1].split('?')[0];
-            if (wistiaId) val = wistiaId;
-        }
-        return { epNum: index + 1, title: `Episode ${index + 1}`, src: val };
-    });
-
-    const db = loadDatabase();
 
     if (id) {
-        const index = db.videos.findIndex(v => v.id === parseInt(id));
-        if (index !== -1) {
-            db.videos[index].title = title;
-            db.videos[index].category = category || "Animasi";
-            db.videos[index].description = description || "";
-            db.videos[index].thumbnail = thumbnail || db.videos[index].thumbnail;
-            db.videos[index].episodes = formattedEpisodes;
-            saveDatabase(db);
-            return res.json({ success: true, video: db.videos[index] });
-        }
+      // Jika Edit Series yang sudah ada
+      videos = videos.map(v => v.id === id ? { ...v, title, category, description, thumbnail: thumbFinal, episodes } : v);
+    } else {
+      // Jika Tambah Series Baru
+      const newVideo = {
+        id: Date.now(),
+        title,
+        category: category || 'Animasi',
+        description,
+        thumbnail: thumbFinal,
+        episodes,
+        likes: 0,
+        comments: []
+      };
+      videos.unshift(newVideo); // Masukkan ke urutan paling atas
     }
 
-    const newVideo = {
-        id: db.videos.length > 0 ? db.videos[db.videos.length - 1].id + 1 : 1,
-        title: title,
-        category: category || "Animasi",
-        description: description || "",
-        thumbnail: thumbnail || "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=600&q=80",
-        likes: 0,
-        comments: [],
-        episodes: formattedEpisodes
-    };
-
-    db.videos.push(newVideo);
-    saveDatabase(db);
-    res.json({ success: true, video: newVideo });
+    fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2));
+    res.json({ success: true, message: 'Berhasil disimpan!' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal menyimpan data.' });
+  }
 });
 
+// API untuk Hapus Series
 app.delete('/api/videos/:id', (req, res) => {
-    const adminKey = req.headers['x-admin-key'];
-    if (adminKey !== 'token-sesi-aman-999') return res.status(403).json({ success: false, message: "Akses ditolak!" });
+  const id = parseInt(req.params.id);
+  try {
+    let videos = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    videos = videos.filter(v => v.id !== id);
+    fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2));
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
 
-    const id = parseInt(req.params.id);
-    const db = loadDatabase();
-    db.videos = db.videos.filter(v => v.id !== id);
-    saveDatabase(db);
-    res.json({ success: true, message: "Series berhasil dihapus" });
+// API Login
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const admins = JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8'));
+    const found = admins.find(a => a.username === username && a.password === password);
+    if (found) {
+      res.json({ success: true, role: found.role });
+    } else {
+      res.status(401).json({ success: false, message: 'Username atau password salah!' });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Kesalahan server.' });
+  }
 });
 
 app.listen(PORT, () => {
-    console.log(`Server NOVI aktif di port ${PORT}`);
+  console.log(`Server berjalan di port ${PORT}`);
 });
