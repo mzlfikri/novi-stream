@@ -29,7 +29,6 @@
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: var(--bg-base); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
     header {
       background: rgba(5, 6, 8, 0.85);
@@ -50,9 +49,8 @@
 
     .search-input-group {
       display: flex; align-items: center; background: var(--bg-surface); border: 1px solid var(--border);
-      border-radius: 30px; padding: 10px 20px; width: 320px; transition: border-color 0.2s;
+      border-radius: 30px; padding: 10px 20px; width: 320px;
     }
-    .search-input-group:focus-within { border-color: var(--accent); }
     .search-input-group input { background: none; border: none; color: #fff; width: 100%; outline: none; margin-left: 10px; font-size: 0.88rem; }
 
     .btn {
@@ -76,8 +74,8 @@
       display: flex; flex-direction: column; justify-content: flex-end; padding: 36px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
-    .hero-badge { background: var(--accent); color: white; font-size: 0.75rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; width: fit-content; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .hero-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.5px; }
+    .hero-badge { background: var(--accent); color: white; font-size: 0.75rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; width: fit-content; margin-bottom: 12px; text-transform: uppercase; }
+    .hero-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 6px; }
     .hero-subtitle { color: var(--text-muted); font-size: 0.92rem; max-width: 600px; line-height: 1.4; }
 
     .filter-chips { display: flex; gap: 12px; margin-bottom: 28px; overflow-x: auto; padding-bottom: 6px; }
@@ -121,17 +119,14 @@
     .card-actions { position: absolute; top: 12px; right: 12px; z-index: 10; display: none; gap: 6px; }
     .btn-delete-card { background: rgba(231, 76, 60, 0.9); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
 
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; animation: fadeIn 0.2s ease; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
     .modal-box-wide { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 960px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 60px rgba(0,0,0,0.8); }
     
     .video-viewport { width: 100%; background: #000; position: relative; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; }
     video, iframe, wistia-player { width: 100% !important; height: 100% !important; border: none; outline: none; position: absolute; inset: 0; }
 
     .modal-body-padding { padding: 32px; }
-    .form-input-dark { width: 100%; padding: 12px 18px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-base); color: white; margin-bottom: 14px; outline: none; font-size: 0.9rem; transition: border-color 0.2s; }
-    .form-input-dark:focus { border-color: var(--accent); }
+    .form-input-dark { width: 100%; padding: 12px 18px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-base); color: white; margin-bottom: 14px; outline: none; font-size: 0.9rem; }
 
     .episodes-container { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
     .ep-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); padding: 10px 22px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
@@ -167,7 +162,7 @@
     <div class="hero-featured">
       <span class="hero-badge" id="roleBadge">PENGUNJUNG</span>
       <h1 class="hero-title">Platform Streaming NOVI</h1>
-      <p class="hero-subtitle">Nikmati koleksi serial dan kartun eksklusif dengan pemutar video beresolusi tinggi tanpa gangguan iklan.</p>
+      <p class="hero-subtitle">Nikmati koleksi serial dan kartun eksklusif dengan pemutar video beresolusi tinggi.</p>
     </div>
 
     <div class="filter-chips">
@@ -178,7 +173,7 @@
       <div class="chip" onclick="filterCategory(event, 'Hiburan')">Hiburan</div>
     </div>
 
-    <div style="font-size: 1.3rem; font-weight: 800; margin-bottom: 20px; letter-spacing: -0.5px;">Daftar Series & Kartun</div>
+    <div style="font-size: 1.3rem; font-weight: 800; margin-bottom: 20px;">Daftar Series & Kartun</div>
     <div class="poster-grid" id="videoGrid"></div>
   </div>
 
@@ -186,7 +181,7 @@
     <div class="modal-box-wide">
       <div style="padding: 18px 32px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
         <h3 id="mTitle" style="font-size: 1.05rem; font-weight: 700;">NOVI Series Player</h3>
-        <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.3rem; color: var(--text-muted); transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-muted)'" onclick="closeModal('playerModal')"></i>
+        <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.3rem; color: var(--text-muted);" onclick="closeModal('playerModal')"></i>
       </div>
       <div class="video-viewport" id="videoContainer"></div>
       
@@ -284,35 +279,13 @@
     const roleBadge = document.getElementById('roleBadge');
     const modalUploadTitle = document.getElementById('modalUploadTitle');
 
-    // Default Database awal jika LocalStorage masih kosong
-    const defaultVideos = [
-      { 
-        id: 1, 
-        title: "Upin & Ipin Musim Terbaru", 
-        description: "Koleksi episode seru petualangan Upin dan Ipin di Kampung Durian Runtuh.", 
-        category: "Animasi", 
-        thumbnail: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=600&q=80",
-        likes: 25, 
-        comments: [],
-        episodes: [
-          { epNum: 1, title: "Episode 1", src: "uiegc6m9x2" }
-        ]
-      }
-    ];
-
-    let allVideos = JSON.parse(localStorage.getItem('novi_videos')) || defaultVideos;
-    let users = JSON.parse(localStorage.getItem('novi_users')) || [{ username: 'owner', password: '123', role: 'owner' }];
-    
+    let allVideos = [];
     let activeVid = null;
     let selectedCategory = 'All';
     
     let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     let userRole = localStorage.getItem('userRole') || 'guest';
-
-    function saveToStorage() {
-      localStorage.setItem('novi_videos', JSON.stringify(allVideos));
-      localStorage.setItem('novi_users', JSON.stringify(users));
-    }
+    const adminToken = "token-sesi-aman-999";
 
     function renderUI() {
       if (isLoggedIn) {
@@ -335,7 +308,7 @@
         roleBadge.innerText = 'STATUS: PENGUNJUNG';
         roleBadge.style.background = 'var(--accent)';
       }
-      filterVideos();
+      fetchVideos();
     }
 
     btnAdmin.onclick = () => {
@@ -380,42 +353,71 @@
       container.appendChild(div);
     }
 
-    document.getElementById('loginForm').onsubmit = (e) => {
+    document.getElementById('loginForm').onsubmit = async (e) => {
       e.preventDefault();
       const u = document.getElementById('userInput').value;
       const p = document.getElementById('passInput').value;
-      const foundUser = users.find(user => user.username === u && user.password === p);
 
-      if (foundUser) {
-        isLoggedIn = true;
-        userRole = foundUser.role;
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('userRole', foundUser.role);
-        closeModal('loginModal');
-        document.getElementById('loginForm').reset();
-        renderUI();
-        alert(`Berhasil login sebagai ${foundUser.role.toUpperCase()}!`);
-      } else {
-        alert('Username atau Password salah!');
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          isLoggedIn = true;
+          userRole = data.role;
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('userRole', data.role);
+          closeModal('loginModal');
+          document.getElementById('loginForm').reset();
+          renderUI();
+          alert('Login Berhasil!');
+        } else {
+          alert(data.message || 'Login gagal!');
+        }
+      } catch (err) {
+        alert('Kesalahan koneksi.');
       }
     };
 
-    document.getElementById('createAdminForm').onsubmit = (e) => {
+    document.getElementById('createAdminForm').onsubmit = async (e) => {
       e.preventDefault();
       const newU = document.getElementById('newUserInput').value;
       const newP = document.getElementById('newPassInput').value;
 
-      if (users.some(u => u.username === newU)) {
-        alert('Username sudah digunakan!');
-        return;
+      try {
+        const res = await fetch('/api/create-admin', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-admin-key': adminToken 
+          },
+          body: JSON.stringify({ newUsername: newU, newPassword: newP })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert(data.message);
+          closeModal('createAdminModal');
+          document.getElementById('createAdminForm').reset();
+        } else {
+          alert(data.message || 'Gagal membuat akun.');
+        }
+      } catch (err) {
+        alert('Kesalahan koneksi.');
       }
-
-      users.push({ username: newU, password: newP, role: 'admin' });
-      saveToStorage();
-      alert(`Akun Admin '${newU}' berhasil dibuat!`);
-      closeModal('createAdminModal');
-      document.getElementById('createAdminForm').reset();
     };
+
+    async function fetchVideos() {
+      try {
+        const res = await fetch('/api/videos');
+        allVideos = await res.json();
+        filterVideos();
+      } catch (err) {
+        console.error('Gagal memuat video:', err);
+      }
+    }
 
     function filterCategory(e, cat) {
       selectedCategory = cat;
@@ -521,24 +523,20 @@
       });
     }
 
-    document.getElementById('btnLike').onclick = () => {
+    document.getElementById('btnLike').onclick = async () => {
       if (!activeVid) return;
       activeVid.likes = (activeVid.likes || 0) + 1;
       likeNum.innerText = activeVid.likes;
-      saveToStorage();
-      filterVideos();
     };
 
-    document.getElementById('commentForm').onsubmit = (e) => {
+    document.getElementById('commentForm').onsubmit = async (e) => {
       e.preventDefault();
       if (!activeVid) return;
       const input = document.getElementById('cInput');
       if (!activeVid.comments) activeVid.comments = [];
       activeVid.comments.push({ text: input.value, date: new Date().toLocaleDateString('id-ID') });
       renderComments(activeVid.comments);
-      saveToStorage();
       input.value = '';
-      filterVideos();
     };
 
     function filterVideos() {
@@ -575,72 +573,62 @@
       uploadModal.style.display = 'flex';
     }
 
-    function delVid(e, id) {
+    async function delVid(e, id) {
       e.stopPropagation();
       if (!confirm("Hapus series ini?")) return;
-      allVideos = allVideos.filter(v => v.id !== id);
-      saveToStorage();
-      filterVideos();
+      try {
+        const res = await fetch(`/api/videos/${id}`, { 
+          method: 'DELETE',
+          headers: { 'x-admin-key': adminToken }
+        });
+        if (res.ok) fetchVideos();
+        else alert("Akses ditolak.");
+      } catch (err) {
+        alert("Gagal menghapus.");
+      }
     }
 
-    document.getElementById('uploadForm').onsubmit = (e) => {
+    document.getElementById('uploadForm').onsubmit = async (e) => {
       e.preventDefault();
       
       const id = document.getElementById('editSeriesId').value;
       const epInputs = document.querySelectorAll('.ep-url');
       let episodes = [];
       epInputs.forEach((inp, idx) => {
-        let val = inp.value.trim();
-        if (val !== '') {
-          if (val.includes('youtube.com/watch?v=')) {
-            const videoId = val.split('v=')[1]?.split('&')[0];
-            if (videoId) val = `https://www.youtube.com/embed/${videoId}`;
-          } else if (val.includes('youtu.be/')) {
-            const videoId = val.split('youtu.be/')[1]?.split('?')[0];
-            if (videoId) val = `https://www.youtube.com/embed/${videoId}`;
-          } else if (val.includes('wistia.com')) {
-            const parts = val.split('/');
-            const wistiaId = parts[parts.length - 1].split('?')[0];
-            if (wistiaId) val = wistiaId;
-          }
-          episodes.push({ epNum: idx + 1, title: `Episode ${idx + 1}`, src: val });
+        if (inp.value.trim() !== '') {
+          episodes.push({ epNum: idx + 1, src: inp.value.trim() });
         }
       });
 
-      const title = document.getElementById('uTitle').value;
-      const category = document.getElementById('uCat').value;
-      const description = document.getElementById('uDesc').value;
-      const thumbnail = document.getElementById('uThumb').value || "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=600&q=80";
+      const payload = {
+        id: id ? parseInt(id) : null,
+        title: document.getElementById('uTitle').value,
+        category: document.getElementById('uCat').value,
+        description: document.getElementById('uDesc').value,
+        thumbnail: document.getElementById('uThumb').value,
+        episodes: episodes
+      };
 
-      if (id) {
-        const index = allVideos.findIndex(v => v.id === parseInt(id));
-        if (index !== -1) {
-          allVideos[index].title = title;
-          allVideos[index].category = category;
-          allVideos[index].description = description;
-          allVideos[index].thumbnail = thumbnail;
-          allVideos[index].episodes = episodes;
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-admin-key': adminToken 
+          },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          alert(id ? 'Series Berhasil Diperbarui!' : 'Series & Episode Berhasil Ditambahkan!');
+          closeModal('uploadModal');
+          document.getElementById('uploadForm').reset();
+          fetchVideos();
+        } else {
+          alert('Gagal menyimpan series.');
         }
-        alert('Series Berhasil Diperbarui!');
-      } else {
-        const newVideo = {
-          id: allVideos.length > 0 ? allVideos[allVideos.length - 1].id + 1 : 1,
-          title: title,
-          category: category,
-          description: description,
-          thumbnail: thumbnail,
-          likes: 0,
-          comments: [],
-          episodes: episodes
-        };
-        allVideos.push(newVideo);
-        alert('Series & Episode Berhasil Ditambahkan!');
+      } catch (err) {
+        alert('Kesalahan koneksi.');
       }
-
-      saveToStorage();
-      closeModal('uploadModal');
-      document.getElementById('uploadForm').reset();
-      filterVideos();
     };
 
     renderUI();
