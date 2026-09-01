@@ -243,10 +243,10 @@
 
         <hr style="border: 0; border-top: 1px solid var(--border); margin: 18px 0;">
         
-        <label style="font-size: 0.88rem; font-weight: 700; display: block; margin-bottom: 10px;">Daftar Media ID Wistia / YouTube:</label>
+        <label style="font-size: 0.88rem; font-weight: 700; display: block; margin-bottom: 10px;">Link Video (YouTube / Wistia / AnonMP4):</label>
         <div id="dynamicEpisodesContainer">
           <div class="ep-input-group">
-            <input type="text" class="form-input-dark ep-url" style="margin:0;" placeholder="Cth: uiegc6m9x2" required />
+            <input type="text" class="form-input-dark ep-url" style="margin:0;" placeholder="Cth: https://anonmp4.art/v/t8mKHMpxwTlWDXz" required />
           </div>
         </div>
 
@@ -285,7 +285,6 @@
     
     let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     let userRole = localStorage.getItem('userRole') || 'guest';
-    const adminToken = "token-sesi-aman-999";
 
     function renderUI() {
       if (isLoggedIn) {
@@ -329,7 +328,7 @@
       modalUploadTitle.innerText = 'Tambah Series & Episode Baru';
       document.getElementById('dynamicEpisodesContainer').innerHTML = `
         <div class="ep-input-group">
-          <input type="text" class="form-input-dark ep-url" style="margin:0;" placeholder="Cth: uiegc6m9x2" required />
+          <input type="text" class="form-input-dark ep-url" style="margin:0;" placeholder="Cth: https://anonmp4.art/v/t8mKHMpxwTlWDXz" required />
         </div>
       `;
       uploadModal.style.display = 'flex';
@@ -349,7 +348,7 @@
       const count = container.children.length + 1;
       const div = document.createElement('div');
       div.className = 'ep-input-group';
-      div.innerHTML = `<input type="text" class="form-input-dark ep-url" style="margin:0;" value="${value}" placeholder="Link / Media ID Episode ${count}" required />`;
+      div.innerHTML = `<input type="text" class="form-input-dark ep-url" style="margin:0;" value="${value}" placeholder="Link Video Episode ${count}" required />`;
       container.appendChild(div);
     }
 
@@ -390,10 +389,7 @@
       try {
         const res = await fetch('/api/create-admin', {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'x-admin-key': adminToken 
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ newUsername: newU, newPassword: newP })
         });
         const data = await res.json();
@@ -493,8 +489,19 @@
     }
 
     function loadEpisodePlayer(src) {
-      if (src.includes('youtube.com/embed')) {
-        videoContainer.innerHTML = `<iframe src="${src}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      if (src.includes('youtube.com/embed') || src.includes('youtu.be')) {
+        let embedUrl = src;
+        if (src.includes('youtu.be/')) {
+          const id = src.split('youtu.be/')[1].split('?')[0];
+          embedUrl = `https://www.youtube.com/embed/${id}`;
+        }
+        videoContainer.innerHTML = `<iframe src="${embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      } else if (src.includes('anonmp4.art')) {
+        let embedSrc = src;
+        if (!src.includes('/embed/')) {
+          embedSrc = src.replace('/v/', '/embed/');
+        }
+        videoContainer.innerHTML = `<iframe src="${embedSrc}" frameborder="0" scrolling="no" allowfullscreen style="width:100%; height:100%;"></iframe>`;
       } else if (src.length === 10 || src.includes('wistia')) {
         let wistiaId = src;
         if (src.includes('/')) {
@@ -505,7 +512,7 @@
           <wistia-player media-id="${wistiaId}" aspect="1.7777777777777777"></wistia-player>
         `;
       } else {
-        videoContainer.innerHTML = `<video src="${src}" controls autoplay preload="metadata"></video>`;
+        videoContainer.innerHTML = `<video src="${src}" controls autoplay preload="metadata" style="width:100%; height:100%;"></video>`;
       }
     }
 
@@ -577,12 +584,9 @@
       e.stopPropagation();
       if (!confirm("Hapus series ini?")) return;
       try {
-        const res = await fetch(`/api/videos/${id}`, { 
-          method: 'DELETE',
-          headers: { 'x-admin-key': adminToken }
-        });
+        const res = await fetch(`/api/videos/${id}`, { method: 'DELETE' });
         if (res.ok) fetchVideos();
-        else alert("Akses ditolak.");
+        else alert("Gagal menghapus.");
       } catch (err) {
         alert("Gagal menghapus.");
       }
@@ -612,22 +616,21 @@
       try {
         const res = await fetch('/api/upload', {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'x-admin-key': adminToken 
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-        if (res.ok) {
+        
+        const data = await res.json();
+        if (res.ok && data.success) {
           alert(id ? 'Series Berhasil Diperbarui!' : 'Series & Episode Berhasil Ditambahkan!');
           closeModal('uploadModal');
           document.getElementById('uploadForm').reset();
           fetchVideos();
         } else {
-          alert('Gagal menyimpan series.');
+          alert('Gagal menyimpan series: ' + (data.message || 'Kesalahan server'));
         }
       } catch (err) {
-        alert('Kesalahan koneksi.');
+        alert('Kesalahan koneksi jaringan.');
       }
     };
 
