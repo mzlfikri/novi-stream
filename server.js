@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -10,31 +11,35 @@ app.use(express.static(path.join(__dirname, 'public')));
 const DB_FILE = path.join(__dirname, 'database.json');
 const ADMIN_FILE = path.join(__dirname, 'admin.json');
 
-// Buat database.json otomatis jika tidak ada
+// Inisialisasi file database jika belum ada
 if (!fs.existsSync(DB_FILE)) {
   fs.writeFileSync(DB_FILE, JSON.stringify([], null, 2));
 }
 
 if (!fs.existsSync(ADMIN_FILE)) {
-  const defaultAdmin = { username: "owner", password: "123", role: "owner" };
-  fs.writeFileSync(ADMIN_FILE, JSON.stringify([defaultAdmin], null, 2));
+  const defaultAdmin = [{ username: "owner", password: "123", role: "owner" }];
+  fs.writeFileSync(ADMIN_FILE, JSON.stringify(defaultAdmin, null, 2));
 }
 
-// API Ambil Video
+// API Ambil Daftar Video
 app.get('/api/videos', (req, res) => {
   try {
-    const data = fs.readFileSync(DB_FILE, 'utf8');
-    res.json(JSON.parse(data));
+    if (fs.existsSync(DB_FILE)) {
+      const data = fs.readFileSync(DB_FILE, 'utf8');
+      res.json(JSON.parse(data));
+    } else {
+      res.json([]);
+    }
   } catch (err) {
     res.json([]);
   }
 });
 
-// API Upload / Simpan Video
+// API Tambah / Edit Video (Upload)
 app.post('/api/upload', (req, res) => {
-  const { id, title, category, description, thumbnail, episodes } = req.body;
-  
   try {
+    const { id, title, category, description, thumbnail, episodes } = req.body;
+    
     let videos = [];
     if (fs.existsSync(DB_FILE)) {
       const fileData = fs.readFileSync(DB_FILE, 'utf8');
@@ -47,15 +52,17 @@ app.post('/api/upload', (req, res) => {
     }
 
     if (id) {
+      // Proses Edit
       videos = videos.map(v => v.id == id ? { ...v, title, category, description, thumbnail: thumbFinal, episodes } : v);
     } else {
+      // Proses Tambah Baru
       const newVideo = {
         id: Date.now(),
         title,
         category: category || 'Animasi',
         description,
         thumbnail: thumbFinal,
-        episodes,
+        episodes: episodes || [],
         likes: 0,
         comments: []
       };
@@ -65,40 +72,65 @@ app.post('/api/upload', (req, res) => {
     fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2));
     res.json({ success: true, message: 'Berhasil disimpan!' });
   } catch (err) {
-    console.error("Error saving video:", err);
+    console.error("Error di /api/upload:", err);
     res.status(500).json({ success: false, message: 'Gagal menyimpan data ke server.' });
   }
 });
 
 // API Hapus Video
 app.delete('/api/videos/:id', (req, res) => {
-  const id = parseInt(req.params.id);
   try {
-    let videos = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-    videos = videos.filter(v => v.id !== id);
-    fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2));
+    const id = parseInt(req.params.id);
+    if (fs.existsSync(DB_FILE)) {
+      let videos = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+      videos = videos.filter(v => v.id !== id);
+      fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2));
+    }
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ success: false });
+    res.status(500).json({ success: false, message: 'Gagal menghapus.' });
   }
 });
 
-// API Login
+// API Login Admin
 app.post('/api/login', (req, res) => {
-  const { username, password } = req.body;
   try {
-    const admins = JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8'));
-    const found = admins.find(a => a.username === username && a.password === password);
-    if (found) {
-      res.json({ success: true, role: found.role });
-    } else {
-      res.status(401).json({ success: false, message: 'Username atau password salah!' });
+    const { username, password } = req.body;
+    if (fs.existsSync(ADMIN_FILE)) {
+      const admins = JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8'));
+      const found = admins.find(a => a.username === username && a.password === password);
+      if (found) {
+        res.json({ success: true, role: found.role });
+        return;
+      }
     }
+    res.status(401).json({ success: false, message: 'Username atau password salah!' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Kesalahan server.' });
   }
 });
 
+// API Buat Admin Baru (Khusus Owner)
+app.post('/api/create-admin', (req, res) => {
+  try {
+    const { newUsername, newPassword } = req.body;
+    let admins = [];
+    if (fs.existsSync(ADMIN_FILE)) {
+      admins = JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8'));
+    }
+    
+    if (admins.some(a => a.username === newUsername)) {
+      return res.status(400).json({ success: false, message: 'Username admin sudah digunakan!' });
+    }
+
+    admins.push({ username: newUsername, password: newPassword, role: 'admin' });
+    fs.writeFileSync(ADMIN_FILE, JSON.stringify(admins, null, 2));
+    res.json({ success: true, message: 'Akun admin baru berhasil dibuat!' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal membuat admin.' });
+  }
+});
+
 app.listen(PORT, () => {
-  console.log(`Server berjalan di port ${PORT}`);
+  console.log(`Server NOVI berjalan di http://localhost:${PORT}`);
 });
