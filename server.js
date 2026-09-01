@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -8,31 +9,48 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database Akun (Default Owner utama)
-let users = [
-    { username: 'owner', password: '123', role: 'owner' }
-];
+// Path file database permanen
+const DB_FILE = path.join(__dirname, 'database.json');
 
-// Database Video & Series
-let videos = [
-    { 
-        id: 1, 
-        title: "Upin & Ipin Musim Terbaru", 
-        description: "Koleksi episode seru petualangan Upin dan Ipin di Kampung Durian Runtuh.", 
-        category: "Animasi", 
-        thumbnail: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=600&q=80",
-        likes: 25, 
-        comments: [],
-        episodes: [
-            { epNum: 1, title: "Episode 1", src: "https://www.youtube.com/embed/5qap5aO4i9A" }
-        ]
+// Fungsi untuk membaca data dari database.json
+function loadDatabase() {
+    if (!fs.existsSync(DB_FILE)) {
+        // Data default jika file belum ada
+        const defaultData = {
+            users: [
+                { username: 'owner', password: '123', role: 'owner' }
+            ],
+            videos: [
+                { 
+                    id: 1, 
+                    title: "Upin & Ipin Musim Terbaru", 
+                    description: "Koleksi episode seru petualangan Upin dan Ipin di Kampung Durian Runtuh.", 
+                    category: "Animasi", 
+                    thumbnail: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=600&q=80",
+                    likes: 25, 
+                    comments: [],
+                    episodes: [
+                        { epNum: 1, title: "Episode 1", src: "uiegc6m9x2" }
+                    ]
+                }
+            ]
+        };
+        fs.writeFileSync(DB_FILE, JSON.stringify(defaultData, null, 2));
     }
-];
+    const data = fs.readFileSync(DB_FILE, 'utf8');
+    return JSON.parse(data);
+}
+
+// Fungsi untuk menyimpan data ke database.json
+function saveDatabase(data) {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+}
 
 // Route: Login
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
-    const foundUser = users.find(u => u.username === username && u.password === password);
+    const db = loadDatabase();
+    const foundUser = db.users.find(u => u.username === username && u.password === password);
 
     if (foundUser) {
         res.json({ 
@@ -58,17 +76,20 @@ app.post('/api/create-admin', (req, res) => {
         return res.status(400).json({ success: false, message: "Username dan password wajib diisi!" });
     }
 
-    if (users.some(u => u.username === newUsername)) {
+    const db = loadDatabase();
+    if (db.users.some(u => u.username === newUsername)) {
         return res.status(400).json({ success: false, message: "Username sudah digunakan!" });
     }
 
-    users.push({ username: newUsername, password: newPassword, role: 'admin' });
+    db.users.push({ username: newUsername, password: newPassword, role: 'admin' });
+    saveDatabase(db);
     res.json({ success: true, message: `Akun Admin '${newUsername}' berhasil dibuat!` });
 });
 
 // Route: Ambil Semua Video
 app.get('/api/videos', (req, res) => {
-    res.json(videos);
+    const db = loadDatabase();
+    res.json(db.videos);
 });
 
 // Route: Tambah atau Update (Edit) Series
@@ -95,12 +116,12 @@ app.post('/api/upload', (req, res) => {
             const videoId = videoSrc.split('youtu.be/')[1]?.split('?')[0];
             if (videoId) videoSrc = `https://www.youtube.com/embed/${videoId}`;
         } 
-        // Format otomatis Wistia (Mendeteksi link share Wistia dan mengubahnya ke format embed iframe)
+        // Format otomatis Wistia
         else if (videoSrc.includes('wistia.com')) {
             const parts = videoSrc.split('/');
             const wistiaId = parts[parts.length - 1].split('?')[0];
             if (wistiaId) {
-                videoSrc = `https://fast.wistia.net/embed/iframe/${wistiaId}`;
+                videoSrc = wistiaId;
             }
         }
 
@@ -111,22 +132,25 @@ app.post('/api/upload', (req, res) => {
         };
     });
 
+    const db = loadDatabase();
+
     // Jika ada ID, lakukan EDIT
     if (id) {
-        const index = videos.findIndex(v => v.id === parseInt(id));
+        const index = db.videos.findIndex(v => v.id === parseInt(id));
         if (index !== -1) {
-            videos[index].title = title;
-            videos[index].category = category || "Animasi";
-            videos[index].description = description || "";
-            videos[index].thumbnail = thumbnail || videos[index].thumbnail;
-            videos[index].episodes = formattedEpisodes;
-            return res.json({ success: true, video: videos[index] });
+            db.videos[index].title = title;
+            db.videos[index].category = category || "Animasi";
+            db.videos[index].description = description || "";
+            db.videos[index].thumbnail = thumbnail || db.videos[index].thumbnail;
+            db.videos[index].episodes = formattedEpisodes;
+            saveDatabase(db);
+            return res.json({ success: true, video: db.videos[index] });
         }
     }
 
     // Jika tidak ada ID, TAMBAH BARU
     const newVideo = {
-        id: videos.length > 0 ? videos[videos.length - 1].id + 1 : 1,
+        id: db.videos.length > 0 ? db.videos[db.videos.length - 1].id + 1 : 1,
         title: title,
         category: category || "Animasi",
         description: description || "",
@@ -136,7 +160,8 @@ app.post('/api/upload', (req, res) => {
         episodes: formattedEpisodes
     };
 
-    videos.push(newVideo);
+    db.videos.push(newVideo);
+    saveDatabase(db);
     res.json({ success: true, video: newVideo });
 });
 
@@ -148,7 +173,9 @@ app.delete('/api/videos/:id', (req, res) => {
     }
 
     const id = parseInt(req.params.id);
-    videos = videos.filter(v => v.id !== id);
+    const db = loadDatabase();
+    db.videos = db.videos.filter(v => v.id !== id);
+    saveDatabase(db);
     res.json({ success: true, message: "Series berhasil dihapus" });
 });
 
