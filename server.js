@@ -95,9 +95,10 @@ app.post('/api/upload', (req, res) => {
             const videoId = videoSrc.split('youtu.be/')[1]?.split('?')[0];
             if (videoId) videoSrc = `https://www.youtube.com/embed/${videoId}`;
         } 
-        // Format otomatis Wistia (ubah link /s/ menjadi /embed/ iframes agar bisa diputar langsung)
-        else if (videoSrc.includes('wistia.com/s/')) {
-            const wistiaId = videoSrc.split('wistia.com/s/')[1]?.split('?')[0];
+        // Format otomatis Wistia (diperbarui agar mendeteksi semua link wistia.com dengan akurat)
+        else if (videoSrc.includes('wistia.com/')) {
+            const parts = videoSrc.split('/');
+            const wistiaId = parts[parts.length - 1].split('?')[0];
             if (wistiaId) videoSrc = `https://fast.wistia.net/embed/iframe/${wistiaId}`;
         }
 
