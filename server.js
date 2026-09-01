@@ -9,13 +9,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Path file database permanen
 const DB_FILE = path.join(__dirname, 'database.json');
 
-// Fungsi untuk membaca data dari database.json
 function loadDatabase() {
     if (!fs.existsSync(DB_FILE)) {
-        // Data default jika file belum ada
         const defaultData = {
             users: [
                 { username: 'owner', password: '123', role: 'owner' }
@@ -41,41 +38,27 @@ function loadDatabase() {
     return JSON.parse(data);
 }
 
-// Fungsi untuk menyimpan data ke database.json
 function saveDatabase(data) {
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 }
 
-// Route: Login
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     const db = loadDatabase();
     const foundUser = db.users.find(u => u.username === username && u.password === password);
 
     if (foundUser) {
-        res.json({ 
-            success: true, 
-            role: foundUser.role, 
-            token: "token-sesi-aman-999", 
-            message: "Login Berhasil!" 
-        });
+        res.json({ success: true, role: foundUser.role, token: "token-sesi-aman-999" });
     } else {
         res.status(401).json({ success: false, message: "Username atau Password salah!" });
     }
 });
 
-// Route: Buat Admin Baru (Khusus Owner)
 app.post('/api/create-admin', (req, res) => {
     const adminKey = req.headers['x-admin-key'];
-    if (adminKey !== 'token-sesi-aman-999') {
-        return res.status(403).json({ success: false, message: "Akses ditolak!" });
-    }
+    if (adminKey !== 'token-sesi-aman-999') return res.status(403).json({ success: false, message: "Akses ditolak!" });
 
     const { newUsername, newPassword } = req.body;
-    if (!newUsername || !newPassword) {
-        return res.status(400).json({ success: false, message: "Username dan password wajib diisi!" });
-    }
-
     const db = loadDatabase();
     if (db.users.some(u => u.username === newUsername)) {
         return res.status(400).json({ success: false, message: "Username sudah digunakan!" });
@@ -86,55 +69,38 @@ app.post('/api/create-admin', (req, res) => {
     res.json({ success: true, message: `Akun Admin '${newUsername}' berhasil dibuat!` });
 });
 
-// Route: Ambil Semua Video
 app.get('/api/videos', (req, res) => {
     const db = loadDatabase();
     res.json(db.videos);
 });
 
-// Route: Tambah atau Update (Edit) Series
 app.post('/api/upload', (req, res) => {
     const adminKey = req.headers['x-admin-key'];
-    if (adminKey !== 'token-sesi-aman-999') {
-        return res.status(403).json({ success: false, message: "Akses ditolak!" });
-    }
+    if (adminKey !== 'token-sesi-aman-999') return res.status(403).json({ success: false, message: "Akses ditolak!" });
 
     let { id, title, category, description, thumbnail, episodes } = req.body;
-    
-    if (!title || !episodes || !Array.isArray(episodes) || episodes.length === 0) {
-        return res.status(400).json({ success: false, message: "Judul dan minimal 1 episode wajib diisi!" });
+    if (!title || !episodes || !Array.isArray(episodes)) {
+        return res.status(400).json({ success: false, message: "Data tidak valid!" });
     }
 
     const formattedEpisodes = episodes.map((ep, index) => {
-        let videoSrc = ep && ep.src ? ep.src.trim() : '';
-        
-        // Format otomatis YouTube
-        if (videoSrc.includes('youtube.com/watch?v=')) {
-            const videoId = videoSrc.split('v=')[1]?.split('&')[0];
-            if (videoId) videoSrc = `https://www.youtube.com/embed/${videoId}`;
-        } else if (videoSrc.includes('youtu.be/')) {
-            const videoId = videoSrc.split('youtu.be/')[1]?.split('?')[0];
-            if (videoId) videoSrc = `https://www.youtube.com/embed/${videoId}`;
-        } 
-        // Format otomatis Wistia
-        else if (videoSrc.includes('wistia.com')) {
-            const parts = videoSrc.split('/');
+        let val = ep && ep.src ? ep.src.trim() : '';
+        if (val.includes('youtube.com/watch?v=')) {
+            const videoId = val.split('v=')[1]?.split('&')[0];
+            if (videoId) val = `https://www.youtube.com/embed/${videoId}`;
+        } else if (val.includes('youtu.be/')) {
+            const videoId = val.split('youtu.be/')[1]?.split('?')[0];
+            if (videoId) val = `https://www.youtube.com/embed/${videoId}`;
+        } else if (val.includes('wistia.com')) {
+            const parts = val.split('/');
             const wistiaId = parts[parts.length - 1].split('?')[0];
-            if (wistiaId) {
-                videoSrc = wistiaId;
-            }
+            if (wistiaId) val = wistiaId;
         }
-
-        return {
-            epNum: index + 1,
-            title: `Episode ${index + 1}`,
-            src: videoSrc
-        };
+        return { epNum: index + 1, title: `Episode ${index + 1}`, src: val };
     });
 
     const db = loadDatabase();
 
-    // Jika ada ID, lakukan EDIT
     if (id) {
         const index = db.videos.findIndex(v => v.id === parseInt(id));
         if (index !== -1) {
@@ -148,7 +114,6 @@ app.post('/api/upload', (req, res) => {
         }
     }
 
-    // Jika tidak ada ID, TAMBAH BARU
     const newVideo = {
         id: db.videos.length > 0 ? db.videos[db.videos.length - 1].id + 1 : 1,
         title: title,
@@ -165,12 +130,9 @@ app.post('/api/upload', (req, res) => {
     res.json({ success: true, video: newVideo });
 });
 
-// Route: Hapus Video
 app.delete('/api/videos/:id', (req, res) => {
     const adminKey = req.headers['x-admin-key'];
-    if (adminKey !== 'token-sesi-aman-999') {
-        return res.status(403).json({ success: false, message: "Akses ditolak!" });
-    }
+    if (adminKey !== 'token-sesi-aman-999') return res.status(403).json({ success: false, message: "Akses ditolak!" });
 
     const id = parseInt(req.params.id);
     const db = loadDatabase();
