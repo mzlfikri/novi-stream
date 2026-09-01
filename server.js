@@ -87,12 +87,18 @@ app.post('/api/upload', (req, res) => {
     const formattedEpisodes = episodes.map((ep, index) => {
         let videoSrc = ep && ep.src ? ep.src.trim() : '';
         
+        // Format otomatis YouTube
         if (videoSrc.includes('youtube.com/watch?v=')) {
             const videoId = videoSrc.split('v=')[1]?.split('&')[0];
             if (videoId) videoSrc = `https://www.youtube.com/embed/${videoId}`;
         } else if (videoSrc.includes('youtu.be/')) {
             const videoId = videoSrc.split('youtu.be/')[1]?.split('?')[0];
             if (videoId) videoSrc = `https://www.youtube.com/embed/${videoId}`;
+        } 
+        // Format otomatis Wistia (ubah link /s/ menjadi /embed/ iframes agar bisa diputar langsung)
+        else if (videoSrc.includes('wistia.com/s/')) {
+            const wistiaId = videoSrc.split('wistia.com/s/')[1]?.split('?')[0];
+            if (wistiaId) videoSrc = `https://fast.wistia.net/embed/iframe/${wistiaId}`;
         }
 
         return {
@@ -102,7 +108,7 @@ app.post('/api/upload', (req, res) => {
         };
     });
 
-    // Jika ada ID, berarti proses EDIT
+    // Jika ada ID, lakukan EDIT
     if (id) {
         const index = videos.findIndex(v => v.id === parseInt(id));
         if (index !== -1) {
@@ -115,7 +121,7 @@ app.post('/api/upload', (req, res) => {
         }
     }
 
-    // Jika tidak ada ID, berarti TAMBAH BARU
+    // Jika tidak ada ID, TAMBAH BARU
     const newVideo = {
         id: videos.length > 0 ? videos[videos.length - 1].id + 1 : 1,
         title: title,
