@@ -387,7 +387,7 @@
       document.getElementById(id).style.display = 'none';
       if (id === 'playerModal') {
         videoContainer.innerHTML = '';
-        fetchVideos(); // Refresh data agar jumlah view/like/komentar terbaru tampil di kartu
+        fetchVideos();
       }
     }
 
@@ -542,13 +542,11 @@
       }
     }
 
-    // Fungsi saat kartu diklik (Mencatat View ke Server)
     async function openPlayer(id) {
       const v = allVideos.find(item => item.id === id);
       if (!v) return;
       activeVid = v;
 
-      // Kirim permintaan tambah view ke server
       try {
         await fetch(`/api/videos/${id}/view`, { method: 'POST' });
         v.views = (v.views || 0) + 1;
@@ -629,7 +627,6 @@
       });
     }
 
-    // Tombol Like Sinkron ke Server
     document.getElementById('btnLike').onclick = async () => {
       if (!activeVid) return;
       try {
@@ -644,7 +641,6 @@
       }
     };
 
-    // Form Komentar Sinkron ke Server
     document.getElementById('commentForm').onsubmit = async (e) => {
       e.preventDefault();
       if (!activeVid) return;
@@ -701,6 +697,7 @@
       }
     }
 
+    // EVENT UPLOAD DENGAN PENGIRIMAN MULTIPLE FILES YANG SESUAI KE BACKEND
     document.getElementById('uploadForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
@@ -733,6 +730,7 @@
         }
       }
 
+      // Pastikan nama field-nya 'videoFiles' sesuai dengan upload.array('videoFiles') di server.js
       if (type === 'film' && fileInput.files.length > 0) {
         for (let i = 0; i < fileInput.files.length; i++) {
           formData.append('videoFiles', fileInput.files[i]);
@@ -747,7 +745,7 @@
         
         const data = await res.json();
         if (res.ok && data.success) {
-          alert('Berhasil Disimpan!');
+          alert('Konten Berhasil Disimpan!');
           closeModal('uploadModal');
           document.getElementById('uploadForm').reset();
           fetchVideos();

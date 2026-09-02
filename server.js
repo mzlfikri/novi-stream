@@ -11,11 +11,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
+// Pastikan folder public/uploads ada
 const uploadDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+// Konfigurasi Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -39,7 +41,6 @@ if (!fs.existsSync(ADMIN_FILE)) {
   fs.writeFileSync(ADMIN_FILE, JSON.stringify(defaultAdmin, null, 2), 'utf8');
 }
 
-// API: Ambil semua data video
 app.get('/api/videos', (req, res) => {
   try {
     if (fs.existsSync(DB_FILE)) {
@@ -53,15 +54,12 @@ app.get('/api/videos', (req, res) => {
   }
 });
 
-// API: Tambah View (Penonton)
 app.post('/api/videos/:id/view', (req, res) => {
   try {
     const id = parseInt(req.params.id);
     let videos = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
     videos = videos.map(v => {
-      if (v.id === id) {
-        v.views = (v.views || 0) + 1;
-      }
+      if (v.id === id) v.views = (v.views || 0) + 1;
       return v;
     });
     fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2), 'utf8');
@@ -71,7 +69,6 @@ app.post('/api/videos/:id/view', (req, res) => {
   }
 });
 
-// API: Tambah Like
 app.post('/api/videos/:id/like', (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -91,19 +88,16 @@ app.post('/api/videos/:id/like', (req, res) => {
   }
 });
 
-// API: Tambah Komentar
 app.post('/api/videos/:id/comment', (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { text } = req.body;
     let videos = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
     let updatedComments = [];
-    
     videos = videos.map(v => {
       if (v.id === id) {
         if (!v.comments) v.comments = [];
-        const newComment = { text, date: new Date().toLocaleDateString('id-ID') };
-        v.comments.push(newComment);
+        v.comments.push({ text, date: new Date().toLocaleDateString('id-ID') });
         updatedComments = v.comments;
       }
       return v;
@@ -115,7 +109,7 @@ app.post('/api/videos/:id/comment', (req, res) => {
   }
 });
 
-// API: Upload Video atau Siaran TV
+// ROUTE UPLOAD UTAMA (Menangani upload.array('videoFiles'))
 app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
   try {
     const { id, title, type, category, description, thumbnail, tvUrl, existingEpisodes } = req.body;
@@ -168,14 +162,13 @@ app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
     }
 
     fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2), 'utf8');
-    res.json({ success: true, message: 'Data berhasil disimpan!' });
+    res.json({ success: true, message: 'Berhasil disimpan!' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: 'Gagal menyimpan ke server.' });
+    console.error("ERROR UPLOAD:", err);
+    res.status(500).json({ success: false, message: 'Gagal memproses upload di server.' });
   }
 });
 
-// API: Hapus data
 app.delete('/api/videos/:id', (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -186,11 +179,10 @@ app.delete('/api/videos/:id', (req, res) => {
     }
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Gagal menghapus.' });
+    res.status(500).json({ success: false });
   }
 });
 
-// API: Login Admin
 app.post('/api/login', (req, res) => {
   try {
     const { username, password } = req.body;
@@ -202,13 +194,12 @@ app.post('/api/login', (req, res) => {
         return;
       }
     }
-    res.status(401).json({ success: false, message: 'Username atau password salah!' });
+    res.status(401).json({ success: false, message: 'Username/password salah!' });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Kesalahan server.' });
+    res.status(500).json({ success: false });
   }
 });
 
-// API: Buat Admin Baru
 app.post('/api/create-admin', (req, res) => {
   try {
     const { newUsername, newPassword } = req.body;
@@ -216,16 +207,14 @@ app.post('/api/create-admin', (req, res) => {
     if (fs.existsSync(ADMIN_FILE)) {
       admins = JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8'));
     }
-    
     if (admins.some(a => a.username === newUsername)) {
-      return res.status(400).json({ success: false, message: 'Username admin sudah digunakan!' });
+      return res.status(400).json({ success: false, message: 'Username sudah ada!' });
     }
-
     admins.push({ username: newUsername, password: newPassword, role: 'admin' });
     fs.writeFileSync(ADMIN_FILE, JSON.stringify(admins, null, 2), 'utf8');
-    res.json({ success: true, message: 'Akun admin baru berhasil dibuat!' });
+    res.json({ success: true, message: 'Admin baru dibuat!' });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Gagal membuat admin.' });
+    res.status(500).json({ success: false });
   }
 });
 
