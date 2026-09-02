@@ -173,6 +173,7 @@
     <div class="poster-grid" id="videoGrid"></div>
   </div>
 
+  <!-- Modal Player -->
   <div class="modal-backdrop" id="playerModal">
     <div class="modal-box-wide">
       <div style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
@@ -200,6 +201,7 @@
     </div>
   </div>
 
+  <!-- Modal Login -->
   <div class="modal-backdrop" id="loginModal">
     <div class="modal-box-wide" style="max-width: 380px; padding: 24px;">
       <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800;">Login Owner / Admin</h3>
@@ -211,6 +213,7 @@
     </div>
   </div>
 
+  <!-- Modal Buat Admin -->
   <div class="modal-backdrop" id="createAdminModal">
     <div class="modal-box-wide" style="max-width: 380px; padding: 24px;">
       <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800; color: #8e44ad;">Buat Akun Admin Baru</h3>
@@ -222,6 +225,7 @@
     </div>
   </div>
 
+  <!-- Modal Upload / Edit Series & Multiple Episodes -->
   <div class="modal-backdrop" id="uploadModal">
     <div class="modal-box-wide" style="max-width: 500px; padding: 24px;">
       <h3 id="modalUploadTitle" style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800;">Tambah Series & Video</h3>
@@ -239,10 +243,11 @@
 
         <hr style="border: 0; border-top: 1px solid var(--border); margin: 14px 0;">
         
-        <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 8px;">Upload File Video (.mp4) dari Perangkat:</label>
+        <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Upload File Video Episode (.mp4):</label>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">Anda bisa memilih banyak file video sekaligus (untuk Episode 1, 2, dst).</p>
         <div id="dynamicEpisodesContainer">
           <div class="ep-input-group">
-            <input type="file" id="videoFile" class="form-input-dark" accept="video/mp4" style="margin:0; padding: 6px;" required />
+            <input type="file" id="videoFile" class="form-input-dark" accept="video/mp4" multiple style="margin:0; padding: 6px;" required />
           </div>
         </div>
 
@@ -570,12 +575,12 @@
       }
     }
 
-    // EVENT LISTENER FORM UPLOAD YANG DIJAMIN MERESPON DAN MENAMPILKAN STATUS
+    // EVENT LISTENER FORM UPLOAD DENGAN DUKUNGAN MULTIPLE FILES
     document.getElementById('uploadForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
       const submitBtn = document.getElementById('btnSubmitUpload');
-      submitBtn.innerText = 'Sedang Mengunggah, Mohon Tunggu...';
+      submitBtn.innerText = 'Sedang Mengunggah Video, Mohon Tunggu...';
       submitBtn.disabled = true;
 
       const title = document.getElementById('uTitle').value;
@@ -590,6 +595,7 @@
       formData.append('category', category);
       formData.append('description', description);
       formData.append('thumbnail', thumbnail);
+      
       if (id) {
         formData.append('id', id);
         const v = allVideos.find(item => item.id == id);
@@ -598,8 +604,11 @@
         }
       }
 
+      // Masukkan semua file video yang dipilih sekaligus ke formData
       if (fileInput.files.length > 0) {
-        formData.append('videoFiles', fileInput.files[0]);
+        for (let i = 0; i < fileInput.files.length; i++) {
+          formData.append('videoFiles', fileInput.files[i]);
+        }
       }
 
       try {
@@ -610,7 +619,7 @@
         
         const data = await res.json();
         if (res.ok && data.success) {
-          alert('Berhasil Disimpan!');
+          alert('Series & Episode Berhasil Disimpan!');
           closeModal('uploadModal');
           document.getElementById('uploadForm').reset();
           fetchVideos();
@@ -629,6 +638,7 @@
     renderUI();
   </script>
 
+  <!-- Footer Credit -->
   <footer style="text-align: center; padding: 24px; border-top: 1px solid var(--border); margin-top: 48px; color: var(--text-muted); font-size: 0.82rem;">
     <p>Platform Streaming <span style="color: var(--accent); font-weight: 700;">NOVI</span> &copy; 2026. Dibuat dan dikembangkan oleh <strong style="color: #fff;">Fikri Al</strong>.</p>
   </footer>

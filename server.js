@@ -55,7 +55,7 @@ app.get('/api/videos', (req, res) => {
   }
 });
 
-// API: Upload video & simpan data series
+// API: Upload banyak file video sekaligus (Multiple Episodes)
 app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
   try {
     const { id, title, category, description, thumbnail, existingEpisodes } = req.body;
@@ -71,11 +71,12 @@ app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
 
     let episodes = existingEpisodes ? JSON.parse(existingEpisodes) : [];
 
+    // Jika ada file-file video baru yang di-upload
     if (req.files && req.files.length > 0) {
       req.files.forEach((file) => {
         const fileUrl = `/uploads/${file.filename}`;
         episodes.push({
-          epNum: episodes.length + 1,
+          epNum: episodes.length + 1, // Otomatis beri nomor urut episode (Ep 1, Ep 2, dst)
           src: fileUrl
         });
       });
@@ -98,7 +99,7 @@ app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
     }
 
     fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2));
-    res.json({ success: true, message: 'Series & Video berhasil disimpan ke server!' });
+    res.json({ success: true, message: 'Series & Episode berhasil disimpan ke server!' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: 'Gagal mengunggah video ke server.' });
