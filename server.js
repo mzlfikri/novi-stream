@@ -64,25 +64,25 @@ app.get('/api/videos', (req, res) => {
   res.json(videos);
 });
 
-// Tambah / Edit Konten Satuan
+// Tambah / Edit Konten Multi-Episode
 app.post('/api/upload', (req, res) => {
   try {
     let videos = loadMetadata();
-    const { id, type, title, category, description, thumbnail, videoUrl } = req.body;
+    const { id, type, title, category, description, thumbnail, episodes } = req.body;
     
-    if (!title || !videoUrl) {
-      return res.status(400).json({ success: false, message: 'Judul dan Link Video wajib diisi!' });
+    if (!title || !episodes || !Array.isArray(episodes) || episodes.length === 0) {
+      return res.status(400).json({ success: false, message: 'Judul dan minimal 1 link episode wajib diisi!' });
     }
 
     if (id) {
-      const index = videos.findIndex(v => v.id == id);
+      const index = videos.findIndex(v => String(v.id) === String(id));
       if (index !== -1) {
         videos[index].title = title;
         videos[index].type = type || 'film';
         videos[index].category = category || 'Umum';
         videos[index].description = description || '';
         videos[index].thumbnail = thumbnail || videos[index].thumbnail;
-        videos[index].episodes = [{ src: videoUrl }];
+        videos[index].episodes = episodes;
         saveMetadata(videos);
         return res.json({ success: true, message: 'Konten berhasil diperbarui!' });
       }
@@ -95,7 +95,7 @@ app.post('/api/upload', (req, res) => {
       category: category || 'Umum',
       description: description || '',
       thumbnail: thumbnail || 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=600&q=80',
-      episodes: [{ src: videoUrl }],
+      episodes: episodes, // Menyimpan array list episode (Eps 1, Eps 2, dst)
       views: 0,
       likes: 0,
       comments: []
@@ -128,7 +128,7 @@ app.post('/api/import-m3u', (req, res) => {
         category: ch.category || 'Live TV',
         description: 'Imported via M3U File Playlist',
         thumbnail: ch.thumbnail || 'https://images.unsplash.com/photo-1593784991095-a205069470b6?auto=format&fit=crop&w=400&q=80',
-        episodes: [{ src: ch.url }],
+        episodes: [{ title: 'Live Stream', src: ch.url }],
         views: 0,
         likes: 0,
         comments: []
@@ -154,7 +154,7 @@ app.delete('/api/videos/:id', (req, res) => {
   res.json({ success: true, message: 'Konten dihapus.' });
 });
 
-// Hapus Banyak Sekaligus (Bulk Delete) yang Diperbaiki (Aman untuk String/Number ID)
+// Hapus Banyak Sekaligus (Bulk Delete)
 app.post('/api/videos/bulk-delete', (req, res) => {
   try {
     let videos = loadMetadata();
@@ -163,7 +163,6 @@ app.post('/api/videos/bulk-delete', (req, res) => {
       return res.status(400).json({ success: false, message: 'Tidak ada data yang dipilih untuk dihapus.' });
     }
 
-    // Ubah semua ID yang dikirim ke string agar pencocokan filter tidak gagal
     const stringIds = ids.map(id => String(id));
     videos = videos.filter(v => !stringIds.includes(String(v.id)));
     
