@@ -221,7 +221,7 @@
         
         <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Pilih Jenis Konten:</label>
         <select id="uType" class="form-input-dark" onchange="toggleUploadType()">
-          <option value="film">Film / Series (YouTube / Embed / MP4 URL)</option>
+          <option value="film">Film / Series (Bunny.net / YouTube / Embed)</option>
           <option value="tv">Siaran TV Live Streaming (.m3u8)</option>
         </select>
 
@@ -241,8 +241,8 @@
 
         <hr style="border: 0; border-top: 1px solid var(--border); margin: 14px 0;">
         
-        <label id="labelVideoUrl" style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Link Video / M3U8 / Embed:</label>
-        <input type="text" id="uVideoUrl" class="form-input-dark" placeholder="Contoh: https://... atau link YouTube/m3u8" required style="margin:0;" />
+        <label id="labelVideoUrl" style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Link Video / Bunny Embed / YouTube:</label>
+        <input type="text" id="uVideoUrl" class="form-input-dark" placeholder="Tempel link embed atau URL video di sini" required style="margin:0;" />
 
         <button type="submit" class="btn" id="btnSubmitUpload" style="width: 100%; justify-content: center; margin-top: 16px;">Simpan Konten</button>
       </form>
@@ -330,7 +330,7 @@
         label.innerText = 'Link Siaran TV (Format .m3u8):';
       } else {
         catGroup.style.display = 'block';
-        label.innerText = 'Link Video / YouTube / Embed:';
+        label.innerText = 'Link Video / Bunny Embed / YouTube:';
       }
     }
 
@@ -541,8 +541,41 @@
     }
 
     function loadEpisodePlayer(src) {
-      if (src.includes('.m3u8')) {
-        videoContainer.innerHTML = `<video id="hlsVideo" controls autoplay style="width:100%; height:100%;"></video>`;
+      // Penanganan Bunny.net, YouTube, atau Iframe
+      if (src.includes('mediadelivery.net') || src.includes('youtube.com') || src.includes('youtu.be') || src.includes('<iframe')) {
+        let finalSrc = src;
+
+        if (src.includes('<iframe')) {
+          const match = src.match(/src="([^"]+)"/);
+          if (match && match[1]) {
+            finalSrc = match[1];
+          }
+        }
+
+        if (src.includes('youtu.be/')) {
+          const id = src.split('youtu.be/')[1].split('?')[0];
+          finalSrc = `https://www.youtube.com/embed/${id}`;
+        } else if (src.includes('/watch?v=')) {
+          const id = src.split('watch?v=')[1].split('&')[0];
+          finalSrc = `https://www.youtube.com/embed/${id}`;
+        }
+
+        // Pastikan parameter muted false agar suara aktif dan video langsung tampil terang
+        if (finalSrc.includes('mediadelivery.net') && finalSrc.includes('muted=true')) {
+          finalSrc = finalSrc.replace('muted=true', 'muted=false');
+        }
+
+        videoContainer.innerHTML = `
+          <iframe 
+            src="${finalSrc}" 
+            style="width:100%; height:100%; border:none; position:absolute; inset:0;" 
+            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen" 
+            allowfullscreen="true">
+          </iframe>`;
+      } 
+      // Siaran TV (.m3u8)
+      else if (src.includes('.m3u8')) {
+        videoContainer.innerHTML = `<video id="hlsVideo" controls autoplay style="width:100%; height:100%; position:absolute; inset:0;"></video>`;
         const videoElement = document.getElementById('hlsVideo');
         
         if (Hls.isSupported()) {
@@ -552,18 +585,10 @@
         } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
           videoElement.src = src;
         }
-      } else if (src.includes('youtube.com') || src.includes('youtu.be')) {
-        let embedUrl = src;
-        if (src.includes('youtu.be/')) {
-          const id = src.split('youtu.be/')[1].split('?')[0];
-          embedUrl = `https://www.youtube.com/embed/${id}`;
-        } else if (src.includes('/watch?v=')) {
-          const id = src.split('watch?v=')[1].split('&')[0];
-          embedUrl = `https://www.youtube.com/embed/${id}`;
-        }
-        videoContainer.innerHTML = `<iframe src="${embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-      } else {
-        videoContainer.innerHTML = `<video src="${src}" controls autoplay preload="metadata" style="width:100%; height:100%;"></video>`;
+      } 
+      // Video MP4 biasa
+      else {
+        videoContainer.innerHTML = `<video src="${src}" controls autoplay preload="metadata" style="width:100%; height:100%; position:absolute; inset:0;"></video>`;
       }
     }
 
