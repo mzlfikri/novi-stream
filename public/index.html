@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NOVI - Premium Streaming Platform</title>
+  <title>NOVI - Premium Streaming & Live TV</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Pustaka HLS.js untuk memutar siaran langsung / link M3U8 -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   
   <style>
@@ -47,7 +46,7 @@
 
     .search-input-group {
       display: flex; align-items: center; background: var(--bg-surface); border: 1px solid var(--border);
-      border-radius: 30px; padding: 8px 16px; width: 240px;
+      border-radius: 30px; padding: 8px 16px; width: 220px;
     }
     .search-input-group input { background: none; border: none; color: #fff; width: 100%; outline: none; margin-left: 8px; font-size: 0.85rem; }
 
@@ -74,13 +73,6 @@
     .hero-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; }
     .hero-subtitle { color: var(--text-muted); font-size: 0.85rem; max-width: 500px; line-height: 1.4; }
 
-    .filter-chips { display: flex; gap: 10px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 4px; }
-    .chip {
-      background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted);
-      padding: 8px 18px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s;
-    }
-    .chip:hover, .chip.active { background: var(--accent); color: white; border-color: var(--accent); }
-
     .poster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
     .poster-card {
       background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border);
@@ -99,6 +91,13 @@
     .poster-card:hover .hover-overlay { opacity: 1; }
     .play-glow-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.95rem; }
     .tag-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); color: #fff; font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
+    .live-badge { background: #e50914; animation: pulse 1.5s infinite; }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
 
     .poster-meta { padding: 14px; flex: 1; display: flex; flex-direction: column; }
     .poster-title { font-size: 0.88rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
@@ -139,15 +138,15 @@
       <a href="#" class="logo" onclick="navTo('home', event)">NOV<span>I</span></a>
       <ul class="nav-menu">
         <li><a href="#" id="navHome" class="active" onclick="navTo('home', event)">Beranda</a></li>
-        <li><a href="#" id="navSeries" onclick="navTo('series', event)">Series</a></li>
-        <li><a href="#" id="navCategory" onclick="navTo('category', event)">Kategori</a></li>
+        <li><a href="#" id="navFilm" onclick="navTo('film', event)">Film & Series</a></li>
+        <li><a href="#" id="navTv" onclick="navTo('tv', event)">Siaran TV</a></li>
       </ul>
     </div>
 
     <div class="header-right">
       <div class="search-input-group">
         <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
-        <input type="text" id="searchInput" placeholder="Cari serial..." oninput="filterVideos()">
+        <input type="text" id="searchInput" placeholder="Cari..." oninput="filterVideos()">
       </div>
 
       <button class="btn btn-owner" id="btnCreateAdmin" style="display: none;"><i class="fa-solid fa-user-plus"></i></button>
@@ -160,26 +159,17 @@
     <div class="hero-featured" id="heroBanner">
       <span class="hero-badge" id="roleBadge">PENGUNJUNG</span>
       <h1 class="hero-title" id="heroTitle">Platform Streaming NOVI</h1>
-      <p class="hero-subtitle" id="heroSubtitle">Nikmati koleksi serial dan kartun eksklusif dengan pemutar video beresolusi tinggi.</p>
+      <p class="hero-subtitle" id="heroSubtitle">Nikmati koleksi film serial dan siaran TV langsung berkualitas tinggi.</p>
     </div>
 
-    <div class="filter-chips" id="categoryChipsSection" style="display: none;">
-      <div class="chip active" onclick="filterCategory(event, 'All')">Semua Kategori</div>
-      <div class="chip" onclick="filterCategory(event, 'Animasi')">Animasi</div>
-      <div class="chip" onclick="filterCategory(event, 'Drama')">Drama</div>
-      <div class="chip" onclick="filterCategory(event, 'Action')">Action</div>
-      <div class="chip" onclick="filterCategory(event, 'Hiburan')">Hiburan</div>
-    </div>
-
-    <div style="font-size: 1.2rem; font-weight: 800; margin-bottom: 16px;" id="sectionHeading">Daftar Series & Kartun</div>
+    <div style="font-size: 1.2rem; font-weight: 800; margin-bottom: 16px;" id="sectionHeading">Daftar Tayangan Terbaru</div>
     <div class="poster-grid" id="videoGrid"></div>
   </div>
 
-  <!-- Modal Player -->
   <div class="modal-backdrop" id="playerModal">
     <div class="modal-box-wide">
       <div style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
-        <h3 id="mTitle" style="font-size: 0.95rem; font-weight: 700;">NOVI Series Player</h3>
+        <h3 id="mTitle" style="font-size: 0.95rem; font-weight: 700;">NOVI Player</h3>
         <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.2rem; color: var(--text-muted);" onclick="closeModal('playerModal')"></i>
       </div>
       <div class="video-viewport" id="videoContainer"></div>
@@ -188,8 +178,10 @@
         <h2 id="mHeader" style="font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;"></h2>
         <p id="mDesc" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5;"></p>
         
-        <h4 style="margin-bottom: 10px; font-weight: 700; font-size: 0.9rem;"><i class="fa-solid fa-list-ul" style="color: var(--accent);"></i> Pilih Episode / Channel:</h4>
-        <div class="episodes-container" id="episodesListContainer"></div>
+        <div id="episodeSection" style="display: none;">
+          <h4 style="margin-bottom: 10px; font-weight: 700; font-size: 0.9rem;"><i class="fa-solid fa-list-ul" style="color: var(--accent);"></i> Pilih Episode:</h4>
+          <div class="episodes-container" id="episodesListContainer"></div>
+        </div>
 
         <button class="btn btn-glass" id="btnLike" style="margin-bottom: 24px;"><i class="fa-solid fa-heart" style="color: var(--accent);"></i> <span id="likeNum">0</span> Suka</button>
 
@@ -203,7 +195,6 @@
     </div>
   </div>
 
-  <!-- Modal Login -->
   <div class="modal-backdrop" id="loginModal">
     <div class="modal-box-wide" style="max-width: 380px; padding: 24px;">
       <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800;">Login Owner / Admin</h3>
@@ -215,7 +206,6 @@
     </div>
   </div>
 
-  <!-- Modal Buat Admin -->
   <div class="modal-backdrop" id="createAdminModal">
     <div class="modal-box-wide" style="max-width: 380px; padding: 24px;">
       <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800; color: #8e44ad;">Buat Akun Admin Baru</h3>
@@ -227,33 +217,48 @@
     </div>
   </div>
 
-  <!-- Modal Upload / Edit Series & Multiple Episodes -->
   <div class="modal-backdrop" id="uploadModal">
     <div class="modal-box-wide" style="max-width: 500px; padding: 24px;">
-      <h3 id="modalUploadTitle" style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800;">Tambah Series & Video</h3>
+      <h3 id="modalUploadTitle" style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800;">Tambah Konten Baru</h3>
       <form id="uploadForm">
         <input type="hidden" id="editSeriesId" value="" />
-        <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Series / Siaran TV" required />
-        <select id="uCat" class="form-input-dark">
-          <option value="Animasi">Animasi</option>
-          <option value="Drama">Drama</option>
-          <option value="Action">Action</option>
-          <option value="Hiburan">Hiburan</option>
+        
+        <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Pilih Jenis Konten:</label>
+        <select id="uType" class="form-input-dark" onchange="toggleUploadType()">
+          <option value="film">Film / Series</option>
+          <option value="tv">Siaran TV (Live Streaming)</option>
         </select>
+
+        <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Film atau Nama Channel TV" required />
+        
+        <div id="catFieldGroup">
+          <select id="uCat" class="form-input-dark">
+            <option value="Animasi">Animasi</option>
+            <option value="Drama">Drama</option>
+            <option value="Action">Action</option>
+            <option value="Hiburan">Hiburan</option>
+          </select>
+        </div>
+
         <textarea id="uDesc" class="form-input-dark" style="height: 70px; resize: none;" placeholder="Deskripsi Singkat"></textarea>
         <input type="text" id="uThumb" class="form-input-dark" placeholder="Link Gambar Cover Poster (Opsional)" />
 
         <hr style="border: 0; border-top: 1px solid var(--border); margin: 14px 0;">
         
-        <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Upload File Video Episode (.mp4):</label>
-        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">Bisa pilih banyak file video sekaligus. Atau kosongkan jika ingin menggunakan link M3U8/Eksternal.</p>
-        <div id="dynamicEpisodesContainer">
+        <div id="filmUploadSection">
+          <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Upload File Video Episode (.mp4):</label>
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">Bisa pilih banyak file video sekaligus untuk episode 1, 2, dst.</p>
           <div class="ep-input-group">
             <input type="file" id="videoFile" class="form-input-dark" accept="video/mp4" multiple style="margin:0; padding: 6px;" />
           </div>
         </div>
 
-        <button type="submit" class="btn" id="btnSubmitUpload" style="width: 100%; justify-content: center; margin-top: 10px;">Simpan Series & Video</button>
+        <div id="tvUploadSection" style="display: none;">
+          <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Link Siaran TV (Format .m3u8):</label>
+          <input type="text" id="uTvUrl" class="form-input-dark" placeholder="https://contoh.com/live/stream.m3u8" style="margin:0;" />
+        </div>
+
+        <button type="submit" class="btn" id="btnSubmitUpload" style="width: 100%; justify-content: center; margin-top: 16px;">Simpan Konten</button>
       </form>
     </div>
   </div>
@@ -268,6 +273,7 @@
     const likeNum = document.getElementById('likeNum');
     const cList = document.getElementById('cList');
     const episodesListContainer = document.getElementById('episodesListContainer');
+    const episodeSection = document.getElementById('episodeSection');
 
     const btnUpload = document.getElementById('btnUpload');
     const btnCreateAdmin = document.getElementById('btnCreateAdmin');
@@ -277,13 +283,11 @@
     const uploadModal = document.getElementById('uploadModal');
     const roleBadge = document.getElementById('roleBadge');
     const modalUploadTitle = document.getElementById('modalUploadTitle');
-    const categoryChipsSection = document.getElementById('categoryChipsSection');
     const sectionHeading = document.getElementById('sectionHeading');
     const heroBanner = document.getElementById('heroBanner');
 
     let allVideos = [];
     let activeVid = null;
-    let selectedCategory = 'All';
     let currentMode = 'home';
     
     let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -322,22 +326,37 @@
       if (mode === 'home') {
         document.getElementById('navHome').classList.add('active');
         heroBanner.style.display = 'flex';
-        categoryChipsSection.style.display = 'none';
-        sectionHeading.innerText = 'Daftar Series & Kartun Terbaru';
-        selectedCategory = 'All';
-      } else if (mode === 'series') {
-        document.getElementById('navSeries').classList.add('active');
+        sectionHeading.innerText = 'Daftar Tayangan Terbaru';
+      } else if (mode === 'film') {
+        document.getElementById('navFilm').classList.add('active');
         heroBanner.style.display = 'none';
-        categoryChipsSection.style.display = 'none';
-        sectionHeading.innerText = 'Semua Koleksi Series';
-        selectedCategory = 'All';
-      } else if (mode === 'category') {
-        document.getElementById('navCategory').classList.add('active');
+        sectionHeading.innerText = 'Koleksi Film & Series';
+      } else if (mode === 'tv') {
+        document.getElementById('navTv').classList.add('active');
         heroBanner.style.display = 'none';
-        categoryChipsSection.style.display = 'flex';
-        sectionHeading.innerText = 'Pilih Berdasarkan Kategori';
+        sectionHeading.innerText = 'Siaran TV Langsung (Live Streaming)';
       }
       filterVideos();
+    }
+
+    function toggleUploadType() {
+      const type = document.getElementById('uType').value;
+      const filmSec = document.getElementById('filmUploadSection');
+      const tvSec = document.getElementById('tvUploadSection');
+      const catGroup = document.getElementById('catFieldGroup');
+
+      if (type === 'tv') {
+        filmSec.style.display = 'none';
+        tvSec.style.display = 'block';
+        catGroup.style.display = 'none';
+        document.getElementById('uTvUrl').required = true;
+        document.getElementById('videoFile').required = false;
+      } else {
+        filmSec.style.display = 'block';
+        tvSec.style.display = 'none';
+        catGroup.style.display = 'block';
+        document.getElementById('uTvUrl').required = false;
+      }
     }
 
     btnAdmin.onclick = () => {
@@ -355,7 +374,8 @@
     btnUpload.onclick = () => {
       document.getElementById('uploadForm').reset();
       document.getElementById('editSeriesId').value = '';
-      modalUploadTitle.innerText = 'Tambah Series & Video Baru';
+      modalUploadTitle.innerText = 'Tambah Konten Baru';
+      toggleUploadType();
       uploadModal.style.display = 'flex';
     };
 
@@ -427,21 +447,14 @@
         allVideos = await res.json();
         filterVideos();
       } catch (err) {
-        console.error('Gagal memuat video:', err);
+        console.error('Gagal memuat data:', err);
       }
-    }
-
-    function filterCategory(e, cat) {
-      selectedCategory = cat;
-      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-      if (e && e.target) e.target.classList.add('active');
-      filterVideos();
     }
 
     function displayGrid(videos) {
       grid.innerHTML = '';
       if (!videos || videos.length === 0) {
-        grid.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada series.</p>';
+        grid.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada konten di kategori ini.</p>';
         return;
       }
 
@@ -450,6 +463,7 @@
         card.className = 'poster-card';
         card.onclick = () => playSeries(v);
 
+        const isTv = v.type === 'tv';
         const totalEp = v.episodes ? v.episodes.length : 0;
 
         card.innerHTML = `
@@ -462,7 +476,7 @@
           <div class="poster-frame">
             <img src="${v.thumbnail}" class="poster-img" />
             <div class="hover-overlay"><div class="play-glow-btn"><i class="fa-solid fa-play"></i></div></div>
-            <span class="tag-badge">${totalEp} Ep</span>
+            <span class="tag-badge ${isTv ? 'live-badge' : ''}">${isTv ? '🔴 LIVE TV' : totalEp + ' Ep'}</span>
           </div>
           <div class="poster-meta">
             <div class="poster-title">${v.title}</div>
@@ -486,7 +500,13 @@
       renderComments(v.comments || []);
 
       episodesListContainer.innerHTML = '';
-      if (v.episodes && v.episodes.length > 0) {
+      if (v.type === 'tv' || !v.episodes || v.episodes.length <= 1) {
+        episodeSection.style.display = 'none';
+        if (v.episodes && v.episodes.length > 0) {
+          loadEpisodePlayer(v.episodes[0].src);
+        }
+      } else {
+        episodeSection.style.display = 'block';
         v.episodes.forEach((ep, index) => {
           const btn = document.createElement('button');
           btn.className = `ep-btn ${index === 0 ? 'active' : ''}`;
@@ -504,7 +524,6 @@
       playerModal.style.display = 'flex';
     }
 
-    // Fungsi Pemutar Pintar (Mendukung .mp4 lokal, YouTube, dan Siaran Live .m3u8)
     function loadEpisodePlayer(src) {
       if (src.includes('.m3u8')) {
         videoContainer.innerHTML = `<video id="hlsVideo" controls autoplay style="width:100%; height:100%;"></video>`;
@@ -564,11 +583,18 @@
 
     function filterVideos() {
       const q = document.getElementById('searchInput').value.toLowerCase();
-      let filtered = allVideos.filter(v => v.title.toLowerCase().includes(q));
-      
-      if (currentMode === 'category' && selectedCategory !== 'All') {
-        filtered = filtered.filter(v => (v.category || 'Animasi') === selectedCategory);
+      let filtered = allVideos;
+
+      if (currentMode === 'film') {
+        filtered = filtered.filter(v => v.type === 'film' || !v.type);
+      } else if (currentMode === 'tv') {
+        filtered = filtered.filter(v => v.type === 'tv');
       }
+
+      if (q) {
+        filtered = filtered.filter(v => v.title.toLowerCase().includes(q));
+      }
+
       displayGrid(filtered);
     }
 
@@ -578,18 +604,24 @@
       if (!v) return;
 
       document.getElementById('editSeriesId').value = v.id;
+      document.getElementById('uType').value = v.type || 'film';
       document.getElementById('uTitle').value = v.title;
       document.getElementById('uCat').value = v.category || 'Animasi';
       document.getElementById('uDesc').value = v.description;
       document.getElementById('uThumb').value = v.thumbnail;
+      
+      toggleUploadType();
+      if (v.type === 'tv' && v.episodes && v.episodes.length > 0) {
+        document.getElementById('uTvUrl').value = v.episodes[0].src;
+      }
 
-      modalUploadTitle.innerText = 'Edit Series & Video';
+      modalUploadTitle.innerText = 'Edit Konten';
       uploadModal.style.display = 'flex';
     }
 
     async function delVid(e, id) {
       e.stopPropagation();
-      if (!confirm("Hapus series ini?")) return;
+      if (!confirm("Hapus konten ini?")) return;
       try {
         const res = await fetch(`/api/videos/${id}`, { method: 'DELETE' });
         if (res.ok) fetchVideos();
@@ -599,26 +631,29 @@
       }
     }
 
-    // EVENT LISTENER FORM UPLOAD (Mendukung File Lokal / Multiple Episodes)
     document.getElementById('uploadForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
       const submitBtn = document.getElementById('btnSubmitUpload');
-      submitBtn.innerText = 'Sedang Menyimpan, Mohon Tunggu...';
+      submitBtn.innerText = 'Sedang Menyimpan...';
       submitBtn.disabled = true;
 
+      const type = document.getElementById('uType').value;
       const title = document.getElementById('uTitle').value;
       const category = document.getElementById('uCat').value;
       const description = document.getElementById('uDesc').value;
       const thumbnail = document.getElementById('uThumb').value;
+      const tvUrl = document.getElementById('uTvUrl').value;
       const fileInput = document.getElementById('videoFile');
       const id = document.getElementById('editSeriesId').value;
 
       const formData = new FormData();
+      formData.append('type', type);
       formData.append('title', title);
       formData.append('category', category);
       formData.append('description', description);
       formData.append('thumbnail', thumbnail);
+      formData.append('tvUrl', tvUrl);
       
       if (id) {
         formData.append('id', id);
@@ -628,7 +663,7 @@
         }
       }
 
-      if (fileInput.files.length > 0) {
+      if (type === 'film' && fileInput.files.length > 0) {
         for (let i = 0; i < fileInput.files.length; i++) {
           formData.append('videoFiles', fileInput.files[i]);
         }
@@ -642,7 +677,7 @@
         
         const data = await res.json();
         if (res.ok && data.success) {
-          alert('Series & Video Berhasil Disimpan!');
+          alert('Berhasil Disimpan!');
           closeModal('uploadModal');
           document.getElementById('uploadForm').reset();
           fetchVideos();
@@ -651,9 +686,9 @@
         }
       } catch (err) {
         console.error(err);
-        alert('Terjadi kesalahan koneksi saat menyimpan.');
+        alert('Terjadi kesalahan koneksi.');
       } finally {
-        submitBtn.innerText = 'Simpan Series & Video';
+        submitBtn.innerText = 'Simpan Konten';
         submitBtn.disabled = false;
       }
     });
@@ -661,7 +696,6 @@
     renderUI();
   </script>
 
-  <!-- Footer Credit -->
   <footer style="text-align: center; padding: 24px; border-top: 1px solid var(--border); margin-top: 48px; color: var(--text-muted); font-size: 0.82rem;">
     <p>Platform Streaming <span style="color: var(--accent); font-weight: 700;">NOVI</span> &copy; 2026. Dibuat dan dikembangkan oleh <strong style="color: #fff;">Fikri Al</strong>.</p>
   </footer>

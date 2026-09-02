@@ -11,7 +11,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
-// Pastikan folder uploads ada di dalam folder public
+// Pastikan folder uploads ada
 const uploadDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -32,6 +32,7 @@ const upload = multer({ storage: storage });
 const DB_FILE = path.join(__dirname, 'database.json');
 const ADMIN_FILE = path.join(__dirname, 'admin.json');
 
+// AMAN: Jangan menimpa file database.json jika sudah ada isinya!
 if (!fs.existsSync(DB_FILE)) {
   fs.writeFileSync(DB_FILE, JSON.stringify([], null, 2));
 }
@@ -55,10 +56,10 @@ app.get('/api/videos', (req, res) => {
   }
 });
 
-// API: Upload banyak file video sekaligus (Multiple Episodes / Local)
+// API: Upload Video Film atau Siaran TV
 app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
   try {
-    const { id, title, category, description, thumbnail, existingEpisodes } = req.body;
+    const { id, title, type, category, description, thumbnail, tvUrl, existingEpisodes } = req.body;
     
     let videos = [];
     if (fs.existsSync(DB_FILE)) {
@@ -71,23 +72,29 @@ app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
 
     let episodes = existingEpisodes ? JSON.parse(existingEpisodes) : [];
 
-    // Jika ada file-file video baru yang di-upload dari perangkat
-    if (req.files && req.files.length > 0) {
-      req.files.forEach((file) => {
-        const fileUrl = `/uploads/${file.filename}`;
-        episodes.push({
-          epNum: episodes.length + 1,
-          src: fileUrl
+    // Jika ini adalah tipe Siaran TV (menggunakan link M3U8)
+    if (type === 'tv') {
+      episodes = [{ epNum: 1, src: tvUrl }];
+    } else {
+      // Jika upload file video lokal (.mp4)
+      if (req.files && req.files.length > 0) {
+        req.files.forEach((file) => {
+          const fileUrl = `/uploads/${file.filename}`;
+          episodes.push({
+            epNum: episodes.length + 1,
+            src: fileUrl
+          });
         });
-      });
+      }
     }
 
     if (id) {
-      videos = videos.map(v => v.id == id ? { ...v, title, category, description, thumbnail: thumbFinal, episodes } : v);
+      videos = videos.map(v => v.id == id ? { ...v, title, type: type || 'film', category, description, thumbnail: thumbFinal, episodes } : v);
     } else {
       const newVideo = {
         id: Date.now(),
         title,
+        type: type || 'film', // 'film' atau 'tv'
         category: category || 'Animasi',
         description,
         thumbnail: thumbFinal,
@@ -99,14 +106,14 @@ app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
     }
 
     fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2));
-    res.json({ success: true, message: 'Series & Episode berhasil disimpan ke server!' });
+    res.json({ success: true, message: 'Data berhasil disimpan ke server!' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: 'Gagal mengunggah video ke server.' });
+    res.status(500).json({ success: false, message: 'Gagal menyimpan ke server.' });
   }
 });
 
-// API: Hapus series
+// API: Hapus data
 app.delete('/api/videos/:id', (req, res) => {
   try {
     const id = parseInt(req.params.id);
