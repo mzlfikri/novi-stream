@@ -17,7 +17,7 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
-// Inisialisasi Database Video
+// Fungsi Load Database Video yang Aman dari Error Array
 function loadMetadata() {
   try {
     if (fs.existsSync(metadataFile)) {
@@ -39,7 +39,7 @@ function saveMetadata(videosArray) {
   }
 }
 
-// Inisialisasi Database Admin Tambahan
+// Fungsi Load Admin Tambahan
 function loadAdmins() {
   try {
     if (fs.existsSync(adminsFile)) {
@@ -222,7 +222,6 @@ app.post('/api/login', (req, res) => {
     return res.json({ success: true, role: 'admin' });
   }
 
-  // Cek admin tambahan yang dibuat oleh owner
   const customAdmins = loadAdmins();
   const foundAdmin = customAdmins.find(a => a.username === username && a.password === password);
   if (foundAdmin) {
@@ -242,7 +241,7 @@ app.post('/api/create-admin', (req, res) => {
 
     let customAdmins = loadAdmins();
     if (customAdmins.some(a => a.username === newUsername) || newUsername === 'owner') {
-      return.status(400).json({ success: false, message: 'Username sudah digunakan!' });
+      return res.status(400).json({ success: false, message: 'Username sudah digunakan!' });
     }
 
     customAdmins.push({ username: newUsername, password: newPassword });
