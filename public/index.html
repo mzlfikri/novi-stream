@@ -3,380 +3,549 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NOVI - Platform Streaming Video Sederhana</title>
+  <title>NOVI - Premium Streaming & Live TV</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  
   <style>
     :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --text-color: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent: #38bdf8;
-      --accent-hover: #0ea5e9;
-      --danger: #ef4444;
-      --border: #334155;
+      --bg-base: #050608;
+      --bg-surface: #0f111a;
+      --bg-card: #141722;
+      --accent: #e50914;
+      --accent-glow: rgba(229, 9, 20, 0.4);
+      --text-main: #ffffff;
+      --text-muted: #8c95a5;
+      --border: #212636;
+      --radius: 16px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-color); min-height: 100vh; display: flex; flex-direction: column; }
-    
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background-color: var(--bg-base); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
     header {
-      background: var(--card-bg);
-      padding: 16px 32px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      background: rgba(5, 6, 8, 0.95); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border);
+      padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;
+      flex-wrap: wrap; gap: 12px;
     }
 
-    .logo { font-size: 1.4rem; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 10px; }
-    .nav-controls { display: flex; gap: 12px; align-items: center; }
+    .brand { display: flex; align-items: center; gap: 24px; }
+    .logo { font-size: 1.6rem; font-weight: 800; color: #fff; text-decoration: none; letter-spacing: -0.5px; }
+    .logo span { color: var(--accent); }
+
+    .nav-menu { display: flex; gap: 18px; list-style: none; }
+    .nav-menu a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.88rem; transition: color 0.2s; cursor: pointer; }
+    .nav-menu a:hover, .nav-menu a.active { color: #fff; }
+
+    .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    .search-input-group {
+      display: flex; align-items: center; background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: 30px; padding: 8px 16px; width: 220px;
+    }
+    .search-input-group input { background: none; border: none; color: #fff; width: 100%; outline: none; margin-left: 8px; font-size: 0.85rem; }
 
     .btn {
-      background: var(--accent);
-      color: #0f172a;
-      border: none;
-      padding: 8px 16px;
-      font-weight: 600;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: 0.2s;
-      font-size: 0.85rem;
+      background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 30px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.25s ease; font-size: 0.82rem; box-shadow: 0 4px 15px var(--accent-glow);
+      white-space: nowrap;
     }
-    .btn:hover { background: var(--accent-hover); }
-    .btn-danger { background: var(--danger); color: #fff; }
-    .btn-danger:hover { background: #dc2626; }
+    .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+    .btn-glass { background: rgba(255,255,255,0.06); border: 1px solid var(--border); box-shadow: none; }
+    .btn-glass:hover { background: rgba(255,255,255,0.12); }
+    .btn-owner { background: #8e44ad; }
+    .btn-edit { background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
 
-    .main-container { max-width: 1200px; margin: 24px auto; padding: 0 20px; flex: 1; width: 100%; }
+    .content-container { max-width: 1400px; margin: 0 auto; padding: 24px; }
 
-    /* Layout Utama: Pemutar dan Interaksi */
-    .watch-layout {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 24px;
-      margin-bottom: 40px;
+    .hero-featured {
+      width: 100%; height: 220px; border-radius: 20px;
+      background: linear-gradient(180deg, rgba(5,6,8,0.2) 0%, rgba(5,6,8,0.95) 100%), 
+                  url('https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+      border: 1px solid var(--border); margin-bottom: 32px; display: flex; flex-direction: column; justify-content: flex-end; padding: 24px;
     }
+    .hero-badge { background: var(--accent); color: white; font-size: 0.7rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; width: fit-content; margin-bottom: 8px; text-transform: uppercase; }
+    .hero-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; }
+    .hero-subtitle { color: var(--text-muted); font-size: 0.85rem; max-width: 500px; line-height: 1.4; }
 
-    @media(min-width: 900px) {
-      .watch-layout { grid-template-columns: 2fr 1fr; }
+    .section-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .section-block { margin-bottom: 40px; }
+
+    .poster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+    .poster-card {
+      background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border);
+      overflow: hidden; cursor: pointer; transition: all 0.25s ease; position: relative; display: flex; flex-direction: column;
     }
+    .poster-card:hover { transform: translateY(-4px); border-color: var(--accent); }
 
-    .player-section { display: flex; flex-direction: column; gap: 16px; }
+    .poster-frame { width: 100%; aspect-ratio: 16/10; background: #000; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    .poster-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+    .poster-card:hover .poster-img { transform: scale(1.05); }
 
-    .player-wrapper {
-      position: relative;
-      width: 100%;
-      padding-top: 56.25%; /* 16:9 Aspect Ratio */
-      background: #000;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    .hover-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.4);
+      display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;
     }
+    .poster-card:hover .hover-overlay { opacity: 1; }
+    .play-glow-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.95rem; }
+    .tag-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); color: #fff; font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
+    .live-badge { background: #e50914; animation: pulse 1.5s infinite; }
 
-    .video-container {
-      position: absolute;
-      top: 0; left: 0; bottom: 0; right: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      text-align: center;
-      padding: 20px;
-    }
-
-    .video-info-box {
-      background: var(--card-bg);
-      padding: 20px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
     }
 
-    .video-title-main { font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; color: #fff; }
+    .poster-meta { padding: 14px; flex: 1; display: flex; flex-direction: column; }
+    .poster-title { font-size: 0.88rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .poster-desc { font-size: 0.75rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 10px; line-height: 1.3; }
+    .card-footer-stats { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); }
+
+    .card-actions { position: absolute; top: 10px; right: 10px; z-index: 10; display: none; gap: 4px; }
+    .btn-delete-card { background: rgba(231, 76, 60, 0.9); color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
+
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 12px; overflow-y: auto; }
+    .modal-box-wide { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 900px; max-height: 92vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
     
-    .video-actions {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-      border-top: 1px solid var(--border);
-      padding-top: 12px;
-    }
+    .video-viewport { width: 100%; background: #000; position: relative; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; }
+    video, iframe { width: 100% !important; height: 100% !important; border: none; outline: none; position: absolute; inset: 0; }
 
-    .action-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text-color);
-      padding: 6px 14px;
-      border-radius: 20px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
-      transition: 0.2s;
-    }
-    .action-btn:hover { background: rgba(56, 189, 248, 0.1); border-color: var(--accent); color: var(--accent); }
-    .action-btn.liked { color: var(--danger); border-color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+    .modal-body-padding { padding: 20px; }
+    .form-input-dark { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-base); color: white; margin-bottom: 12px; outline: none; font-size: 0.88rem; }
 
-    /* Kolom Komentar */
-    .comments-section {
-      background: var(--card-bg);
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      max-height: 500px;
+    @media (min-width: 768px) {
+      header { padding: 16px 48px; }
+      .content-container { padding: 32px 48px; }
+      .poster-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 24px; }
+      .hero-featured { height: 260px; padding: 32px; }
+      .hero-title { font-size: 2rem; }
+      .modal-body-padding { padding: 32px; }
     }
-
-    .comments-title { font-size: 1rem; font-weight: 600; margin-bottom: 12px; color: #fff; }
-    
-    .comments-list {
-      flex: 1;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 15px;
-      padding-right: 5px;
-    }
-
-    .comment-item {
-      background: rgba(15, 23, 42, 0.6);
-      padding: 10px 12px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      border: 1px solid var(--border);
-    }
-
-    .comment-form { display: flex; gap: 8px; }
-    .comment-input {
-      flex: 1;
-      background: var(--bg-color);
-      border: 1px solid var(--border);
-      padding: 8px 12px;
-      color: #fff;
-      border-radius: 6px;
-      font-size: 0.85rem;
-    }
-    .comment-input:focus { outline: none; border-color: var(--accent); }
-
-    /* Grid Daftar Channel / Video */
-    .section-title { font-size: 1.1rem; color: #fff; margin-bottom: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-    
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-      gap: 16px;
-    }
-
-    .card {
-      background: var(--card-bg);
-      border-radius: 10px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      border: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-    }
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(56, 189, 248, 0.15);
-      border-color: var(--accent);
-    }
-
-    .card-img { width: 100%; height: 120px; object-fit: cover; background: #000; }
-    .card-body { padding: 12px; display: flex; flex-direction: column; flex: 1; justify-content: space-between; }
-    .card-title { font-size: 0.88rem; font-weight: 600; color: #fff; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .card-category { font-size: 0.7rem; color: var(--accent); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
-
-    /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.75);
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 16px;
-    }
-    .modal-content {
-      background: var(--card-bg);
-      padding: 24px;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 440px;
-      border: 1px solid var(--border);
-      box-shadow: 0 15px 35px rgba(0,0,0,0.6);
-    }
-    .form-group { margin-bottom: 14px; }
-    .form-group label { display: block; font-size: 0.8rem; margin-bottom: 6px; color: var(--text-muted); }
-    .form-control {
-      width: 100%;
-      padding: 9px 12px;
-      background: var(--bg-color);
-      border: 1px solid var(--border);
-      color: #fff;
-      border-radius: 6px;
-      font-size: 0.85rem;
-    }
-    .form-control:focus { outline: none; border-color: var(--accent); }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="logo"><i class="fa-solid fa-tv"></i> NOVI STREAM</div>
-    <div class="nav-controls">
-      <button class="btn" id="openModalBtn" style="display:none;"><i class="fa-solid fa-plus"></i> Tambah Konten</button>
-      <button class="btn" id="loginBtn">Login Admin</button>
+    <div class="brand">
+      <a href="#" class="logo" onclick="navTo('home', event)">NOV<span>I</span></a>
+      <ul class="nav-menu">
+        <li><a href="#" id="navHome" class="active" onclick="navTo('home', event)">Beranda</a></li>
+        <li><a href="#" id="navFilm" onclick="navTo('film', event)">Film & Series</a></li>
+        <li><a href="#" id="navTv" onclick="navTo('tv', event)">Siaran TV</a></li>
+      </ul>
+    </div>
+
+    <div class="header-right">
+      <div class="search-input-group">
+        <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
+        <input type="text" id="searchInput" placeholder="Cari..." oninput="filterVideos()">
+      </div>
+
+      <button class="btn btn-owner" id="btnCreateAdmin" style="display: none;"><i class="fa-solid fa-user-plus"></i></button>
+      <button class="btn" id="btnUpload" style="display: none;"><i class="fa-solid fa-plus"></i> Tambah</button>
+      <button class="btn btn-glass" id="btnAdmin"><i class="fa-solid fa-user-lock"></i> Login</button>
     </div>
   </header>
 
-  <div class="main-container">
-    <div class="watch-layout">
-      <div class="player-section">
-        <div class="player-wrapper">
-          <div class="video-container" id="videoContainer">
-            <p><i class="fa-solid fa-circle-play" style="font-size: 2rem; display: block; margin-bottom: 8px; color: var(--accent);"></i>Pilih salah satu siaran di bawah untuk mulai menonton</p>
-          </div>
-        </div>
-        <div class="video-info-box">
-          <div class="video-title-main" id="currentVideoTitle">Belum ada video yang diputar</div>
-          <div class="video-actions">
-            <button class="action-btn" id="likeBtn" onclick="toggleLike()">
-              <i class="fa-solid fa-heart"></i> <span id="likeCount">0</span> Suka
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="comments-section">
-        <div class="comments-title"><i class="fa-solid fa-comments"></i> Komentar Penonton</div>
-        <div class="comments-list" id="commentsList">
-          <div style="color: var(--text-muted); font-size: 0.82rem; text-align: center; margin-top: 20px;">Belum ada komentar.</div>
-        </div>
-        <form class="comment-form" onsubmit="postComment(event)">
-          <input type="text" id="commentInput" class="comment-input" placeholder="Tulis komentar..." required>
-          <button type="submit" class="btn" style="padding: 8px 12px;"><i class="fa-solid fa-paper-plane"></i></button>
-        </form>
-      </div>
+  <div class="content-container">
+    <div class="hero-featured" id="heroBanner">
+      <span class="hero-badge" id="roleBadge">PENGUNJUNG</span>
+      <h1 class="hero-title" id="heroTitle">Platform Streaming NOVI</h1>
+      <p class="hero-subtitle" id="heroSubtitle">Nikmati koleksi film serial dan siaran TV langsung berkualitas tinggi.</p>
     </div>
 
-    <div class="section-title"><i class="fa-solid fa-list"></i> Daftar Siaran & Video Tersedia</div>
-    <div class="grid" id="contentGrid">
-      </div>
+    <div id="dynamicMainContent"></div>
   </div>
 
-  <div class="modal" id="addModal">
-    <div class="modal-content">
-      <h3 style="color:#fff; margin-bottom:16px; font-size:1.1rem;">Tambah Siaran / Video Baru</h3>
-      <form id="addForm">
-        <div class="form-group">
-          <label>Judul / Nama Channel</label>
-          <input type="text" id="itemTitle" class="form-control" required placeholder="Contoh: RCTI / SCTV">
+  <div class="modal-backdrop" id="playerModal">
+    <div class="modal-box-wide">
+      <div style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
+        <h3 id="mTitle" style="font-size: 0.95rem; font-weight: 700;">NOVI Player</h3>
+        <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.2rem; color: var(--text-muted);" onclick="closeModal('playerModal')"></i>
+      </div>
+      <div class="video-viewport" id="videoContainer"></div>
+      
+      <div class="modal-body-padding">
+        <h2 id="mHeader" style="font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;"></h2>
+        <p id="mDesc" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 12px; line-height: 1.5;"></p>
+        
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px;">
+          <span><i class="fa-solid fa-eye"></i> <span id="viewNum">0</span> Penonton</span>
         </div>
-        <div class="form-group">
-          <label>Kategori / Grup</label>
-          <input type="text" id="itemCategory" class="form-control" required placeholder="Contoh: NASIONAL / SPORT">
-        </div>
-        <div class="form-group">
-          <label>Link Streaming (.mpd, .m3u8, dll)</label>
-          <input type="text" id="itemSrc" class="form-control" required placeholder="Tempel URL link streaming">
-        </div>
-        <div class="form-group">
-          <label>Link Logo / Poster (Opsional)</label>
-          <input type="text" id="itemLogo" class="form-control" placeholder="URL gambar logo">
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn" id="closeModalBtn" style="background:#475569; color:#fff;">Batal</button>
-          <button type="submit" class="btn">Simpan</button>
-        </div>
+
+        <button class="btn btn-glass" id="btnLike" style="margin-bottom: 24px;"><i class="fa-solid fa-heart" style="color: var(--accent);"></i> <span id="likeNum">0</span> Suka</button>
+
+        <h4 style="margin-bottom: 10px; font-weight: 700; font-size: 0.95rem;">Komentar Pengguna</h4>
+        <form id="commentForm" style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+          <input type="text" id="cInput" class="form-input-dark" style="margin: 0; flex: 1; min-width: 200px;" placeholder="Tulis tanggapan..." required />
+          <button type="submit" class="btn" style="padding: 0 20px;">Kirim</button>
+        </form>
+        <div id="cList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="loginModal">
+    <div class="modal-box-wide" style="max-width: 380px; padding: 24px;">
+      <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800;">Login Owner / Admin</h3>
+      <form id="loginForm">
+        <input type="text" id="userInput" class="form-input-dark" placeholder="Username (Cth: owner)" required />
+        <input type="password" id="passInput" class="form-input-dark" placeholder="Password (Cth: 123)" required />
+        <button type="submit" class="btn" style="width: 100%; justify-content: center; margin-top: 6px;">Masuk</button>
       </form>
     </div>
   </div>
 
-  <footer style="text-align: center; padding: 24px; border-top: 1px solid var(--border); margin-top: 48px; color: var(--text-muted); font-size: 0.82rem;">
-    <p>Platform Streaming <span style="color: var(--accent); font-weight: 600;">NOVI</span> &copy; 2026. Dibuat dan dikembangkan oleh <strong style="color: #fff;">Fikri Al</strong>.</p>
-  </footer>
+  <div class="modal-backdrop" id="createAdminModal">
+    <div class="modal-box-wide" style="max-width: 380px; padding: 24px;">
+      <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800; color: #8e44ad;">Buat Akun Admin Baru</h3>
+      <form id="createAdminForm">
+        <input type="text" id="newUserInput" class="form-input-dark" placeholder="Username Admin Baru" required />
+        <input type="password" id="newPassInput" class="form-input-dark" placeholder="Password Admin Baru" required />
+        <button type="submit" class="btn btn-owner" style="width: 100%; justify-content: center; margin-top: 6px;">Buat Akun</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="uploadModal">
+    <div class="modal-box-wide" style="max-width: 500px; padding: 24px;">
+      <h3 id="modalUploadTitle" style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800;">Tambah Konten Baru</h3>
+      <form id="uploadForm">
+        <input type="hidden" id="editSeriesId" value="" />
+        
+        <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Pilih Jenis Konten:</label>
+        <select id="uType" class="form-input-dark" onchange="toggleUploadType()">
+          <option value="film">Film / Series (Bunny.net / YouTube / Embed)</option>
+          <option value="tv">Siaran TV Live Streaming (.m3u8 / Worker)</option>
+        </select>
+
+        <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Film atau Nama Channel TV" required />
+        
+        <div id="catFieldGroup">
+          <select id="uCat" class="form-input-dark">
+            <option value="Animasi">Animasi</option>
+            <option value="Drama">Drama</option>
+            <option value="Action">Action</option>
+            <option value="Hiburan">Hiburan</option>
+          </select>
+        </div>
+
+        <textarea id="uDesc" class="form-input-dark" style="height: 70px; resize: none;" placeholder="Deskripsi Singkat"></textarea>
+        <input type="text" id="uThumb" class="form-input-dark" placeholder="Link Gambar Cover Poster (Opsional)" />
+
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 14px 0;">
+        
+        <label id="labelVideoUrl" style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Link Video / Bunny Embed / M3U8:</label>
+        <input type="text" id="uVideoUrl" class="form-input-dark" placeholder="Tempel link embed atau URL video di sini" required style="margin:0;" />
+
+        <button type="submit" class="btn" id="btnSubmitUpload" style="width: 100%; justify-content: center; margin-top: 16px;">Simpan Konten</button>
+      </form>
+    </div>
+  </div>
 
   <script>
-    let isAdmin = false;
-    let allContent = [];
-    let currentVideoId = null;
-
+    const mainContainer = document.getElementById('dynamicMainContent');
+    const playerModal = document.getElementById('playerModal');
     const videoContainer = document.getElementById('videoContainer');
-    const contentGrid = document.getElementById('contentGrid');
-    const loginBtn = document.getElementById('loginBtn');
-    const openModalBtn = document.getElementById('openModalBtn');
-    const addModal = document.getElementById('addModal');
-    const closeModalBtn = document.getElementById('closeModalBtn');
-    const addForm = document.getElementById('addForm');
-    const currentVideoTitle = document.getElementById('currentVideoTitle');
-    const likeCountSpan = document.getElementById('likeCount');
-    const likeBtn = document.getElementById('likeBtn');
-    const commentsList = document.getElementById('commentsList');
+    const mTitle = document.getElementById('mTitle');
+    const mHeader = document.getElementById('mHeader');
+    const mDesc = document.getElementById('mDesc');
+    const viewNum = document.getElementById('viewNum');
+    const likeNum = document.getElementById('likeNum');
+    const cList = document.getElementById('cList');
 
-    async function fetchContent() {
-      try {
-        const res = await fetch('/api/content');
-        allContent = await res.json();
-        renderGrid();
-      } catch (err) {
-        console.error('Gagal memuat konten:', err);
+    const btnUpload = document.getElementById('btnUpload');
+    const btnCreateAdmin = document.getElementById('btnCreateAdmin');
+    const btnAdmin = document.getElementById('btnAdmin');
+    const loginModal = document.getElementById('loginModal');
+    const createAdminModal = document.getElementById('createAdminModal');
+    const uploadModal = document.getElementById('uploadModal');
+    const roleBadge = document.getElementById('roleBadge');
+    const modalUploadTitle = document.getElementById('modalUploadTitle');
+    const heroBanner = document.getElementById('heroBanner');
+
+    let allVideos = [];
+    let activeVid = null;
+    let currentMode = 'home';
+    
+    let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    let userRole = localStorage.getItem('userRole') || 'guest';
+
+    function renderUI() {
+      if (isLoggedIn) {
+        btnUpload.style.display = 'flex';
+        btnAdmin.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i>';
+        
+        if (userRole === 'owner') {
+          btnCreateAdmin.style.display = 'flex';
+          roleBadge.innerText = 'STATUS: OWNER UTAMA';
+          roleBadge.style.background = '#8e44ad';
+        } else {
+          btnCreateAdmin.style.display = 'none';
+          roleBadge.innerText = 'STATUS: ADMIN';
+          roleBadge.style.background = '#e67e22';
+        }
+      } else {
+        btnUpload.style.display = 'none';
+        btnCreateAdmin.style.display = 'none';
+        btnAdmin.innerHTML = '<i class="fa-solid fa-user-lock"></i>';
+        roleBadge.innerText = 'STATUS: PENGUNJUNG';
+        roleBadge.style.background = 'var(--accent)';
+      }
+      fetchVideos();
+    }
+
+    function navTo(mode, e) {
+      if (e) e.preventDefault();
+      currentMode = mode;
+      
+      document.querySelectorAll('.nav-menu a').forEach(a => a.classList.remove('active'));
+
+      if (mode === 'home') {
+        document.getElementById('navHome').classList.add('active');
+        heroBanner.style.display = 'flex';
+      } else if (mode === 'film') {
+        document.getElementById('navFilm').classList.add('active');
+        heroBanner.style.display = 'none';
+      } else if (mode === 'tv') {
+        document.getElementById('navTv').classList.add('active');
+        heroBanner.style.display = 'none';
+      }
+      filterVideos();
+    }
+
+    function toggleUploadType() {
+      const type = document.getElementById('uType').value;
+      const catGroup = document.getElementById('catFieldGroup');
+      const label = document.getElementById('labelVideoUrl');
+
+      if (type === 'tv') {
+        catGroup.style.display = 'none';
+        label.innerText = 'Link Siaran TV (Format .m3u8 / Worker):';
+      } else {
+        catGroup.style.display = 'block';
+        label.innerText = 'Link Video / Bunny Embed / YouTube:';
       }
     }
 
-    function renderGrid() {
-      contentGrid.innerHTML = '';
-      if (allContent.length === 0) {
-        contentGrid.innerHTML = `<p style="grid-column: 1/-1; text-align:center; color:var(--text-muted);">Belum ada konten tersedia.</p>`;
-        return;
+    btnAdmin.onclick = () => {
+      if (isLoggedIn) {
+        isLoggedIn = false;
+        userRole = 'guest';
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userRole');
+        renderUI();
+      } else {
+        loginModal.style.display = 'flex';
       }
+    };
 
-      allContent.forEach((item, index) => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-          <img src="${item.logo || 'https://via.placeholder.com/200x120?text=NOVI'}" class="card-img" alt="Poster">
-          <div class="card-body">
-            <div>
-              <div class="card-category">${item.category || 'UMUM'}</div>
-              <div class="card-title">${item.title}</div>
+    btnUpload.onclick = () => {
+      document.getElementById('uploadForm').reset();
+      document.getElementById('editSeriesId').value = '';
+      modalUploadTitle.innerText = 'Tambah Konten Baru';
+      toggleUploadType();
+      uploadModal.style.display = 'flex';
+    };
+
+    btnCreateAdmin.onclick = () => { createAdminModal.style.display = 'flex'; };
+
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+      if (id === 'playerModal') {
+        videoContainer.innerHTML = '';
+        fetchVideos();
+      }
+    }
+
+    document.getElementById('loginForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const u = document.getElementById('userInput').value;
+      const p = document.getElementById('passInput').value;
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          isLoggedIn = true;
+          userRole = data.role;
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('userRole', data.role);
+          closeModal('loginModal');
+          document.getElementById('loginForm').reset();
+          renderUI();
+          alert('Login Berhasil!');
+        } else {
+          alert(data.message || 'Login gagal!');
+        }
+      } catch (err) {
+        alert('Kesalahan koneksi.');
+      }
+    };
+
+    document.getElementById('createAdminForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const newU = document.getElementById('newUserInput').value;
+      const newP = document.getElementById('newPassInput').value;
+
+      try {
+        const res = await fetch('/api/create-admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newUsername: newU, newPassword: newP })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert(data.message);
+          closeModal('createAdminModal');
+          document.getElementById('createAdminForm').reset();
+        } else {
+          alert(data.message || 'Gagal membuat akun.');
+        }
+      } catch (err) {
+        alert('Kesalahan koneksi.');
+      }
+    };
+
+    async function fetchVideos() {
+      try {
+        const res = await fetch('/api/videos');
+        allVideos = await res.json();
+        filterVideos();
+      } catch (err) {
+        console.error('Gagal memuat data:', err);
+      }
+    }
+
+    function createCardHTML(v) {
+      const isTv = v.type === 'tv';
+      return `
+        <div class="poster-card" onclick="openPlayer(${v.id})">
+          ${isLoggedIn ? `
+            <div class="card-actions" style="display:flex;">
+              <button class="btn-edit" onclick="editVid(event, ${v.id})"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-delete-card" onclick="delVid(event, ${v.id})"><i class="fa-solid fa-trash"></i></button>
             </div>
-            ${isAdmin ? `<button class="btn btn-danger" style="padding:4px 8px; font-size:0.7rem; margin-top:8px;" onclick="deleteItem(event, ${index})">Hapus</button>` : ''}
+          ` : ''}
+          <div class="poster-frame">
+            <img src="${v.thumbnail}" class="poster-img" />
+            <div class="hover-overlay"><div class="play-glow-btn"><i class="fa-solid fa-play"></i></div></div>
+            <span class="tag-badge ${isTv ? 'live-badge' : ''}">${isTv ? '🔴 LIVE TV' : 'FILM'}</span>
+          </div>
+          <div class="poster-meta">
+            <div class="poster-title">${v.title}</div>
+            <div class="poster-desc">${v.description}</div>
+            <div class="card-footer-stats">
+              <span><i class="fa-solid fa-eye"></i> ${v.views || 0}</span>
+              <span><i class="fa-solid fa-heart" style="color: var(--accent);"></i> ${v.likes || 0}</span>
+              <span><i class="fa-solid fa-comment"></i> ${v.comments ? v.comments.length : 0}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function filterVideos() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      mainContainer.innerHTML = '';
+
+      if (currentMode === 'home') {
+        let films = allVideos.filter(v => v.type === 'film' || !v.type);
+        let tvs = allVideos.filter(v => v.type === 'tv');
+
+        if (q) {
+          films = films.filter(v => v.title.toLowerCase().includes(q));
+          tvs = tvs.filter(v => v.title.toLowerCase().includes(q));
+        }
+
+        let html = '';
+        html += `
+          <div class="section-block">
+            <div class="section-title"><i class="fa-solid fa-film" style="color: var(--accent);"></i> Koleksi Film & Series</div>
+            <div class="poster-grid">
+              ${films.length > 0 ? films.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada film.</p>'}
+            </div>
           </div>
         `;
-        card.addEventListener('click', (e) => {
-          if (!e.target.classList.contains('btn-danger')) {
-            playVideo(index, item);
-          }
-        });
-        contentGrid.appendChild(card);
-      });
+        html += `
+          <div class="section-block">
+            <div class="section-title"><i class="fa-solid fa-tv" style="color: var(--accent);"></i> Siaran TV Langsung (Live)</div>
+            <div class="poster-grid">
+              ${tvs.length > 0 ? tvs.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada siaran TV.</p>'}
+            </div>
+          </div>
+        `;
+        mainContainer.innerHTML = html;
+
+      } else if (currentMode === 'film') {
+        let films = allVideos.filter(v => v.type === 'film' || !v.type);
+        if (q) films = films.filter(v => v.title.toLowerCase().includes(q));
+
+        mainContainer.innerHTML = `
+          <div class="section-block">
+            <div class="section-title"><i class="fa-solid fa-film" style="color: var(--accent);"></i> Koleksi Film & Series</div>
+            <div class="poster-grid">
+              ${films.length > 0 ? films.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada film.</p>'}
+            </div>
+          </div>
+        `;
+      } else if (currentMode === 'tv') {
+        let tvs = allVideos.filter(v => v.type === 'tv');
+        if (q) tvs = tvs.filter(v => v.title.toLowerCase().includes(q));
+
+        mainContainer.innerHTML = `
+          <div class="section-block">
+            <div class="section-title"><i class="fa-solid fa-tv" style="color: var(--accent);"></i> Siaran TV Langsung (Live)</div>
+            <div class="poster-grid">
+              ${tvs.length > 0 ? tvs.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada siaran TV.</p>'}
+            </div>
+          </div>
+        `;
+      }
     }
 
-    function playVideo(index, item) {
-      currentVideoId = index;
-      currentVideoTitle.innerText = item.title;
-      loadEpisodePlayer(item.src);
-      fetchEngagementData(index);
+    async function openPlayer(id) {
+      const v = allVideos.find(item => item.id === id);
+      if (!v) return;
+      activeVid = v;
+
+      try {
+        await fetch(`/api/videos/${id}/view`, { method: 'POST' });
+        v.views = (v.views || 0) + 1;
+      } catch (err) {
+        console.error(err);
+      }
+
+      mTitle.innerText = v.title;
+      mHeader.innerText = v.title;
+      mDesc.innerText = v.description;
+      viewNum.innerText = v.views || 0;
+      likeNum.innerText = v.likes || 0;
+      renderComments(v.comments || []);
+
+      if (v.episodes && v.episodes.length > 0) {
+        loadEpisodePlayer(v.episodes[0].src);
+      }
+
+      playerModal.style.display = 'flex';
     }
 
-    // Pemutar otomatis tanpa memunculkan pesan peringatan VLC/DRM
     function loadEpisodePlayer(src) {
-      if (src.includes('.mpd')) {
-        videoContainer.innerHTML = `<video src="${src}" controls autoplay style="width:100%; height:100%; position:absolute; inset:0; background:#000;"></video>`;
-      } else if (src.includes('.m3u8') || src.includes('workers.dev')) {
+      // 1. Deteksi Siaran TV (m3u8 / workers.dev)
+      if (src.includes('.m3u8') || src.includes('workers.dev') || src.includes('m3u8')) {
         videoContainer.innerHTML = `<video id="hlsVideo" controls autoplay style="width:100%; height:100%; position:absolute; inset:0;"></video>`;
         const videoElement = document.getElementById('hlsVideo');
+        
         if (Hls.isSupported()) {
           const hls = new Hls();
           hls.loadSource(src);
@@ -384,159 +553,182 @@
         } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
           videoElement.src = src;
         }
-      } else if (src.includes('youtube.com') || src.includes('youtu.be') || src.includes('<iframe')) {
+      } 
+      // 2. Deteksi Bunny.net, YouTube, atau Iframe
+      else if (src.includes('mediadelivery.net') || src.includes('youtube.com') || src.includes('youtu.be') || src.includes('<iframe')) {
         let finalSrc = src;
+
         if (src.includes('<iframe')) {
           const match = src.match(/src="([^"]+)"/);
-          if (match && match[1]) finalSrc = match[1];
+          if (match && match[1]) {
+            finalSrc = match[1];
+          }
         }
-        videoContainer.innerHTML = `<iframe src="${finalSrc}" style="width:100%; height:100%; border:none; position:absolute; inset:0;" allowfullscreen="true"></iframe>`;
-      } else {
+
+        if (src.includes('youtu.be/')) {
+          const id = src.split('youtu.be/')[1].split('?')[0];
+          finalSrc = `https://www.youtube.com/embed/${id}`;
+        } else if (src.includes('/watch?v=')) {
+          const id = src.split('watch?v=')[1].split('&')[0];
+          finalSrc = `https://www.youtube.com/embed/${id}`;
+        }
+
+        if (finalSrc.includes('mediadelivery.net') && finalSrc.includes('muted=true')) {
+          finalSrc = finalSrc.replace('muted=true', 'muted=false');
+        }
+
+        videoContainer.innerHTML = `
+          <iframe 
+            src="${finalSrc}" 
+            style="width:100%; height:100%; border:none; position:absolute; inset:0;" 
+            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen" 
+            allowfullscreen="true">
+          </iframe>`;
+      } 
+      // 3. Video MP4 biasa
+      else {
         videoContainer.innerHTML = `<video src="${src}" controls autoplay preload="metadata" style="width:100%; height:100%; position:absolute; inset:0;"></video>`;
       }
     }
 
-    async function fetchEngagementData(id) {
-      try {
-        const res = await fetch(`/api/content/${id}/engagement`);
-        const data = await res.json();
-        likeCountSpan.innerText = data.likes || 0;
-        if (data.userLiked) {
-          likeBtn.classList.add('liked');
-        } else {
-          likeBtn.classList.remove('liked');
-        }
-        renderComments(data.comments || []);
-      } catch (err) {
-        console.error('Gagal memuat suka/komentar', err);
-      }
-    }
-
-    async function toggleLike() {
-      if (currentVideoId === null) {
-        alert('Pilih video terlebih dahulu!');
+    function renderComments(comments) {
+      cList.innerHTML = '';
+      if (!comments || !comments.length) {
+        cList.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted);">Belum ada komentar.</p>';
         return;
       }
-      try {
-        const res = await fetch(`/api/content/${currentVideoId}/like`, { method: 'POST' });
-        const data = await res.json();
-        likeCountSpan.innerText = data.likes;
-        if (data.liked) {
-          likeBtn.classList.add('liked');
-        } else {
-          likeBtn.classList.remove('liked');
-        }
-      } catch (err) {
-        console.error('Gagal mengirim suka', err);
-      }
+      comments.forEach(c => {
+        const d = document.createElement('div');
+        d.style.cssText = 'background:var(--bg-base); padding:10px 14px; border-radius:10px; border:1px solid var(--border); font-size:0.85rem;';
+        d.innerHTML = `<div>${c.text}</div><div style="font-size:0.7rem; color:var(--text-muted); margin-top:3px;">${c.date}</div>`;
+        cList.appendChild(d);
+      });
     }
 
-    async function postComment(e) {
+    document.getElementById('btnLike').onclick = async () => {
+      if (!activeVid) return;
+      try {
+        const res = await fetch(`/api/videos/${activeVid.id}/like`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          activeVid.likes = data.likes;
+          likeNum.innerText = data.likes;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    document.getElementById('commentForm').onsubmit = async (e) => {
       e.preventDefault();
-      if (currentVideoId === null) {
-        alert('Pilih video terlebih dahulu!');
-        return;
-      }
-      const input = document.getElementById('commentInput');
-      const text = input.value.trim();
-      if (!text) return;
+      if (!activeVid) return;
+      const input = document.getElementById('cInput');
+      const text = input.value;
 
       try {
-        const res = await fetch(`/api/content/${currentVideoId}/comment`, {
+        const res = await fetch(`/api/videos/${activeVid.id}/comment`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text })
         });
-        const comments = await res.json();
-        renderComments(comments);
-        input.value = '';
-      } catch (err) {
-        console.error('Gagal mengirim komentar', err);
-      }
-    }
-
-    function renderComments(comments) {
-      commentsList.innerHTML = '';
-      if (!comments || comments.length === 0) {
-        commentsList.innerHTML = `<div style="color: var(--text-muted); font-size: 0.82rem; text-align: center; margin-top: 20px;">Belum ada komentar.</div>`;
-        return;
-      }
-      comments.forEach(c => {
-        const div = document.createElement('div');
-        div.className = 'comment-item';
-        div.innerText = c;
-        commentsList.appendChild(div);
-      });
-    }
-
-    loginBtn.addEventListener('click', () => {
-      if (!isAdmin) {
-        const pwd = prompt('Masukkan Password Admin:');
-        if (pwd === 'admin123' || pwd === 'novi') {
-          isAdmin = true;
-          loginBtn.innerText = 'Logout Admin';
-          loginBtn.style.background = var(--danger);
-          loginBtn.style.color = '#fff';
-          openModalBtn.style.display = 'inline-block';
-          alert('Berhasil Login Admin!');
-          renderGrid();
-        } else {
-          alert('Password salah!');
+        const data = await res.json();
+        if (data.success) {
+          activeVid.comments = data.comments;
+          renderComments(activeVid.comments);
+          input.value = '';
         }
-      } else {
-        isAdmin = false;
-        loginBtn.innerText = 'Login Admin';
-        loginBtn.style.background = 'var(--accent)';
-        loginBtn.style.color = '#0f172a';
-        openModalBtn.style.display = 'none';
-        renderGrid();
+      } catch (err) {
+        console.error(err);
       }
-    });
+    };
 
-    openModalBtn.addEventListener('click', () => { addModal.style.display = 'flex'; });
-    closeModalBtn.addEventListener('click', () => { addModal.style.display = 'none'; });
+    function editVid(e, id) {
+      e.stopPropagation();
+      const v = allVideos.find(item => item.id === id);
+      if (!v) return;
 
-    addForm.addEventListener('submit', async (e) => {
+      document.getElementById('editSeriesId').value = v.id;
+      document.getElementById('uType').value = v.type || 'film';
+      document.getElementById('uTitle').value = v.title;
+      document.getElementById('uCat').value = v.category || 'Animasi';
+      document.getElementById('uDesc').value = v.description;
+      document.getElementById('uThumb').value = v.thumbnail;
+      if (v.episodes && v.episodes.length > 0) {
+        document.getElementById('uVideoUrl').value = v.episodes[0].src;
+      }
+      
+      toggleUploadType();
+      modalUploadTitle.innerText = 'Edit Konten';
+      uploadModal.style.display = 'flex';
+    }
+
+    async function delVid(e, id) {
+      e.stopPropagation();
+      if (!confirm("Hapus konten ini?")) return;
+      try {
+        const res = await fetch(`/api/videos/${id}`, { method: 'DELETE' });
+        if (res.ok) fetchVideos();
+        else alert("Gagal menghapus.");
+      } catch (err) {
+        alert("Gagal menghapus.");
+      }
+    }
+
+    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
       e.preventDefault();
-      const newItem = {
-        title: document.getElementById('itemTitle').value,
-        category: document.getElementById('itemCategory').value,
-        src: document.getElementById('itemSrc').value,
-        logo: document.getElementById('itemLogo').value
+      
+      const submitBtn = document.getElementById('btnSubmitUpload');
+      submitBtn.innerText = 'Sedang Menyimpan...';
+      submitBtn.disabled = true;
+
+      const type = document.getElementById('uType').value;
+      const title = document.getElementById('uTitle').value;
+      const category = document.getElementById('uCat').value;
+      const description = document.getElementById('uDesc').value;
+      const thumbnail = document.getElementById('uThumb').value;
+      const videoUrl = document.getElementById('uVideoUrl').value;
+      const id = document.getElementById('editSeriesId').value;
+
+      const payload = {
+        id: id || undefined,
+        type,
+        title,
+        category,
+        description,
+        thumbnail,
+        videoUrl
       };
 
       try {
-        const res = await fetch('/api/content', {
+        const res = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newItem)
+          body: JSON.stringify(payload)
         });
-        if (res.ok) {
-          addModal.style.display = 'none';
-          addForm.reset();
-          fetchContent();
-          alert('Konten berhasil ditambahkan!');
+        
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert('Konten Berhasil Disimpan!');
+          closeModal('uploadModal');
+          document.getElementById('uploadForm').reset();
+          fetchVideos();
         } else {
-          alert('Gagal menyimpan.');
+          alert('Gagal: ' + (data.message || 'Kesalahan server'));
         }
       } catch (err) {
-        alert('Kesalahan jaringan.');
+        console.error(err);
+        alert('Terjadi kesalahan koneksi.');
+      } finally {
+        submitBtn.innerText = 'Simpan Konten';
+        submitBtn.disabled = false;
       }
     });
 
-    async function deleteItem(e, index) {
-      e.stopPropagation();
-      if (confirm('Yakin ingin menghapus konten ini?')) {
-        try {
-          await fetch(`/api/content/${index}`, { method: 'DELETE' });
-          fetchContent();
-        } catch (err) {
-          alert('Gagal menghapus.');
-        }
-      }
-    }
-
-    fetchContent();
+    renderUI();
   </script>
+
+  <footer style="text-align: center; padding: 24px; border-top: 1px solid var(--border); margin-top: 48px; color: var(--text-muted); font-size: 0.82rem;">
+    <p>Platform Streaming <span style="color: var(--accent); font-weight: 700;">NOVI</span> &copy; 2026. Dibuat dan dikembangkan oleh <strong style="color: #fff;">Fikri Al</strong>.</p>
+  </footer>
 </body>
 </html>
