@@ -61,7 +61,7 @@
     .btn-owner { background: #8e44ad; }
     .btn-import { background: #27ae60; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4); }
     .btn-delete-bulk { background: #c0392b; box-shadow: 0 4px 15px rgba(192, 57, 43, 0.4); display: none; }
-    .btn-edit { background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
+    .btn-edit { background: #f39c12; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
     .btn-small-action { background: rgba(255,255,255,0.1); border: 1px solid var(--border); color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600; }
 
     .content-container { max-width: 1400px; margin: 0 auto; padding: 24px; }
@@ -82,21 +82,21 @@
     .poster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
     .poster-card {
       background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border);
-      overflow: hidden; cursor: pointer; transition: all 0.25s ease; position: relative; display: flex; flex-direction: column;
+      overflow: hidden; transition: all 0.25s ease; position: relative; display: flex; flex-direction: column;
     }
     .poster-card:hover { transform: translateY(-4px); border-color: var(--accent); }
 
-    .poster-frame { width: 100%; aspect-ratio: 16/10; background: #000; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    .poster-frame { width: 100%; aspect-ratio: 16/10; background: #000; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: pointer; }
     .poster-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
-    .poster-card:hover .poster-img { transform: scale(1.05); }
+    .poster-frame:hover .poster-img { transform: scale(1.05); }
 
     .hover-overlay {
       position: absolute; inset: 0; background: rgba(0,0,0,0.4);
-      display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;
+      display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease; pointer-events: none;
     }
-    .poster-card:hover .hover-overlay { opacity: 1; }
+    .poster-frame:hover .hover-overlay { opacity: 1; }
     .play-glow-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.95rem; }
-    .tag-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); color: #fff; font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
+    .tag-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); color: #fff; font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; pointer-events: none; }
     .live-badge { background: #e50914; animation: pulse 1.5s infinite; }
 
     @keyframes pulse {
@@ -106,12 +106,14 @@
     }
 
     .poster-meta { padding: 14px; flex: 1; display: flex; flex-direction: column; }
-    .poster-title { font-size: 0.88rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .poster-title { font-size: 0.88rem; font-weight: 700; color: #fff; margin-bottom: 4px; cursor: pointer; }
+    .poster-title:hover { color: var(--accent); }
     .poster-desc { font-size: 0.75rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 10px; line-height: 1.3; }
+    
+    .admin-action-bar { display: flex; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
     .card-footer-stats { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); }
 
-    .card-actions { position: absolute; top: 10px; right: 10px; z-index: 25; display: none; gap: 4px; }
-    .btn-delete-card { background: rgba(231, 76, 60, 0.9); color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
+    .btn-delete-card { background: rgba(231, 76, 60, 0.9); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
 
     .bulk-checkbox {
       position: absolute; top: 10px; left: 10px; z-index: 25; width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent); display: none;
@@ -496,24 +498,26 @@
       const isTv = v.type === 'tv';
       const totalEps = v.episodes ? v.episodes.length : 0;
       return `
-        <div class="poster-card" onclick="openPlayer(${v.id})">
+        <div class="poster-card">
           ${userRole === 'owner' ? `
-            <input type="checkbox" class="bulk-checkbox" value="${v.id}" onclick="event.stopPropagation()" style="display: block;" />
+            <input type="checkbox" class="bulk-checkbox" value="${v.id}" />
           ` : ''}
-          ${isLoggedIn ? `
-            <div class="card-actions" style="display:flex;">
-              <button type="button" class="btn-edit" onclick="editVid(event, ${v.id})"><i class="fa-solid fa-pen"></i></button>
-              <button type="button" class="btn-delete-card" onclick="delVid(event, ${v.id})"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          ` : ''}
-          <div class="poster-frame">
+          <div class="poster-frame" onclick="openPlayer(${v.id})">
             <img src="${v.thumbnail}" class="poster-img" />
             <div class="hover-overlay"><div class="play-glow-btn"><i class="fa-solid fa-play"></i></div></div>
             <span class="tag-badge ${isTv ? 'live-badge' : ''}">${isTv ? '🔴 LIVE TV' : (totalEps > 1 ? totalEps + ' EPS' : 'FILM')}</span>
           </div>
           <div class="poster-meta">
-            <div class="poster-title">${v.title}</div>
+            <div class="poster-title" onclick="openPlayer(${v.id})">${v.title}</div>
             <div class="poster-desc">${v.description}</div>
+            
+            ${isLoggedIn ? `
+              <div class="admin-action-bar">
+                <button type="button" class="btn-edit" onclick="editVid(event, ${v.id})"><i class="fa-solid fa-pen"></i> Edit</button>
+                <button type="button" class="btn-delete-card" onclick="delVid(event, ${v.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
+              </div>
+            ` : ''}
+
             <div class="card-footer-stats">
               <span><i class="fa-solid fa-eye"></i> ${v.views || 0}</span>
               <span><i class="fa-solid fa-heart" style="color: var(--accent);"></i> ${v.likes || 0}</span>
@@ -751,9 +755,8 @@
       }
     };
 
-    // Fungsi Edit yang Sekarang Aman dari Bug Fullscreen Player
     function editVid(e, id) {
-      e.stopPropagation(); // Mencegah event klik merembet ke kartu poster
+      e.stopPropagation();
       const v = allVideos.find(item => item.id == id);
       if (!v) return;
 
@@ -779,7 +782,7 @@
     }
 
     async function delVid(e, id) {
-      e.stopPropagation(); // Mencegah event klik merembet ke kartu poster
+      e.stopPropagation();
       if (!confirm("Hapus konten ini?")) return;
       try {
         const res = await fetch(`/api/videos/${id}`, { method: 'DELETE' });
