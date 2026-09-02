@@ -3,607 +3,343 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NOVI - Premium Streaming & Live TV</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>NOVI - Platform Streaming Video Modern</title>
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
+
   <style>
-    :root {
-      --bg-base: #050608;
-      --bg-surface: #0f111a;
-      --bg-card: #141722;
-      --accent: #e50914;
-      --accent-glow: rgba(229, 9, 20, 0.4);
-      --text-main: #ffffff;
-      --text-muted: #8c95a5;
-      --border: #212636;
-      --radius: 16px;
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    
+    body { 
+      background-color: #0b0c10; 
+      color: #c5c6c7; 
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-    body { background-color: var(--bg-base); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
-
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: var(--bg-base); }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
     header {
-      background: rgba(5, 6, 8, 0.95); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border);
-      padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;
-      flex-wrap: wrap; gap: 12px;
+      background: #1f2833;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #28313b;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
-    .brand { display: flex; align-items: center; gap: 24px; }
-    .logo { font-size: 1.6rem; font-weight: 800; color: #fff; text-decoration: none; letter-spacing: -0.5px; }
-    .logo span { color: var(--accent); }
-
-    .nav-menu { display: flex; gap: 18px; list-style: none; }
-    .nav-menu a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.88rem; transition: color 0.2s; cursor: pointer; }
-    .nav-menu a:hover, .nav-menu a.active { color: #fff; }
-
-    .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-
-    .search-input-group {
-      display: flex; align-items: center; background: var(--bg-surface); border: 1px solid var(--border);
-      border-radius: 30px; padding: 8px 16px; width: 220px;
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #66fcf1;
+      letter-spacing: 1px;
     }
-    .search-input-group input { background: none; border: none; color: #fff; width: 100%; outline: none; margin-left: 8px; font-size: 0.85rem; }
+
+    .nav-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
 
     .btn {
-      background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 30px; font-weight: 700;
-      cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.25s ease; font-size: 0.82rem; box-shadow: 0 4px 15px var(--accent-glow);
-      white-space: nowrap;
-    }
-    .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
-    .btn-glass { background: rgba(255,255,255,0.06); border: 1px solid var(--border); box-shadow: none; }
-    .btn-glass:hover { background: rgba(255,255,255,0.12); }
-    .btn-owner { background: #8e44ad; }
-    .btn-import { background: #27ae60; }
-    .btn-edit { background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
-
-    .content-container { max-width: 1400px; margin: 0 auto; padding: 24px; }
-
-    .hero-featured {
-      width: 100%; height: 220px; border-radius: 20px;
-      background: linear-gradient(180deg, rgba(5,6,8,0.2) 0%, rgba(5,6,8,0.95) 100%), 
-                  url('https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
-      border: 1px solid var(--border); margin-bottom: 32px; display: flex; flex-direction: column; justify-content: flex-end; padding: 24px;
-    }
-    .hero-badge { background: var(--accent); color: white; font-size: 0.7rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; width: fit-content; margin-bottom: 8px; text-transform: uppercase; }
-    .hero-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; }
-    .hero-subtitle { color: var(--text-muted); font-size: 0.85rem; max-width: 500px; line-height: 1.4; }
-
-    .section-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-    .section-block { margin-bottom: 40px; }
-
-    .poster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
-    .poster-card {
-      background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border);
-      overflow: hidden; cursor: pointer; transition: all 0.25s ease; position: relative; display: flex; flex-direction: column;
-    }
-    .poster-card:hover { transform: translateY(-4px); border-color: var(--accent); }
-
-    .poster-frame { width: 100%; aspect-ratio: 16/10; background: #000; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-    .poster-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
-    .poster-card:hover .poster-img { transform: scale(1.05); }
-
-    .hover-overlay {
-      position: absolute; inset: 0; background: rgba(0,0,0,0.4);
-      display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;
-    }
-    .poster-card:hover .hover-overlay { opacity: 1; }
-    .play-glow-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.95rem; }
-    .tag-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); color: #fff; font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
-    .live-badge { background: #e50914; animation: pulse 1.5s infinite; }
-
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.4; }
-      100% { opacity: 1; }
+      background: #45a29e;
+      color: #0b0c10;
+      border: none;
+      padding: 8px 16px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: 0.2s;
+      font-size: 0.85rem;
     }
 
-    .poster-meta { padding: 14px; flex: 1; display: flex; flex-direction: column; }
-    .poster-title { font-size: 0.88rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
-    .poster-desc { font-size: 0.75rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 10px; line-height: 1.3; }
-    .card-footer-stats { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); }
+    .btn:hover { background: #66fcf1; }
+    .btn-danger { background: #e74c3c; color: #fff; }
+    .btn-danger:hover { background: #c0392b; }
 
-    .card-actions { position: absolute; top: 10px; right: 10px; z-index: 10; display: none; gap: 4px; }
-    .btn-delete-card { background: rgba(231, 76, 60, 0.9); color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
+    .main-container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 20px;
+      flex: 1;
+      width: 100%;
+    }
 
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 12px; overflow-y: auto; }
-    .modal-box-wide { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 900px; max-height: 92vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
-    
-    .video-viewport { width: 100%; background: #000; position: relative; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; }
-    video, iframe { width: 100% !important; height: 100% !important; border: none; outline: none; position: absolute; inset: 0; }
+    /* Player Section */
+    .player-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* Rasio 16:9 */
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 25px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    }
 
-    .modal-body-padding { padding: 20px; }
-    .form-input-dark { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-base); color: white; margin-bottom: 12px; outline: none; font-size: 0.88rem; }
+    .video-container {
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #66fcf1;
+      font-size: 1rem;
+    }
 
-    @media (min-width: 768px) {
-      header { padding: 16px 48px; }
-      .content-container { padding: 32px 48px; }
-      .poster-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 24px; }
-      .hero-featured { height: 260px; padding: 32px; }
-      .hero-title { font-size: 2rem; }
-      .modal-body-padding { padding: 32px; }
+    /* Grid Konten & Channel */
+    .section-title {
+      font-size: 1.2rem;
+      color: #fff;
+      margin-bottom: 15px;
+      border-left: 4px solid #66fcf1;
+      padding-left: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+    }
+
+    .card {
+      background: #1f2833;
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 1px solid #28313b;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 15px rgba(102, 252, 241, 0.15);
+      border-color: #66fcf1;
+    }
+
+    .card-img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      background: #0b0c10;
+    }
+
+    .card-body {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 5px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-category {
+      font-size: 0.7rem;
+      color: #45a29e;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    /* Modal Form */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 15px;
+    }
+
+    .modal-content {
+      background: #1f2833;
+      padding: 25px;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 450px;
+      border: 1px solid #45a29e;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      margin-bottom: 5px;
+      color: #c5c6c7;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 8px 12px;
+      background: #0b0c10;
+      border: 1px solid #28313b;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: #66fcf1;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="brand">
-      <a href="#" class="logo" onclick="navTo('home', event)">NOV<span>I</span></a>
-      <ul class="nav-menu">
-        <li><a href="#" id="navHome" class="active" onclick="navTo('home', event)">Beranda</a></li>
-        <li><a href="#" id="navFilm" onclick="navTo('film', event)">Film & Series</a></li>
-        <li><a href="#" id="navTv" onclick="navTo('tv', event)">Siaran TV</a></li>
-      </ul>
-    </div>
-
-    <div class="header-right">
-      <div class="search-input-group">
-        <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
-        <input type="text" id="searchInput" placeholder="Cari..." oninput="filterVideos()">
-      </div>
-
-      <button class="btn btn-owner" id="btnCreateAdmin" style="display: none;"><i class="fa-solid fa-user-plus"></i></button>
-      <button class="btn btn-import" id="btnImportM3U" style="display: none;"><i class="fa-solid fa-file-arrow-down"></i> Import M3U</button>
-      <button class="btn" id="btnUpload" style="display: none;"><i class="fa-solid fa-plus"></i> Tambah</button>
-      <button class="btn btn-glass" id="btnAdmin"><i class="fa-solid fa-user-lock"></i> Login</button>
+    <div class="logo"><i class="fa-solid fa-play-circle"></i> NOVI STREAM</div>
+    <div class="nav-controls">
+      <button class="btn" id="openModalBtn" style="display:none;"><i class="fa-solid fa-plus"></i> Tambah</button>
+      <button class="btn" id="loginBtn">Login Admin</button>
     </div>
   </header>
 
-  <div class="content-container">
-    <div class="hero-featured" id="heroBanner">
-      <span class="hero-badge" id="roleBadge">PENGUNJUNG</span>
-      <h1 class="hero-title" id="heroTitle">Platform Streaming NOVI</h1>
-      <p class="hero-subtitle" id="heroSubtitle">Nikmati koleksi film serial dan siaran TV langsung berkualitas tinggi.</p>
-    </div>
-
-    <div id="dynamicMainContent"></div>
-  </div>
-
-  <div class="modal-backdrop" id="playerModal">
-    <div class="modal-box-wide">
-      <div style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
-        <h3 id="mTitle" style="font-size: 0.95rem; font-weight: 700;">NOVI Player</h3>
-        <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.2rem; color: var(--text-muted);" onclick="closeModal('playerModal')"></i>
-      </div>
-      <div class="video-viewport" id="videoContainer"></div>
-      
-      <div class="modal-body-padding">
-        <h2 id="mHeader" style="font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;"></h2>
-        <p id="mDesc" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 12px; line-height: 1.5;"></p>
-        
-        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px;">
-          <span><i class="fa-solid fa-eye"></i> <span id="viewNum">0</span> Penonton</span>
-        </div>
-
-        <button class="btn btn-glass" id="btnLike" style="margin-bottom: 24px;"><i class="fa-solid fa-heart" style="color: var(--accent);"></i> <span id="likeNum">0</span> Suka</button>
-
-        <h4 style="margin-bottom: 10px; font-weight: 700; font-size: 0.95rem;">Komentar Pengguna</h4>
-        <form id="commentForm" style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
-          <input type="text" id="cInput" class="form-input-dark" style="margin: 0; flex: 1; min-width: 200px;" placeholder="Tulis tanggapan..." required />
-          <button type="submit" class="btn" style="padding: 0 20px;">Kirim</button>
-        </form>
-        <div id="cList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+  <div class="main-container">
+    <div class="player-wrapper">
+      <div class="video-container" id="videoContainer">
+        <p>Pilih salah satu siaran di bawah untuk mulai menonton</p>
       </div>
     </div>
+
+    <div class="section-title">Daftar Siaran & Video</div>
+    <div class="grid" id="contentGrid">
+      </div>
   </div>
 
-  <div class="modal-backdrop" id="loginModal">
-    <div class="modal-box-wide" style="max-width: 380px; padding: 24px;">
-      <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800;">Login Owner / Admin</h3>
-      <form id="loginForm">
-        <input type="text" id="userInput" class="form-input-dark" placeholder="Username (Cth: owner)" required />
-        <input type="password" id="passInput" class="form-input-dark" placeholder="Password (Cth: 123)" required />
-        <button type="submit" class="btn" style="width: 100%; justify-content: center; margin-top: 6px;">Masuk</button>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="importM3UModal">
-    <div class="modal-box-wide" style="max-width: 600px; padding: 24px;">
-      <h3 style="margin-bottom: 12px; font-size: 1.2rem; font-weight: 800; color: #27ae60;"><i class="fa-solid fa-file-arrow-down"></i> Import Playlist M3U Massal</h3>
-      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">Tempelkan seluruh kode teks M3U (#EXTM3U ...) Anda di bawah ini untuk memasukkan ratusan channel sekaligus secara otomatis.</p>
-      <form id="importM3UForm">
-        <textarea id="m3uTextArea" class="form-input-dark" style="height: 250px; resize: vertical; font-family: monospace; font-size: 0.75rem;" placeholder="#EXTM3U..." required></textarea>
-        <button type="submit" class="btn btn-import" id="btnSubmitImport" style="width: 100%; justify-content: center; margin-top: 6px;">Proses & Masukkan Semua Channel</button>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="createAdminModal">
-    <div class="modal-box-wide" style="max-width: 380px; padding: 24px;">
-      <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800; color: #8e44ad;">Buat Akun Admin Baru</h3>
-      <form id="createAdminForm">
-        <input type="text" id="newUserInput" class="form-input-dark" placeholder="Username Admin Baru" required />
-        <input type="password" id="newPassInput" class="form-input-dark" placeholder="Password Admin Baru" required />
-        <button type="submit" class="btn btn-owner" style="width: 100%; justify-content: center; margin-top: 6px;">Buat Akun</button>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="uploadModal">
-    <div class="modal-box-wide" style="max-width: 500px; padding: 24px;">
-      <h3 id="modalUploadTitle" style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800;">Tambah Konten Baru</h3>
-      <form id="uploadForm">
-        <input type="hidden" id="editSeriesId" value="" />
-        
-        <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Pilih Jenis Konten:</label>
-        <select id="uType" class="form-input-dark" onchange="toggleUploadType()">
-          <option value="film">Film / Series / Premium Movies</option>
-          <option value="tv">Siaran TV Live Streaming</option>
-        </select>
-
-        <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Film atau Nama Channel TV" required />
-        
-        <div id="catFieldGroup">
-          <select id="uCat" class="form-input-dark">
-            <option value="INDONESIA">INDONESIA</option>
-            <option value="Sports">Sports</option>
-            <option value="KIDS">KIDS</option>
-            <option value="Entertainment & LifeStyle">Entertainment & LifeStyle</option>
-            <option value="KNOWLEDGE & DOCUMENTARY">KNOWLEDGE & DOCUMENTARY</option>
-            <option value="Premium Movies">Premium Movies</option>
-          </select>
+  <div class="modal" id="addModal">
+    <div class="modal-content">
+      <h3 style="color:#fff; margin-bottom:15px; font-size:1.1rem;">Tambah Konten / Siaran Baru</h3>
+      <form id="addForm">
+        <div class="form-group">
+          <label>Judul Siaran / Film</label>
+          <input type="text" id="itemTitle" class="form-control" required placeholder="Contoh: RCTI Live / Film A">
         </div>
-
-        <textarea id="uDesc" class="form-input-dark" style="height: 70px; resize: none;" placeholder="Deskripsi Singkat"></textarea>
-        <input type="text" id="uThumb" class="form-input-dark" placeholder="Link Gambar Cover Poster (Opsional)" />
-
-        <hr style="border: 0; border-top: 1px solid var(--border); margin: 14px 0;">
-        
-        <label id="labelVideoUrl" style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Link Streaming (.m3u8 / .mpd / Worker):</label>
-        <input type="text" id="uVideoUrl" class="form-input-dark" placeholder="Tempel link streaming di sini" required style="margin:0;" />
-
-        <button type="submit" class="btn" id="btnSubmitUpload" style="width: 100%; justify-content: center; margin-top: 16px;">Simpan Konten</button>
+        <div class="form-group">
+          <label>Kategori / Grup</label>
+          <input type="text" id="itemCategory" class="form-control" required placeholder="Contoh: NASIONAL / SPORT">
+        </div>
+        <div class="form-group">
+          <label>Link Streaming (.mpd, .m3u8, dll)</label>
+          <input type="text" id="itemSrc" class="form-control" required placeholder="Tempel URL link streaming di sini">
+        </div>
+        <div class="form-group">
+          <label>Link Logo / Poster (Opsional)</label>
+          <input type="text" id="itemLogo" class="form-control" placeholder="URL gambar poster">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn" id="closeModalBtn" style="background:#555; color:#fff;">Batal</button>
+          <button type="submit" class="btn" id="submitBtn">Simpan</button>
+        </div>
       </form>
     </div>
   </div>
+
+  <footer style="text-align: center; padding: 24px; border-top: 1px solid #28313b; margin-top: 48px; color: #8c95a5; font-size: 0.82rem;">
+    <p>Platform Streaming <span style="color: #66fcf1; font-weight: 700;">NOVI</span> &copy; 2026. Dibuat dan dikembangkan oleh <strong style="color: #fff;">Fikri Al</strong>.</p>
+  </footer>
 
   <script>
-    const mainContainer = document.getElementById('dynamicMainContent');
-    const playerModal = document.getElementById('playerModal');
+    let isAdmin = false;
+    let allContent = [];
+
     const videoContainer = document.getElementById('videoContainer');
-    const mTitle = document.getElementById('mTitle');
-    const mHeader = document.getElementById('mHeader');
-    const mDesc = document.getElementById('mDesc');
-    const viewNum = document.getElementById('viewNum');
-    const likeNum = document.getElementById('likeNum');
-    const cList = document.getElementById('cList');
+    const contentGrid = document.getElementById('contentGrid');
+    const loginBtn = document.getElementById('loginBtn');
+    const openModalBtn = document.getElementById('openModalBtn');
+    const addModal = document.getElementById('addModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const addForm = document.getElementById('addForm');
 
-    const btnUpload = document.getElementById('btnUpload');
-    const btnImportM3U = document.getElementById('btnImportM3U');
-    const btnCreateAdmin = document.getElementById('btnCreateAdmin');
-    const btnAdmin = document.getElementById('btnAdmin');
-    const loginModal = document.getElementById('loginModal');
-    const importM3UModal = document.getElementById('importM3UModal');
-    const createAdminModal = document.getElementById('createAdminModal');
-    const uploadModal = document.getElementById('uploadModal');
-    const roleBadge = document.getElementById('roleBadge');
-    const modalUploadTitle = document.getElementById('modalUploadTitle');
-    const heroBanner = document.getElementById('heroBanner');
-
-    let allVideos = [];
-    let activeVid = null;
-    let currentMode = 'home';
-    
-    let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    let userRole = localStorage.getItem('userRole') || 'guest';
-
-    function renderUI() {
-      if (isLoggedIn) {
-        btnUpload.style.display = 'flex';
-        btnImportM3U.style.display = 'flex';
-        btnAdmin.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i>';
-        
-        if (userRole === 'owner') {
-          btnCreateAdmin.style.display = 'flex';
-          roleBadge.innerText = 'STATUS: OWNER UTAMA';
-          roleBadge.style.background = '#8e44ad';
-        } else {
-          btnCreateAdmin.style.display = 'none';
-          roleBadge.innerText = 'STATUS: ADMIN';
-          roleBadge.style.background = '#e67e22';
-        }
-      } else {
-        btnUpload.style.display = 'none';
-        btnImportM3U.style.display = 'none';
-        btnCreateAdmin.style.display = 'none';
-        btnAdmin.innerHTML = '<i class="fa-solid fa-user-lock"></i>';
-        roleBadge.innerText = 'STATUS: PENGUNJUNG';
-        roleBadge.style.background = 'var(--accent)';
-      }
-      fetchVideos();
-    }
-
-    function navTo(mode, e) {
-      if (e) e.preventDefault();
-      currentMode = mode;
-      
-      document.querySelectorAll('.nav-menu a').forEach(a => a.classList.remove('active'));
-
-      if (mode === 'home') {
-        document.getElementById('navHome').classList.add('active');
-        heroBanner.style.display = 'flex';
-      } else if (mode === 'film') {
-        document.getElementById('navFilm').classList.add('active');
-        heroBanner.style.display = 'none';
-      } else if (mode === 'tv') {
-        document.getElementById('navTv').classList.add('active');
-        heroBanner.style.display = 'none';
-      }
-      filterVideos();
-    }
-
-    function toggleUploadType() {
-      const type = document.getElementById('uType').value;
-      const label = document.getElementById('labelVideoUrl');
-      if (type === 'tv') {
-        label.innerText = 'Link Siaran TV (Format .m3u8 / .mpd / Worker):';
-      } else {
-        label.innerText = 'Link Film / Premium Movies (.mpd / .m3u8):';
-      }
-    }
-
-    btnAdmin.onclick = () => {
-      if (isLoggedIn) {
-        isLoggedIn = false;
-        userRole = 'guest';
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userRole');
-        renderUI();
-      } else {
-        loginModal.style.display = 'flex';
-      }
-    };
-
-    btnUpload.onclick = () => {
-      document.getElementById('uploadForm').reset();
-      document.getElementById('editSeriesId').value = '';
-      modalUploadTitle.innerText = 'Tambah Konten Baru';
-      toggleUploadType();
-      uploadModal.style.display = 'flex';
-    };
-
-    btnImportM3U.onclick = () => {
-      document.getElementById('importM3UForm').reset();
-      importM3UModal.style.display = 'flex';
-    };
-
-    btnCreateAdmin.onclick = () => { createAdminModal.style.display = 'flex'; };
-
-    function closeModal(id) {
-      document.getElementById(id).style.display = 'none';
-      if (id === 'playerModal') {
-        videoContainer.innerHTML = '';
-        fetchVideos();
-      }
-    }
-
-    document.getElementById('loginForm').onsubmit = async (e) => {
-      e.preventDefault();
-      const u = document.getElementById('userInput').value;
-      const p = document.getElementById('passInput').value;
-
+    // Ambil data dari backend / database
+    async function fetchContent() {
       try {
-        const res = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: u, password: p })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          isLoggedIn = true;
-          userRole = data.role;
-          localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('userRole', data.role);
-          closeModal('loginModal');
-          document.getElementById('loginForm').reset();
-          renderUI();
-          alert('Login Berhasil!');
-        } else {
-          alert(data.message || 'Login gagal!');
-        }
+        const res = await fetch('/api/content');
+        allContent = await res.json();
+        renderGrid();
       } catch (err) {
-        alert('Kesalahan koneksi.');
-      }
-    };
-
-    document.getElementById('importM3UForm').onsubmit = async (e) => {
-      e.preventDefault();
-      const m3uText = document.getElementById('m3uTextArea').value;
-      const btn = document.getElementById('btnSubmitImport');
-      btn.innerText = 'Memproses...';
-      btn.disabled = true;
-
-      try {
-        const res = await fetch('/api/import-m3u', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ m3uText })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          alert(data.message);
-          closeModal('importM3UModal');
-          fetchVideos();
-        } else {
-          alert(data.message || 'Gagal mengimpor M3U.');
-        }
-      } catch (err) {
-        alert('Terjadi kesalahan koneksi.');
-      } finally {
-        btn.innerText = 'Proses & Masukkan Semua Channel';
-        btn.disabled = false;
-      }
-    };
-
-    document.getElementById('createAdminForm').onsubmit = async (e) => {
-      e.preventDefault();
-      const newU = document.getElementById('newUserInput').value;
-      const newP = document.getElementById('newPassInput').value;
-
-      try {
-        const res = await fetch('/api/create-admin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ newUsername: newU, newPassword: newP })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          alert(data.message);
-          closeModal('createAdminModal');
-          document.getElementById('createAdminForm').reset();
-        } else {
-          alert(data.message || 'Gagal membuat akun.');
-        }
-      } catch (err) {
-        alert('Kesalahan koneksi.');
-      }
-    };
-
-    async function fetchVideos() {
-      try {
-        const res = await fetch('/api/videos');
-        allVideos = await res.json();
-        filterVideos();
-      } catch (err) {
-        console.error('Gagal memuat data:', err);
+        console.error('Gagal memuat data konten:', err);
       }
     }
 
-    function createCardHTML(v) {
-      const isTv = v.type === 'tv';
-      return `
-        <div class="poster-card" onclick="openPlayer(${v.id})">
-          ${isLoggedIn ? `
-            <div class="card-actions" style="display:flex;">
-              <button class="btn-edit" onclick="editVid(event, ${v.id})"><i class="fa-solid fa-pen"></i></button>
-              <button class="btn-delete-card" onclick="delVid(event, ${v.id})"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          ` : ''}
-          <div class="poster-frame">
-            <img src="${v.thumbnail}" class="poster-img" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80'" />
-            <div class="hover-overlay"><div class="play-glow-btn"><i class="fa-solid fa-play"></i></div></div>
-            <span class="tag-badge ${isTv ? 'live-badge' : ''}">${v.category || (isTv ? '🔴 LIVE TV' : 'FILM')}</span>
-          </div>
-          <div class="poster-meta">
-            <div class="poster-title">${v.title}</div>
-            <div class="poster-desc">${v.description}</div>
-            <div class="card-footer-stats">
-              <span><i class="fa-solid fa-eye"></i> ${v.views || 0}</span>
-              <span><i class="fa-solid fa-heart" style="color: var(--accent);"></i> ${v.likes || 0}</span>
-              <span><i class="fa-solid fa-comment"></i> ${v.comments ? v.comments.length : 0}</span>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function filterVideos() {
-      const q = document.getElementById('searchInput').value.toLowerCase();
-      mainContainer.innerHTML = '';
-
-      if (currentMode === 'home') {
-        let films = allVideos.filter(v => v.type === 'film' || v.category === 'Premium Movies');
-        let tvs = allVideos.filter(v => v.type === 'tv' && v.category !== 'Premium Movies');
-
-        if (q) {
-          films = films.filter(v => v.title.toLowerCase().includes(q));
-          tvs = tvs.filter(v => v.title.toLowerCase().includes(q));
-        }
-
-        let html = '';
-        html += `
-          <div class="section-block">
-            <div class="section-title"><i class="fa-solid fa-film" style="color: var(--accent);"></i> Film & Premium Movies</div>
-            <div class="poster-grid">
-              ${films.length > 0 ? films.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada film.</p>'}
-            </div>
-          </div>
-        `;
-        html += `
-          <div class="section-block">
-            <div class="section-title"><i class="fa-solid fa-tv" style="color: var(--accent);"></i> Siaran TV & Live Streaming</div>
-            <div class="poster-grid">
-              ${tvs.length > 0 ? tvs.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada siaran TV.</p>'}
-            </div>
-          </div>
-        `;
-        mainContainer.innerHTML = html;
-
-      } else if (currentMode === 'film') {
-        let films = allVideos.filter(v => v.type === 'film' || v.category === 'Premium Movies');
-        if (q) films = films.filter(v => v.title.toLowerCase().includes(q));
-
-        mainContainer.innerHTML = `
-          <div class="section-block">
-            <div class="section-title"><i class="fa-solid fa-film" style="color: var(--accent);"></i> Film & Premium Movies</div>
-            <div class="poster-grid">
-              ${films.length > 0 ? films.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada film.</p>'}
-            </div>
-          </div>
-        `;
-      } else if (currentMode === 'tv') {
-        let tvs = allVideos.filter(v => v.type === 'tv');
-        if (q) tvs = tvs.filter(v => v.title.toLowerCase().includes(q));
-
-        mainContainer.innerHTML = `
-          <div class="section-block">
-            <div class="section-title"><i class="fa-solid fa-tv" style="color: var(--accent);"></i> Siaran TV & Live Streaming</div>
-            <div class="poster-grid">
-              ${tvs.length > 0 ? tvs.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada siaran TV.</p>'}
-            </div>
-          </div>
-        `;
-      }
-    }
-
-    async function openPlayer(id) {
-      const v = allVideos.find(item => item.id === id);
-      if (!v) return;
-      activeVid = v;
-
-      try {
-        await fetch(`/api/videos/${id}/view`, { method: 'POST' });
-        v.views = (v.views || 0) + 1;
-      } catch (err) {
-        console.error(err);
+    function renderGrid() {
+      contentGrid.innerHTML = '';
+      if (allContent.length === 0) {
+        contentGrid.innerHTML = `<p style="grid-column: 1/-1; text-align:center; color:#8c95a5;">Belum ada konten tersedia.</p>`;
+        return;
       }
 
-      mTitle.innerText = v.title;
-      mHeader.innerText = v.title;
-      mDesc.innerText = v.description;
-      viewNum.innerText = v.views || 0;
-      likeNum.innerText = v.likes || 0;
-      renderComments(v.comments || []);
-
-      if (v.episodes && v.episodes.length > 0) {
-        loadEpisodePlayer(v.episodes[0].src);
-      }
-
-      playerModal.style.display = 'flex';
-    }
-
-    function loadEpisodePlayer(src) {
-      if (src.includes('.mpd')) {
-        videoContainer.innerHTML = `
-          <div style="display:flex; align-items:center; justify-content:center; width:100%; height:100%; background:#111; color:#fff; text-align:center; padding:20px;">
+      allContent.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <img src="${item.logo || 'https://via.placeholder.com/200x120?text=NOVI+STREAM'}" class="card-img" alt="Poster">
+          <div class="card-body">
             <div>
-              <i class="fa-solid fa-circle-exclamation" style="font-size:2rem; color:#f39c12; margin-bottom:10px;"></i>
-              <p style="font-size:0.9rem; font-weight:700;">Format DASH (.mpd) dengan Proteksi Lisensi</p>
-              <p style="font-size:0.75rem; color:var://text-muted; margin-top:5px; color: #8c95a5;">Link ini menggunakan proteksi DRM/Clearkey yang memerlukan pemutar eksternal (VLC/Kodi).</p>
-              <input type="text" value="${src}" readonly class="form-input-dark" style="margin-top:10px; font-size:0.7rem; text-align:center;" onclick="this.select()">
+              <div class="card-category">${item.category || ' UMUM'}</div>
+              <div class="card-title">${item.title}</div>
             </div>
-          </div>`;
-      } else if (src.includes('.m3u8') || src.includes('workers.dev') || src.includes('m3u8')) {
+            ${isAdmin ? `<button class="btn btn-danger" style="padding:4px 8px; font-size:0.7rem; margin-top:8px;" onclick="deleteItem(${index})">Hapus</button>` : ''}
+          </div>
+        `;
+        card.addEventListener('click', (e) => {
+          if (!e.target.classList.contains('btn-danger')) {
+            loadEpisodePlayer(item.src);
+          }
+        });
+        contentGrid.appendChild(card);
+      });
+    }
+
+    // Pemutar video otomatis berbasis format menggunakan Shaka Player & HLS.js
+    async function loadEpisodePlayer(src) {
+      if (src.includes('.mpd')) {
+        videoContainer.innerHTML = `<video id="shakaVideo" controls autoplay style="width:100%; height:100%; position:absolute; inset:0; background:#000;"></video>`;
+        const videoElement = document.getElementById('shakaVideo');
+        
+        if (shaka.Player.isBrowserSupported()) {
+          const player = new shaka.Player(videoElement);
+          try {
+            await player.load(src);
+          } catch (error) {
+            videoContainer.innerHTML = `
+              <div style="text-align:center; padding:20px;">
+                <p style="color:#e74c3c; font-weight:bold; margin-bottom:10px;">Format DASH (.mpd) Memerlukan Lisensi Khusus</p>
+                <button class="btn" onclick="navigator.clipboard.writeText('${src}'); alert('Link berhasil disalin!');">Salin Link Streaming</button>
+              </div>`;
+          }
+        }
+      } else if (src.includes('.m3u8') || src.includes('workers.dev')) {
         videoContainer.innerHTML = `<video id="hlsVideo" controls autoplay style="width:100%; height:100%; position:absolute; inset:0;"></video>`;
         const videoElement = document.getElementById('hlsVideo');
-        
         if (Hls.isSupported()) {
           const hls = new Hls();
           hls.loadSource(src);
@@ -611,7 +347,7 @@
         } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
           videoElement.src = src;
         }
-      } else if (src.includes('mediadelivery.net') || src.includes('youtube.com') || src.includes('youtu.be') || src.includes('<iframe')) {
+      } else if (src.includes('youtube.com') || src.includes('youtu.be') || src.includes('<iframe')) {
         let finalSrc = src;
         if (src.includes('<iframe')) {
           const match = src.match(/src="([^"]+)"/);
@@ -623,125 +359,74 @@
       }
     }
 
-    function renderComments(comments) {
-      cList.innerHTML = '';
-      if (!comments || !comments.length) {
-        cList.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted);">Belum ada komentar.</p>';
-        return;
-      }
-      comments.forEach(c => {
-        const d = document.createElement('div');
-        d.style.cssText = 'background:var(--bg-base); padding:10px 14px; border-radius:10px; border:1px solid var(--border); font-size:0.85rem;';
-        d.innerHTML = `<div>${c.text}</div><div style="font-size:0.7rem; color:var(--text-muted); margin-top:3px;">${c.date}</div>`;
-        cList.appendChild(d);
-      });
-    }
-
-    document.getElementById('btnLike').onclick = async () => {
-      if (!activeVid) return;
-      try {
-        const res = await fetch(`/api/videos/${activeVid.id}/like`, { method: 'POST' });
-        const data = await res.json();
-        if (data.success) {
-          activeVid.likes = data.likes;
-          likeNum.innerText = data.likes;
-        }
-      } catch (err) { console.error(err); }
-    };
-
-    document.getElementById('commentForm').onsubmit = async (e) => {
-      e.preventDefault();
-      if (!activeVid) return;
-      const input = document.getElementById('cInput');
-      const text = input.value;
-
-      try {
-        const res = await fetch(`/api/videos/${activeVid.id}/comment`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text })
-        });
-        const data = await res.json();
-        if (data.success) {
-          activeVid.comments = data.comments;
-          renderComments(activeVid.comments);
-          input.value = '';
-        }
-      } catch (err) { console.error(err); }
-    };
-
-    function editVid(e, id) {
-      e.stopPropagation();
-      const v = allVideos.find(item => item.id === id);
-      if (!v) return;
-
-      document.getElementById('editSeriesId').value = v.id;
-      document.getElementById('uType').value = v.type || 'tv';
-      document.getElementById('uTitle').value = v.title;
-      document.getElementById('uCat').value = v.category || 'INDONESIA';
-      document.getElementById('uDesc').value = v.description;
-      document.getElementById('uThumb').value = v.thumbnail;
-      if (v.episodes && v.episodes.length > 0) {
-        document.getElementById('uVideoUrl').value = v.episodes[0].src;
-      }
-      
-      toggleUploadType();
-      modalUploadTitle.innerText = 'Edit Konten';
-      uploadModal.style.display = 'flex';
-    }
-
-    async function delVid(e, id) {
-      e.stopPropagation();
-      if (!confirm("Hapus konten ini?")) return;
-      try {
-        const res = await fetch(`/api/videos/${id}`, { method: 'DELETE' });
-        if (res.ok) fetchVideos();
-        else alert("Gagal menghapus.");
-      } catch (err) { alert("Gagal menghapus."); }
-    }
-
-    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const submitBtn = document.getElementById('btnSubmitUpload');
-      submitBtn.innerText = 'Sedang Menyimpan...';
-      submitBtn.disabled = true;
-
-      const type = document.getElementById('uType').value;
-      const title = document.getElementById('uTitle').value;
-      const category = document.getElementById('uCat').value;
-      const description = document.getElementById('uDesc').value;
-      const thumbnail = document.getElementById('uThumb').value;
-      const videoUrl = document.getElementById('uVideoUrl').value;
-      const id = document.getElementById('editSeriesId').value;
-
-      try {
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: id || undefined, type, title, category, description, thumbnail, videoUrl })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          alert('Konten Berhasil Disimpan!');
-          closeModal('uploadModal');
-          document.getElementById('uploadForm').reset();
-          fetchVideos();
+    // Toggle Login Admin sederhana
+    loginBtn.addEventListener('click', () => {
+      if (!isAdmin) {
+        const pwd = prompt('Masukkan Password Admin:');
+        if (pwd === 'admin123' || pwd === 'novi') {
+          isAdmin = true;
+          loginBtn.innerText = 'Logout Admin';
+          loginBtn.style.background = '#e74c3c';
+          loginBtn.style.color = '#fff';
+          openModalBtn.style.display = 'inline-block';
+          alert('Berhasil Login sebagai Admin!');
+          renderGrid();
         } else {
-          alert('Gagal: ' + (data.message || 'Kesalahan server'));
+          alert('Password salah!');
         }
-      } catch (err) {
-        alert('Terjadi kesalahan koneksi.');
-      } finally {
-        submitBtn.innerText = 'Simpan Konten';
-        submitBtn.disabled = false;
+      } else {
+        isAdmin = false;
+        loginBtn.innerText = 'Login Admin';
+        loginBtn.style.background = '#45a29e';
+        loginBtn.style.color = '#0b0c10';
+        openModalBtn.style.display = 'none';
+        renderGrid();
       }
     });
 
-    renderUI();
-  </script>
+    openModalBtn.addEventListener('click', () => { addModal.style.display = 'flex'; });
+    closeModalBtn.addEventListener('click', () => { addModal.style.display = 'none'; });
 
-  <footer style="text-align: center; padding: 24px; border-top: 1px solid var(--border); margin-top: 48px; color: var(--text-muted); font-size: 0.82rem;">
-    <p>Platform Streaming <span style="color: var(--accent); font-weight: 700;">NOVI</span> &copy; 2026. Dibuat dan dikembangkan oleh <strong style="color: #fff;">Fikri Al</strong>.</p>
-  </footer>
+    addForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const newItem = {
+        title: document.getElementById('itemTitle').value,
+        category: document.getElementById('itemCategory').value,
+        src: document.getElementById('itemSrc').value,
+        logo: document.getElementById('itemLogo').value
+      };
+
+      try {
+        const res = await fetch('/api/content', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newItem)
+        });
+        if (res.ok) {
+          addModal.style.display = 'none';
+          addForm.reset();
+          fetchContent();
+          alert('Konten berhasil ditambahkan!');
+        } else {
+          alert('Gagal menyimpan konten.');
+        }
+      } catch (err) {
+        alert('Terjadi kesalahan jaringan.');
+      }
+    });
+
+    async function deleteItem(index) {
+      if (confirm('Yakin ingin menghapus konten ini?')) {
+        try {
+          await fetch(`/api/content/${index}`, { method: 'DELETE' });
+          fetchContent();
+        } catch (err) {
+          alert('Gagal menghapus konten.');
+        }
+      }
+    }
+
+    fetchContent();
+  </script>
 </body>
 </html>
