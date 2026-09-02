@@ -5,9 +5,9 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Menaikkan batas limit data JSON agar file M3U besar tidak tertolak server
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+// Mengatur batas ukuran data JSON agar file M3U besar atau upload video besar tidak ditolak
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
 app.use(express.static('public'));
 
 const uploadDir = path.join(__dirname, 'uploads');
@@ -17,26 +17,42 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
+// Inisialisasi Database JSON yang aman dari error kosong
 let videos = [];
-if (fs.existsSync(metadataFile)) {
+function loadMetadata() {
   try {
-    const data = fs.readFileSync(metadataFile, 'utf8');
-    videos = JSON.parse(data);
+    if (fs.existsSync(metadataFile)) {
+      const data = fs.readFileSync(metadataFile, 'utf8');
+      videos = data ? JSON.parse(data) : [];
+    } else {
+      videos = [];
+    }
   } catch (e) {
+    console.error("Gagal membaca metadata.json, membuat database baru:", e);
     videos = [];
   }
 }
 
 function saveMetadata() {
-  fs.writeFileSync(metadataFile, JSON.stringify(videos, null, 2));
+  try {
+    fs.writeFileSync(metadataFile, JSON.stringify(videos, null, 2));
+  } catch (e) {
+    console.error("Gagal menyimpan ke metadata.json:", e);
+  }
 }
 
+loadMetadata();
+
+// Ambil daftar video
 app.get('/api/videos', (req, res) => {
+  loadMetadata();
   res.json(videos);
 });
 
+// Tambah / Edit Konten Satuan
 app.post('/api/upload', (req, res) => {
   try {
+    loadMetadata();
     const { id, type, title, category, description, thumbnail, videoUrl } = req.body;
     
     if (!title || !videoUrl) {
@@ -74,13 +90,15 @@ app.post('/api/upload', (req, res) => {
     saveMetadata();
     res.json({ success: true, message: 'Konten berhasil ditambahkan!' });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Kesalahan server saat menyimpan.' });
+    console.error("Error pada /api/upload:", err);
+    res.status(500).json({ success: false, message: 'Kesalahan server saat menyimpan: ' + err.message });
   }
 });
 
-// Import Playlist M3U via Upload File
+// Import Playlist M3U via File Upload (Massal)
 app.post('/api/import-m3u', (req, res) => {
   try {
+    loadMetadata();
     const { channels } = req.body;
     if (!channels || !Array.isArray(channels) || channels.length === 0) {
       return res.status(400).json({ success: false, message: 'File M3U kosong atau format tidak valid.' });
@@ -107,19 +125,23 @@ app.post('/api/import-m3u', (req, res) => {
     saveMetadata();
     res.json({ success: true, message: `Berhasil mengimport ${addedCount} channel siaran TV dari file!` });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: 'Gagal memproses file M3U di server.' });
+    console.error("Error pada /api/import-m3u:", err);
+    res.status(500).json({ success: false, message: 'Gagal memproses file M3U di server: ' + err.message });
   }
 });
 
+// Hapus Konten
 app.delete('/api/videos/:id', (req, res) => {
+  loadMetadata();
   const id = req.params.id;
   videos = videos.filter(v => v.id != id);
   saveMetadata();
   res.json({ success: true, message: 'Konten dihapus.' });
 });
 
+// Tambah View
 app.post('/api/videos/:id/view', (req, res) => {
+  loadMetadata();
   const v = videos.find(item => item.id == req.params.id);
   if (v) {
     v.views = (v.views || 0) + 1;
@@ -128,7 +150,9 @@ app.post('/api/videos/:id/view', (req, res) => {
   res.json({ success: true });
 });
 
+// Like Video
 app.post('/api/videos/:id/like', (req, res) => {
+  loadMetadata();
   const v = videos.find(item => item.id == req.params.id);
   if (v) {
     v.likes = (v.likes || 0) + 1;
@@ -139,7 +163,9 @@ app.post('/api/videos/:id/like', (req, res) => {
   }
 });
 
+// Komentar
 app.post('/api/videos/:id/comment', (req, res) => {
+  loadMetadata();
   const v = videos.find(item => item.id == req.params.id);
   const { text } = req.body;
   if (v && text) {
@@ -152,6 +178,7 @@ app.post('/api/videos/:id/comment', (req, res) => {
   }
 });
 
+// Login Admin
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
   if (username === 'owner' && password === '123') {
