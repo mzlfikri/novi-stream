@@ -17,7 +17,6 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
-// Fungsi Load Database Video yang Aman dari Error Array
 function loadMetadata() {
   try {
     if (fs.existsSync(metadataFile)) {
@@ -39,7 +38,6 @@ function saveMetadata(videosArray) {
   }
 }
 
-// Fungsi Load Admin Tambahan
 function loadAdmins() {
   try {
     if (fs.existsSync(adminsFile)) {
@@ -91,7 +89,7 @@ app.post('/api/upload', (req, res) => {
     }
 
     const newVideo = {
-      id: Date.now() + Math.random(),
+      id: Date.now(),
       type: type || 'film',
       title,
       category: category || 'Umum',
@@ -151,21 +149,24 @@ app.post('/api/import-m3u', (req, res) => {
 app.delete('/api/videos/:id', (req, res) => {
   let videos = loadMetadata();
   const id = req.params.id;
-  videos = videos.filter(v => v.id != id);
+  videos = videos.filter(v => String(v.id) !== String(id));
   saveMetadata(videos);
   res.json({ success: true, message: 'Konten dihapus.' });
 });
 
-// Hapus Banyak Sekaligus (Bulk Delete) - Khusus Owner
+// Hapus Banyak Sekaligus (Bulk Delete) yang Diperbaiki (Aman untuk String/Number ID)
 app.post('/api/videos/bulk-delete', (req, res) => {
   try {
     let videos = loadMetadata();
-    const { ids } = req.body;
+    const { ids } = req.body; 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ success: false, message: 'Tidak ada data yang dipilih untuk dihapus.' });
     }
 
-    videos = videos.filter(v => !ids.includes(v.id));
+    // Ubah semua ID yang dikirim ke string agar pencocokan filter tidak gagal
+    const stringIds = ids.map(id => String(id));
+    videos = videos.filter(v => !stringIds.includes(String(v.id)));
+    
     saveMetadata(videos);
     res.json({ success: true, message: `Berhasil menghapus ${ids.length} konten terpilih!` });
   } catch (err) {
@@ -176,7 +177,7 @@ app.post('/api/videos/bulk-delete', (req, res) => {
 
 app.post('/api/videos/:id/view', (req, res) => {
   let videos = loadMetadata();
-  const v = videos.find(item => item.id == req.params.id);
+  const v = videos.find(item => String(item.id) === String(req.params.id));
   if (v) {
     v.views = (v.views || 0) + 1;
     saveMetadata(videos);
@@ -186,7 +187,7 @@ app.post('/api/videos/:id/view', (req, res) => {
 
 app.post('/api/videos/:id/like', (req, res) => {
   let videos = loadMetadata();
-  const v = videos.find(item => item.id == req.params.id);
+  const v = videos.find(item => String(item.id) === String(req.params.id));
   if (v) {
     v.likes = (v.likes || 0) + 1;
     saveMetadata(videos);
@@ -198,7 +199,7 @@ app.post('/api/videos/:id/like', (req, res) => {
 
 app.post('/api/videos/:id/comment', (req, res) => {
   let videos = loadMetadata();
-  const v = videos.find(item => item.id == req.params.id);
+  const v = videos.find(item => String(item.id) === String(req.params.id));
   const { text } = req.body;
   if (v && text) {
     if (!v.comments) v.comments = [];
@@ -210,7 +211,6 @@ app.post('/api/videos/:id/comment', (req, res) => {
   }
 });
 
-// Login Admin & Owner Utama
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
   
@@ -231,7 +231,6 @@ app.post('/api/login', (req, res) => {
   res.json({ success: false, message: 'Username atau Password salah!' });
 });
 
-// Endpoint Buat Akun Admin Baru (Khusus Owner)
 app.post('/api/create-admin', (req, res) => {
   try {
     const { newUsername, newPassword } = req.body;

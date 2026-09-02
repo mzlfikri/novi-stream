@@ -112,8 +112,9 @@
     .card-actions { position: absolute; top: 10px; right: 10px; z-index: 10; display: none; gap: 4px; }
     .btn-delete-card { background: rgba(231, 76, 60, 0.9); color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
 
+    /* Checkbox Hapus Massal */
     .bulk-checkbox {
-      position: absolute; top: 10px; left: 10px; z-index: 10; width: 18px; height: 18px; cursor: pointer; display: none;
+      position: absolute; top: 10px; left: 10px; z-index: 20; width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent);
     }
 
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 12px; overflow-y: auto; }
@@ -467,7 +468,7 @@
       return `
         <div class="poster-card" onclick="openPlayer(${v.id})">
           ${userRole === 'owner' ? `
-            <input type="checkbox" class="bulk-checkbox" data-id="${v.id}" onclick="event.stopPropagation()" style="display: block;" />
+            <input type="checkbox" class="bulk-checkbox" value="${v.id}" onclick="event.stopPropagation()" style="display: block;" />
           ` : ''}
           ${isLoggedIn ? `
             <div class="card-actions" style="display:flex;">
@@ -493,16 +494,17 @@
       `;
     }
 
+    // Fungsi Hapus Massal yang Diperbarui
     async function deleteSelectedVideos() {
       const checkboxes = document.querySelectorAll('.bulk-checkbox:checked');
       if (checkboxes.length === 0) {
-        alert('Pilih setidaknya satu video yang ingin dihapus terlebih dahulu!');
+        alert('Pilih setidaknya satu video yang ingin dihapus terlebih dahulu dengan mencentang kotak di pojok kiri atas poster!');
         return;
       }
 
       if (!confirm(`Yakin ingin menghapus ${checkboxes.length} video yang dipilih?`)) return;
 
-      const selectedIds = Array.from(checkboxes).map(cb => Number(cb.getAttribute('data-id')));
+      const selectedIds = Array.from(checkboxes).map(cb => cb.value);
 
       try {
         const res = await fetch('/api/videos/bulk-delete', {
@@ -583,7 +585,7 @@
     }
 
     async function openPlayer(id) {
-      const v = allVideos.find(item => item.id === id);
+      const v = allVideos.find(item => item.id == id);
       if (!v) return;
       activeVid = v;
 
@@ -709,7 +711,7 @@
 
     function editVid(e, id) {
       e.stopPropagation();
-      const v = allVideos.find(item => item.id === id);
+      const v = allVideos.find(item => item.id == id);
       if (!v) return;
 
       document.getElementById('editSeriesId').value = v.id;
