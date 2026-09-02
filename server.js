@@ -1,12 +1,13 @@
 const express = require('express');
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+// Menaikkan batas limit data JSON agar file M3U besar tidak tertolak server
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static('public'));
 
 const uploadDir = path.join(__dirname, 'uploads');
@@ -16,7 +17,6 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
-// Inisialisasi Database JSON sederhana
 let videos = [];
 if (fs.existsSync(metadataFile)) {
   try {
@@ -31,12 +31,10 @@ function saveMetadata() {
   fs.writeFileSync(metadataFile, JSON.stringify(videos, null, 2));
 }
 
-// Ambil daftar video
 app.get('/api/videos', (req, res) => {
   res.json(videos);
 });
 
-// Tambah / Edit Video Satuan
 app.post('/api/upload', (req, res) => {
   try {
     const { id, type, title, category, description, thumbnail, videoUrl } = req.body;
@@ -46,7 +44,6 @@ app.post('/api/upload', (req, res) => {
     }
 
     if (id) {
-      // Edit video yang sudah ada
       const index = videos.findIndex(v => v.id == id);
       if (index !== -1) {
         videos[index].title = title;
@@ -60,7 +57,6 @@ app.post('/api/upload', (req, res) => {
       }
     }
 
-    // Tambah video baru
     const newVideo = {
       id: Date.now(),
       type: type || 'film',
@@ -82,12 +78,12 @@ app.post('/api/upload', (req, res) => {
   }
 });
 
-// Import Playlist M3U secara Massal
+// Import Playlist M3U via Upload File
 app.post('/api/import-m3u', (req, res) => {
   try {
     const { channels } = req.body;
     if (!channels || !Array.isArray(channels) || channels.length === 0) {
-      return res.status(400).json({ success: false, message: 'Tidak ada data channel yang valid.' });
+      return res.status(400).json({ success: false, message: 'File M3U kosong atau format tidak valid.' });
     }
 
     let addedCount = 0;
@@ -97,7 +93,7 @@ app.post('/api/import-m3u', (req, res) => {
         type: 'tv',
         title: ch.title || 'Live Channel',
         category: ch.category || 'Live TV',
-        description: 'Imported via M3U Playlist',
+        description: 'Imported via M3U File Playlist',
         thumbnail: ch.thumbnail || 'https://images.unsplash.com/photo-1593784991095-a205069470b6?auto=format&fit=crop&w=400&q=80',
         episodes: [{ src: ch.url }],
         views: 0,
@@ -109,14 +105,13 @@ app.post('/api/import-m3u', (req, res) => {
     });
 
     saveMetadata();
-    res.json({ success: true, message: `Berhasil mengimport ${addedCount} channel siaran TV!` });
+    res.json({ success: true, message: `Berhasil mengimport ${addedCount} channel siaran TV dari file!` });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: 'Gagal memproses file M3U di server.' });
   }
 });
 
-// Hapus Video
 app.delete('/api/videos/:id', (req, res) => {
   const id = req.params.id;
   videos = videos.filter(v => v.id != id);
@@ -124,7 +119,6 @@ app.delete('/api/videos/:id', (req, res) => {
   res.json({ success: true, message: 'Konten dihapus.' });
 });
 
-// Tambah View
 app.post('/api/videos/:id/view', (req, res) => {
   const v = videos.find(item => item.id == req.params.id);
   if (v) {
@@ -134,7 +128,6 @@ app.post('/api/videos/:id/view', (req, res) => {
   res.json({ success: true });
 });
 
-// Like Video
 app.post('/api/videos/:id/like', (req, res) => {
   const v = videos.find(item => item.id == req.params.id);
   if (v) {
@@ -146,7 +139,6 @@ app.post('/api/videos/:id/like', (req, res) => {
   }
 });
 
-// Komentar
 app.post('/api/videos/:id/comment', (req, res) => {
   const v = videos.find(item => item.id == req.params.id);
   const { text } = req.body;
@@ -160,7 +152,6 @@ app.post('/api/videos/:id/comment', (req, res) => {
   }
 });
 
-// Login Admin Sederhana
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
   if (username === 'owner' && password === '123') {

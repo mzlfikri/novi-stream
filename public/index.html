@@ -696,8 +696,8 @@
       }
     }
 
-    // Fungsi Proses Import M3U secara Massal
-    async function processImportM3U() {
+    // Fungsi Proses Import File M3U
+    function processImportM3U() {
       const fileInput = document.getElementById('m3uFile');
       if (!fileInput.files || fileInput.files.length === 0) {
         alert('Pilih file M3U terlebih dahulu!');
