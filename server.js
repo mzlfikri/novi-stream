@@ -55,7 +55,7 @@ app.get('/api/videos', (req, res) => {
   }
 });
 
-// API: Upload banyak file video sekaligus (Multiple Episodes)
+// API: Upload banyak file video sekaligus (Multiple Episodes / Local)
 app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
   try {
     const { id, title, category, description, thumbnail, existingEpisodes } = req.body;
@@ -71,12 +71,12 @@ app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
 
     let episodes = existingEpisodes ? JSON.parse(existingEpisodes) : [];
 
-    // Jika ada file-file video baru yang di-upload
+    // Jika ada file-file video baru yang di-upload dari perangkat
     if (req.files && req.files.length > 0) {
       req.files.forEach((file) => {
         const fileUrl = `/uploads/${file.filename}`;
         episodes.push({
-          epNum: episodes.length + 1, // Otomatis beri nomor urut episode (Ep 1, Ep 2, dst)
+          epNum: episodes.length + 1,
           src: fileUrl
         });
       });

@@ -6,6 +6,8 @@
   <title>NOVI - Premium Streaming Platform</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Pustaka HLS.js untuk memutar siaran langsung / link M3U8 -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   
   <style>
     :root {
@@ -186,7 +188,7 @@
         <h2 id="mHeader" style="font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;"></h2>
         <p id="mDesc" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5;"></p>
         
-        <h4 style="margin-bottom: 10px; font-weight: 700; font-size: 0.9rem;"><i class="fa-solid fa-list-ul" style="color: var(--accent);"></i> Pilih Episode:</h4>
+        <h4 style="margin-bottom: 10px; font-weight: 700; font-size: 0.9rem;"><i class="fa-solid fa-list-ul" style="color: var(--accent);"></i> Pilih Episode / Channel:</h4>
         <div class="episodes-container" id="episodesListContainer"></div>
 
         <button class="btn btn-glass" id="btnLike" style="margin-bottom: 24px;"><i class="fa-solid fa-heart" style="color: var(--accent);"></i> <span id="likeNum">0</span> Suka</button>
@@ -231,7 +233,7 @@
       <h3 id="modalUploadTitle" style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800;">Tambah Series & Video</h3>
       <form id="uploadForm">
         <input type="hidden" id="editSeriesId" value="" />
-        <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Series" required />
+        <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Series / Siaran TV" required />
         <select id="uCat" class="form-input-dark">
           <option value="Animasi">Animasi</option>
           <option value="Drama">Drama</option>
@@ -244,10 +246,10 @@
         <hr style="border: 0; border-top: 1px solid var(--border); margin: 14px 0;">
         
         <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Upload File Video Episode (.mp4):</label>
-        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">Anda bisa memilih banyak file video sekaligus (untuk Episode 1, 2, dst).</p>
+        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">Bisa pilih banyak file video sekaligus. Atau kosongkan jika ingin menggunakan link M3U8/Eksternal.</p>
         <div id="dynamicEpisodesContainer">
           <div class="ep-input-group">
-            <input type="file" id="videoFile" class="form-input-dark" accept="video/mp4" multiple style="margin:0; padding: 6px;" required />
+            <input type="file" id="videoFile" class="form-input-dark" accept="video/mp4" multiple style="margin:0; padding: 6px;" />
           </div>
         </div>
 
@@ -354,7 +356,6 @@
       document.getElementById('uploadForm').reset();
       document.getElementById('editSeriesId').value = '';
       modalUploadTitle.innerText = 'Tambah Series & Video Baru';
-      document.getElementById('videoFile').required = true;
       uploadModal.style.display = 'flex';
     };
 
@@ -503,8 +504,32 @@
       playerModal.style.display = 'flex';
     }
 
+    // Fungsi Pemutar Pintar (Mendukung .mp4 lokal, YouTube, dan Siaran Live .m3u8)
     function loadEpisodePlayer(src) {
-      videoContainer.innerHTML = `<video src="${src}" controls autoplay preload="metadata" style="width:100%; height:100%;"></video>`;
+      if (src.includes('.m3u8')) {
+        videoContainer.innerHTML = `<video id="hlsVideo" controls autoplay style="width:100%; height:100%;"></video>`;
+        const videoElement = document.getElementById('hlsVideo');
+        
+        if (Hls.isSupported()) {
+          const hls = new Hls();
+          hls.loadSource(src);
+          hls.attachMedia(videoElement);
+        } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+          videoElement.src = src;
+        }
+      } else if (src.includes('youtube.com') || src.includes('youtu.be')) {
+        let embedUrl = src;
+        if (src.includes('youtu.be/')) {
+          const id = src.split('youtu.be/')[1].split('?')[0];
+          embedUrl = `https://www.youtube.com/embed/${id}`;
+        } else if (src.includes('/watch?v=')) {
+          const id = src.split('watch?v=')[1].split('&')[0];
+          embedUrl = `https://www.youtube.com/embed/${id}`;
+        }
+        videoContainer.innerHTML = `<iframe src="${embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      } else {
+        videoContainer.innerHTML = `<video src="${src}" controls autoplay preload="metadata" style="width:100%; height:100%;"></video>`;
+      }
     }
 
     function renderComments(comments) {
@@ -557,7 +582,6 @@
       document.getElementById('uCat').value = v.category || 'Animasi';
       document.getElementById('uDesc').value = v.description;
       document.getElementById('uThumb').value = v.thumbnail;
-      document.getElementById('videoFile').required = false;
 
       modalUploadTitle.innerText = 'Edit Series & Video';
       uploadModal.style.display = 'flex';
@@ -575,12 +599,12 @@
       }
     }
 
-    // EVENT LISTENER FORM UPLOAD DENGAN DUKUNGAN MULTIPLE FILES
+    // EVENT LISTENER FORM UPLOAD (Mendukung File Lokal / Multiple Episodes)
     document.getElementById('uploadForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
       const submitBtn = document.getElementById('btnSubmitUpload');
-      submitBtn.innerText = 'Sedang Mengunggah Video, Mohon Tunggu...';
+      submitBtn.innerText = 'Sedang Menyimpan, Mohon Tunggu...';
       submitBtn.disabled = true;
 
       const title = document.getElementById('uTitle').value;
@@ -604,7 +628,6 @@
         }
       }
 
-      // Masukkan semua file video yang dipilih sekaligus ke formData
       if (fileInput.files.length > 0) {
         for (let i = 0; i < fileInput.files.length; i++) {
           formData.append('videoFiles', fileInput.files[i]);
@@ -619,7 +642,7 @@
         
         const data = await res.json();
         if (res.ok && data.success) {
-          alert('Series & Episode Berhasil Disimpan!');
+          alert('Series & Video Berhasil Disimpan!');
           closeModal('uploadModal');
           document.getElementById('uploadForm').reset();
           fetchVideos();
@@ -628,7 +651,7 @@
         }
       } catch (err) {
         console.error(err);
-        alert('Terjadi kesalahan koneksi saat mengunggah video.');
+        alert('Terjadi kesalahan koneksi saat menyimpan.');
       } finally {
         submitBtn.innerText = 'Simpan Series & Video';
         submitBtn.disabled = false;
