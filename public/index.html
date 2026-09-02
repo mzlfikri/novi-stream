@@ -62,11 +62,6 @@
     .btn-import { background: #27ae60; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4); }
     .btn-delete-bulk { background: #c0392b; box-shadow: 0 4px 15px rgba(192, 57, 43, 0.4); display: none; }
     
-    /* Tombol Edit & Hapus Khusus di dalam Modal Pemutar */
-    .btn-edit-modal { background: #f39c12; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-    .btn-delete-modal { background: #c0392b; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-    .admin-controls-box { display: none; gap: 10px; margin-bottom: 20px; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; align-items: center; }
-
     .btn-small-action { background: rgba(255,255,255,0.1); border: 1px solid var(--border); color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600; }
 
     .content-container { max-width: 1400px; margin: 0 auto; padding: 24px; }
@@ -187,12 +182,6 @@
       <div class="video-viewport" id="videoContainer"></div>
       
       <div class="modal-body-padding">
-        <div id="adminControlsBox" class="admin-controls-box">
-          <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);"><i class="fa-solid fa-shield-halved"></i> Panel Admin:</span>
-          <button type="button" class="btn-edit-modal" id="btnModalEdit"><i class="fa-solid fa-pen"></i> Edit Konten & Episode</button>
-          <button type="button" class="btn-delete-modal" id="btnModalDelete"><i class="fa-solid fa-trash"></i> Hapus Konten Ini</button>
-        </div>
-
         <h2 id="mHeader" style="font-size: 1.3rem; font-weight: 800; margin-bottom: 10px;"></h2>
         
         <div id="episodeBarContainer" class="episodes-bar"></div>
@@ -304,9 +293,6 @@
     const cList = document.getElementById('cList');
     const episodeBarContainer = document.getElementById('episodeBarContainer');
     const episodeInputsContainer = document.getElementById('episodeInputsContainer');
-    const adminControlsBox = document.getElementById('adminControlsBox');
-    const btnModalEdit = document.getElementById('btnModalEdit');
-    const btnModalDelete = document.getElementById('btnModalDelete');
 
     const btnUpload = document.getElementById('btnUpload');
     const btnImport = document.getElementById('btnImport');
@@ -507,7 +493,7 @@
       const isTv = v.type === 'tv';
       const totalEps = v.episodes ? v.episodes.length : 0;
       return `
-        <div class="poster-card" onclick="openPlayer(${v.id})">
+        <div class="poster-card" onclick="openPlayer('${v.id}')">
           ${userRole === 'owner' ? `
             <input type="checkbox" class="bulk-checkbox" value="${v.id}" onclick="event.stopPropagation()" style="display: block;" />
           ` : ''}
@@ -637,24 +623,6 @@
       likeNum.innerText = v.likes || 0;
       renderComments(v.comments || []);
 
-      // Tampilkan Panel Admin di dalam Modal jika user adalah Admin/Owner
-      if (isLoggedIn) {
-        adminControlsBox.style.display = 'flex';
-        btnModalEdit.onclick = () => {
-          closeModal('playerModal');
-          openEditModal(v.id);
-        };
-        btnModalDelete.onclick = async () => {
-          if (confirm("Hapus konten ini?")) {
-            await fetch(`/api/videos/${v.id}`, { method: 'DELETE' });
-            closeModal('playerModal');
-            fetchVideos();
-          }
-        };
-      } else {
-        adminControlsBox.style.display = 'none';
-      }
-
       episodeBarContainer.innerHTML = '';
       if (v.episodes && v.episodes.length > 0) {
         v.episodes.forEach((eps, idx) => {
@@ -773,31 +741,6 @@
         console.error(err);
       }
     };
-
-    function openEditModal(id) {
-      const v = allVideos.find(item => String(item.id) === String(id));
-      if (!v) return;
-
-      document.getElementById('editSeriesId').value = v.id;
-      document.getElementById('uType').value = v.type || 'film';
-      document.getElementById('uTitle').value = v.title;
-      document.getElementById('uCat').value = v.category || 'Animasi';
-      document.getElementById('uDesc').value = v.description;
-      document.getElementById('uThumb').value = v.thumbnail;
-      
-      episodeInputsContainer.innerHTML = '';
-      if (v.episodes && v.episodes.length > 0) {
-        v.episodes.forEach(eps => {
-          addEpisodeInput(eps.title, eps.src);
-        });
-      } else {
-        addEpisodeInput('Episode 1', '');
-      }
-      
-      toggleUploadType();
-      modalUploadTitle.innerText = 'Edit Konten & Episode';
-      uploadModal.style.display = 'flex';
-    }
 
     function processImportM3U() {
       const fileInput = document.getElementById('m3uFile');
