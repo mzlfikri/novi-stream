@@ -7,9 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <script src="https://fast.wistia.net/player.js" async></script>
-  <script src="https://fast.wistia.net/embed/uiegc6m9x2.js" async type="module"></script>
-
   <style>
     :root {
       --bg-base: #050608;
@@ -26,195 +23,209 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
     body { background-color: var(--bg-base); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
 
-    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg-base); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
     header {
-      background: rgba(5, 6, 8, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border);
-      padding: 16px 48px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;
+      background: rgba(5, 6, 8, 0.95); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border);
+      padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;
+      flex-wrap: wrap; gap: 12px;
     }
 
-    .brand { display: flex; align-items: center; gap: 40px; }
-    .logo { font-size: 1.8rem; font-weight: 800; color: #fff; text-decoration: none; letter-spacing: -0.5px; }
+    .brand { display: flex; align-items: center; gap: 24px; }
+    .logo { font-size: 1.6rem; font-weight: 800; color: #fff; text-decoration: none; letter-spacing: -0.5px; }
     .logo span { color: var(--accent); }
 
-    .nav-menu { display: flex; gap: 24px; list-style: none; }
-    .nav-menu a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: color 0.2s; }
+    .nav-menu { display: flex; gap: 18px; list-style: none; }
+    .nav-menu a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.88rem; transition: color 0.2s; cursor: pointer; }
     .nav-menu a:hover, .nav-menu a.active { color: #fff; }
+
+    .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
     .search-input-group {
       display: flex; align-items: center; background: var(--bg-surface); border: 1px solid var(--border);
-      border-radius: 30px; padding: 10px 20px; width: 320px;
+      border-radius: 30px; padding: 8px 16px; width: 240px;
     }
-    .search-input-group input { background: none; border: none; color: #fff; width: 100%; outline: none; margin-left: 10px; font-size: 0.88rem; }
+    .search-input-group input { background: none; border: none; color: #fff; width: 100%; outline: none; margin-left: 8px; font-size: 0.85rem; }
 
     .btn {
-      background: var(--accent); color: white; border: none; padding: 10px 22px; border-radius: 30px; font-weight: 700;
-      cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.25s ease; font-size: 0.88rem; box-shadow: 0 4px 15px var(--accent-glow);
+      background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 30px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.25s ease; font-size: 0.82rem; box-shadow: 0 4px 15px var(--accent-glow);
+      white-space: nowrap;
     }
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--accent-glow); filter: brightness(1.1); }
+    .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
     .btn-glass { background: rgba(255,255,255,0.06); border: 1px solid var(--border); box-shadow: none; }
-    .btn-glass:hover { background: rgba(255,255,255,0.12); transform: translateY(-2px); }
-    .btn-owner { background: #8e44ad; box-shadow: 0 4px 15px rgba(142, 68, 173, 0.4); }
-    .btn-edit { background: #f39c12; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+    .btn-glass:hover { background: rgba(255,255,255,0.12); }
+    .btn-owner { background: #8e44ad; }
+    .btn-edit { background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
 
-    .content-container { max-width: 1400px; margin: 0 auto; padding: 32px 48px; }
+    .content-container { max-width: 1400px; margin: 0 auto; padding: 24px; }
 
     .hero-featured {
-      width: 100%; height: 260px; border-radius: 24px;
-      background: linear-gradient(180deg, rgba(5,6,8,0.1) 0%, rgba(5,6,8,0.95) 100%), 
+      width: 100%; height: 220px; border-radius: 20px;
+      background: linear-gradient(180deg, rgba(5,6,8,0.2) 0%, rgba(5,6,8,0.95) 100%), 
                   url('https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
-      border: 1px solid var(--border); margin-bottom: 32px; display: flex; flex-direction: column; justify-content: flex-end; padding: 36px;
+      border: 1px solid var(--border); margin-bottom: 24px; display: flex; flex-direction: column; justify-content: flex-end; padding: 24px;
     }
-    .hero-badge { background: var(--accent); color: white; font-size: 0.75rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; width: fit-content; margin-bottom: 12px; text-transform: uppercase; }
-    .hero-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 6px; }
-    .hero-subtitle { color: var(--text-muted); font-size: 0.92rem; max-width: 600px; line-height: 1.4; }
+    .hero-badge { background: var(--accent); color: white; font-size: 0.7rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; width: fit-content; margin-bottom: 8px; text-transform: uppercase; }
+    .hero-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; }
+    .hero-subtitle { color: var(--text-muted); font-size: 0.85rem; max-width: 500px; line-height: 1.4; }
 
-    .filter-chips { display: flex; gap: 12px; margin-bottom: 28px; overflow-x: auto; padding-bottom: 6px; }
+    .filter-chips { display: flex; gap: 10px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 4px; }
     .chip {
       background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted);
-      padding: 9px 22px; border-radius: 24px; font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s;
+      padding: 8px 18px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s;
     }
-    .chip:hover, .chip.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 4px 15px var(--accent-glow); }
+    .chip:hover, .chip.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-    .poster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; }
+    .poster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
     .poster-card {
       background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border);
-      overflow: hidden; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; display: flex; flex-direction: column;
+      overflow: hidden; cursor: pointer; transition: all 0.25s ease; position: relative; display: flex; flex-direction: column;
     }
-    .poster-card:hover { transform: translateY(-8px); border-color: var(--accent); box-shadow: 0 15px 35px rgba(0,0,0,0.7); }
+    .poster-card:hover { transform: translateY(-4px); border-color: var(--accent); }
 
     .poster-frame { width: 100%; aspect-ratio: 16/10; background: #000; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-    .poster-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
-    .poster-card:hover .poster-img { transform: scale(1.08); }
+    .poster-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+    .poster-card:hover .poster-img { transform: scale(1.05); }
 
     .hover-overlay {
-      position: absolute; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px);
-      display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.25s ease;
+      position: absolute; inset: 0; background: rgba(0,0,0,0.4);
+      display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;
     }
     .poster-card:hover .hover-overlay { opacity: 1; }
-    .play-glow-btn { width: 48px; height: 48px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.1rem; box-shadow: 0 0 20px var(--accent-glow); }
-    .tag-badge { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); color: #fff; font-size: 0.7rem; font-weight: 700; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
+    .play-glow-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.95rem; }
+    .tag-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); color: #fff; font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
 
-    .poster-meta { padding: 18px; flex: 1; display: flex; flex-direction: column; }
-    .poster-title { font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 6px; }
-    .poster-desc { font-size: 0.78rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 14px; line-height: 1.4; }
-    .card-footer-stats { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted); }
+    .poster-meta { padding: 14px; flex: 1; display: flex; flex-direction: column; }
+    .poster-title { font-size: 0.88rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .poster-desc { font-size: 0.75rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 10px; line-height: 1.3; }
+    .card-footer-stats { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); }
 
-    .card-actions { position: absolute; top: 12px; right: 12px; z-index: 10; display: none; gap: 6px; }
-    .btn-delete-card { background: rgba(231, 76, 60, 0.9); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+    .card-actions { position: absolute; top: 10px; right: 10px; z-index: 10; display: none; gap: 4px; }
+    .btn-delete-card { background: rgba(231, 76, 60, 0.9); color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
 
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
-    .modal-box-wide { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 960px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 60px rgba(0,0,0,0.8); }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 12px; overflow-y: auto; }
+    .modal-box-wide { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 900px; max-height: 92vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
     
     .video-viewport { width: 100%; background: #000; position: relative; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; }
-    video, iframe, wistia-player { width: 100% !important; height: 100% !important; border: none; outline: none; position: absolute; inset: 0; }
+    video, iframe { width: 100% !important; height: 100% !important; border: none; outline: none; position: absolute; inset: 0; }
 
-    .modal-body-padding { padding: 32px; }
-    .form-input-dark { width: 100%; padding: 12px 18px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-base); color: white; margin-bottom: 14px; outline: none; font-size: 0.9rem; }
+    .modal-body-padding { padding: 20px; }
+    .form-input-dark { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-base); color: white; margin-bottom: 12px; outline: none; font-size: 0.88rem; }
 
-    .episodes-container { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
-    .ep-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); padding: 10px 22px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    .ep-btn:hover, .ep-btn.active { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 4px 15px var(--accent-glow); }
-    .ep-input-group { background: var(--bg-base); border: 1px solid var(--border); padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; gap: 8px; align-items: center; }
+    .episodes-container { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .ep-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); padding: 8px 16px; border-radius: 10px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .ep-btn:hover, .ep-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .ep-input-group { background: var(--bg-base); border: 1px solid var(--border); padding: 10px; border-radius: 10px; margin-bottom: 8px; display: flex; gap: 8px; align-items: center; }
+
+    /* Responsif khusus layar HP/Tablet */
+    @media (min-width: 768px) {
+      header { padding: 16px 48px; }
+      .content-container { padding: 32px 48px; }
+      .poster-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 24px; }
+      .hero-featured { height: 260px; padding: 32px; }
+      .hero-title { font-size: 2rem; }
+      .modal-body-padding { padding: 32px; }
+    }
   </style>
 </head>
 <body>
 
   <header>
     <div class="brand">
-      <a href="#" class="logo">NOV<span>I</span></a>
+      <a href="#" class="logo" onclick="navTo('home', event)">NOV<span>I</span></a>
       <ul class="nav-menu">
-        <li><a href="#" class="active">Beranda</a></li>
-        <li><a href="#">Series</a></li>
-        <li><a href="#">Kategori</a></li>
+        <li><a href="#" id="navHome" class="active" onclick="navTo('home', event)">Beranda</a></li>
+        <li><a href="#" id="navSeries" onclick="navTo('series', event)">Series</a></li>
+        <li><a href="#" id="navCategory" onclick="navTo('category', event)">Kategori</a></li>
       </ul>
     </div>
 
-    <div class="search-input-group">
-      <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
-      <input type="text" id="searchInput" placeholder="Cari serial atau kartun..." oninput="filterVideos()">
-    </div>
+    <div class="header-right">
+      <div class="search-input-group">
+        <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted);"></i>
+        <input type="text" id="searchInput" placeholder="Cari serial..." oninput="filterVideos()">
+      </div>
 
-    <div style="display: flex; gap: 12px;">
-      <button class="btn btn-owner" id="btnCreateAdmin" style="display: none;"><i class="fa-solid fa-user-plus"></i> Buat Admin</button>
-      <button class="btn" id="btnUpload" style="display: none;"><i class="fa-solid fa-plus"></i> Tambah Series</button>
+      <button class="btn btn-owner" id="btnCreateAdmin" style="display: none;"><i class="fa-solid fa-user-plus"></i></button>
+      <button class="btn" id="btnUpload" style="display: none;"><i class="fa-solid fa-plus"></i> Tambah</button>
       <button class="btn btn-glass" id="btnAdmin"><i class="fa-solid fa-user-lock"></i> Login</button>
     </div>
   </header>
 
   <div class="content-container">
-    <div class="hero-featured">
+    <div class="hero-featured" id="heroBanner">
       <span class="hero-badge" id="roleBadge">PENGUNJUNG</span>
-      <h1 class="hero-title">Platform Streaming NOVI</h1>
-      <p class="hero-subtitle">Nikmati koleksi serial dan kartun eksklusif dengan pemutar video beresolusi tinggi.</p>
+      <h1 class="hero-title" id="heroTitle">Platform Streaming NOVI</h1>
+      <p class="hero-subtitle" id="heroSubtitle">Nikmati koleksi serial dan kartun eksklusif dengan pemutar video beresolusi tinggi.</p>
     </div>
 
-    <div class="filter-chips">
-      <div class="chip active" onclick="filterCategory(event, 'All')">Semua</div>
+    <div class="filter-chips" id="categoryChipsSection" style="display: none;">
+      <div class="chip active" onclick="filterCategory(event, 'All')">Semua Kategori</div>
       <div class="chip" onclick="filterCategory(event, 'Animasi')">Animasi</div>
       <div class="chip" onclick="filterCategory(event, 'Drama')">Drama</div>
       <div class="chip" onclick="filterCategory(event, 'Action')">Action</div>
       <div class="chip" onclick="filterCategory(event, 'Hiburan')">Hiburan</div>
     </div>
 
-    <div style="font-size: 1.3rem; font-weight: 800; margin-bottom: 20px;">Daftar Series & Kartun</div>
+    <div style="font-size: 1.2rem; font-weight: 800; margin-bottom: 16px;" id="sectionHeading">Daftar Series & Kartun</div>
     <div class="poster-grid" id="videoGrid"></div>
   </div>
 
   <div class="modal-backdrop" id="playerModal">
     <div class="modal-box-wide">
-      <div style="padding: 18px 32px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
-        <h3 id="mTitle" style="font-size: 1.05rem; font-weight: 700;">NOVI Series Player</h3>
-        <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.3rem; color: var(--text-muted);" onclick="closeModal('playerModal')"></i>
+      <div style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
+        <h3 id="mTitle" style="font-size: 0.95rem; font-weight: 700;">NOVI Series Player</h3>
+        <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.2rem; color: var(--text-muted);" onclick="closeModal('playerModal')"></i>
       </div>
       <div class="video-viewport" id="videoContainer"></div>
       
       <div class="modal-body-padding">
-        <h2 id="mHeader" style="font-size: 1.5rem; font-weight: 800; margin-bottom: 8px;"></h2>
-        <p id="mDesc" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; line-height: 1.6;"></p>
+        <h2 id="mHeader" style="font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;"></h2>
+        <p id="mDesc" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5;"></p>
         
-        <h4 style="margin-bottom: 12px; font-weight: 700; font-size: 0.95rem;"><i class="fa-solid fa-list-ul" style="color: var(--accent);"></i> Pilih Episode:</h4>
+        <h4 style="margin-bottom: 10px; font-weight: 700; font-size: 0.9rem;"><i class="fa-solid fa-list-ul" style="color: var(--accent);"></i> Pilih Episode:</h4>
         <div class="episodes-container" id="episodesListContainer"></div>
 
-        <button class="btn btn-glass" id="btnLike" style="margin-bottom: 28px;"><i class="fa-solid fa-heart" style="color: var(--accent);"></i> <span id="likeNum">0</span> Suka</button>
+        <button class="btn btn-glass" id="btnLike" style="margin-bottom: 24px;"><i class="fa-solid fa-heart" style="color: var(--accent);"></i> <span id="likeNum">0</span> Suka</button>
 
-        <h4 style="margin-bottom: 12px; font-weight: 700;">Komentar Pengguna</h4>
-        <form id="commentForm" style="display: flex; gap: 12px; margin-bottom: 20px;">
-          <input type="text" id="cInput" class="form-input-dark" style="margin: 0;" placeholder="Tulis tanggapan Anda..." required />
-          <button type="submit" class="btn" style="padding: 0 26px;">Kirim</button>
+        <h4 style="margin-bottom: 10px; font-weight: 700; font-size: 0.95rem;">Komentar Pengguna</h4>
+        <form id="commentForm" style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+          <input type="text" id="cInput" class="form-input-dark" style="margin: 0; flex: 1; min-width: 200px;" placeholder="Tulis tanggapan..." required />
+          <button type="submit" class="btn" style="padding: 0 20px;">Kirim</button>
         </form>
-        <div id="cList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+        <div id="cList" style="display: flex; flex-direction: column; gap: 8px;"></div>
       </div>
     </div>
   </div>
 
   <div class="modal-backdrop" id="loginModal">
-    <div class="modal-box-wide" style="max-width: 420px; padding: 32px;">
-      <h3 style="margin-bottom: 20px; font-size: 1.3rem; font-weight: 800;">Login Owner / Admin</h3>
+    <div class="modal-box-wide" style="max-width: 380px; padding: 24px;">
+      <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800;">Login Owner / Admin</h3>
       <form id="loginForm">
         <input type="text" id="userInput" class="form-input-dark" placeholder="Username (Cth: owner)" required />
         <input type="password" id="passInput" class="form-input-dark" placeholder="Password (Cth: 123)" required />
-        <button type="submit" class="btn" style="width: 100%; justify-content: center; margin-top: 8px;">Masuk</button>
+        <button type="submit" class="btn" style="width: 100%; justify-content: center; margin-top: 6px;">Masuk</button>
       </form>
     </div>
   </div>
 
   <div class="modal-backdrop" id="createAdminModal">
-    <div class="modal-box-wide" style="max-width: 420px; padding: 32px;">
-      <h3 style="margin-bottom: 20px; font-size: 1.3rem; font-weight: 800; color: #8e44ad;">Buat Akun Admin Baru</h3>
+    <div class="modal-box-wide" style="max-width: 380px; padding: 24px;">
+      <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800; color: #8e44ad;">Buat Akun Admin Baru</h3>
       <form id="createAdminForm">
         <input type="text" id="newUserInput" class="form-input-dark" placeholder="Username Admin Baru" required />
         <input type="password" id="newPassInput" class="form-input-dark" placeholder="Password Admin Baru" required />
-        <button type="submit" class="btn btn-owner" style="width: 100%; justify-content: center; margin-top: 8px;">Buat Akun</button>
+        <button type="submit" class="btn btn-owner" style="width: 100%; justify-content: center; margin-top: 6px;">Buat Akun</button>
       </form>
     </div>
   </div>
 
   <div class="modal-backdrop" id="uploadModal">
-    <div class="modal-box-wide" style="max-width: 540px; padding: 32px;">
-      <h3 id="modalUploadTitle" style="margin-bottom: 20px; font-size: 1.3rem; font-weight: 800;">Tambah Series & Episode Baru</h3>
+    <div class="modal-box-wide" style="max-width: 500px; padding: 24px;">
+      <h3 id="modalUploadTitle" style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800;">Tambah Series & Episode</h3>
       <form id="uploadForm">
         <input type="hidden" id="editSeriesId" value="" />
         <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Series" required />
@@ -224,19 +235,19 @@
           <option value="Action">Action</option>
           <option value="Hiburan">Hiburan</option>
         </select>
-        <textarea id="uDesc" class="form-input-dark" style="height: 80px; resize: none;" placeholder="Deskripsi Singkat"></textarea>
+        <textarea id="uDesc" class="form-input-dark" style="height: 70px; resize: none;" placeholder="Deskripsi Singkat"></textarea>
         <input type="text" id="uThumb" class="form-input-dark" placeholder="Link Gambar Cover Poster (Opsional)" />
 
-        <hr style="border: 0; border-top: 1px solid var(--border); margin: 18px 0;">
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 14px 0;">
         
-        <label style="font-size: 0.88rem; font-weight: 700; display: block; margin-bottom: 10px;">Link Video (YouTube / Wistia / AnonMP4):</label>
+        <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 8px;">Link Video (.mp4 / Embed):</label>
         <div id="dynamicEpisodesContainer">
           <div class="ep-input-group">
-            <input type="text" class="form-input-dark ep-url" style="margin:0;" placeholder="Cth: https://anonmp4.art/v/t8mKHMpxwTlWDXz" required />
+            <input type="text" class="form-input-dark ep-url" style="margin:0;" placeholder="Cth: https://domain.com/video.mp4" required />
           </div>
         </div>
 
-        <button type="button" class="btn btn-glass" onclick="addEpisodeInput()" style="width: 100%; justify-content: center; margin-bottom: 20px; font-size: 0.85rem;">
+        <button type="button" class="btn btn-glass" onclick="addEpisodeInput()" style="width: 100%; justify-content: center; margin-bottom: 16px; font-size: 0.82rem;">
           <i class="fa-solid fa-plus"></i> Tambah Episode Lain
         </button>
 
@@ -264,10 +275,14 @@
     const uploadModal = document.getElementById('uploadModal');
     const roleBadge = document.getElementById('roleBadge');
     const modalUploadTitle = document.getElementById('modalUploadTitle');
+    const categoryChipsSection = document.getElementById('categoryChipsSection');
+    const sectionHeading = document.getElementById('sectionHeading');
+    const heroBanner = document.getElementById('heroBanner');
 
     let allVideos = [];
     let activeVid = null;
     let selectedCategory = 'All';
+    let currentMode = 'home'; // 'home', 'series', 'category'
     
     let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     let userRole = localStorage.getItem('userRole') || 'guest';
@@ -275,7 +290,7 @@
     function renderUI() {
       if (isLoggedIn) {
         btnUpload.style.display = 'flex';
-        btnAdmin.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> Logout';
+        btnAdmin.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i>';
         
         if (userRole === 'owner') {
           btnCreateAdmin.style.display = 'flex';
@@ -289,11 +304,39 @@
       } else {
         btnUpload.style.display = 'none';
         btnCreateAdmin.style.display = 'none';
-        btnAdmin.innerHTML = '<i class="fa-solid fa-user-lock"></i> Login';
+        btnAdmin.innerHTML = '<i class="fa-solid fa-user-lock"></i>';
         roleBadge.innerText = 'STATUS: PENGUNJUNG';
         roleBadge.style.background = 'var(--accent)';
       }
       fetchVideos();
+    }
+
+    // Fungsi Navigasi Menu Header
+    function navTo(mode, e) {
+      if (e) e.preventDefault();
+      currentMode = mode;
+      
+      document.querySelectorAll('.nav-menu a').forEach(a => a.classList.remove('active'));
+
+      if (mode === 'home') {
+        document.getElementById('navHome').classList.add('active');
+        heroBanner.style.display = 'flex';
+        categoryChipsSection.style.display = 'none';
+        sectionHeading.innerText = 'Daftar Series & Kartun Terbaru';
+        selectedCategory = 'All';
+      } else if (mode === 'series') {
+        document.getElementById('navSeries').classList.add('active');
+        heroBanner.style.display = 'none';
+        categoryChipsSection.style.display = 'none';
+        sectionHeading.innerText = 'Semua Koleksi Series';
+        selectedCategory = 'All';
+      } else if (mode === 'category') {
+        document.getElementById('navCategory').classList.add('active');
+        heroBanner.style.display = 'none';
+        categoryChipsSection.style.display = 'flex';
+        sectionHeading.innerText = 'Pilih Berdasarkan Kategori';
+      }
+      filterVideos();
     }
 
     btnAdmin.onclick = () => {
@@ -314,7 +357,7 @@
       modalUploadTitle.innerText = 'Tambah Series & Episode Baru';
       document.getElementById('dynamicEpisodesContainer').innerHTML = `
         <div class="ep-input-group">
-          <input type="text" class="form-input-dark ep-url" style="margin:0;" placeholder="Cth: https://anonmp4.art/v/t8mKHMpxwTlWDXz" required />
+          <input type="text" class="form-input-dark ep-url" style="margin:0;" placeholder="Cth: https://domain.com/video.mp4" required />
         </div>
       `;
       uploadModal.style.display = 'flex';
@@ -411,7 +454,7 @@
     function displayGrid(videos) {
       grid.innerHTML = '';
       if (!videos || videos.length === 0) {
-        grid.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">Belum ada series.</p>';
+        grid.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada series.</p>';
         return;
       }
 
@@ -432,7 +475,7 @@
           <div class="poster-frame">
             <img src="${v.thumbnail}" class="poster-img" />
             <div class="hover-overlay"><div class="play-glow-btn"><i class="fa-solid fa-play"></i></div></div>
-            <span class="tag-badge">${totalEp} Episode</span>
+            <span class="tag-badge">${totalEp} Ep</span>
           </div>
           <div class="poster-meta">
             <div class="poster-title">${v.title}</div>
@@ -475,26 +518,16 @@
     }
 
     function loadEpisodePlayer(src) {
-      if (src.includes('youtube.com/embed') || src.includes('youtu.be')) {
+      if (src.includes('youtube.com') || src.includes('youtu.be')) {
         let embedUrl = src;
         if (src.includes('youtu.be/')) {
           const id = src.split('youtu.be/')[1].split('?')[0];
           embedUrl = `https://www.youtube.com/embed/${id}`;
+        } else if (src.includes('/watch?v=')) {
+          const id = src.split('watch?v=')[1].split('&')[0];
+          embedUrl = `https://www.youtube.com/embed/${id}`;
         }
         videoContainer.innerHTML = `<iframe src="${embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-      } else if (src.includes('anonmp4.art')) {
-        let embedSrc = src;
-        if (!src.includes('/embed/')) {
-          embedSrc = src.replace('/v/', '/embed/');
-        }
-        videoContainer.innerHTML = `<iframe src="${embedSrc}" frameborder="0" scrolling="no" allowfullscreen style="width:100%; height:100%;"></iframe>`;
-      } else if (src.length === 10 || src.includes('wistia')) {
-        let wistiaId = src;
-        if (src.includes('/')) {
-          const parts = src.split('/');
-          wistiaId = parts[parts.length - 1].split('?')[0];
-        }
-        videoContainer.innerHTML = `<wistia-player media-id="${wistiaId}" aspect="1.7777777777777777"></wistia-player>`;
       } else {
         videoContainer.innerHTML = `<video src="${src}" controls autoplay preload="metadata" style="width:100%; height:100%;"></video>`;
       }
@@ -503,13 +536,13 @@
     function renderComments(comments) {
       cList.innerHTML = '';
       if (!comments || !comments.length) {
-        cList.innerHTML = '<p style="font-size:0.85rem; color:var(--text-muted);">Belum ada komentar.</p>';
+        cList.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted);">Belum ada komentar.</p>';
         return;
       }
       comments.forEach(c => {
         const d = document.createElement('div');
-        d.style.cssText = 'background:var(--bg-base); padding:12px 16px; border-radius:12px; border:1px solid var(--border); font-size:0.88rem;';
-        d.innerHTML = `<div>${c.text}</div><div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">${c.date}</div>`;
+        d.style.cssText = 'background:var(--bg-base); padding:10px 14px; border-radius:10px; border:1px solid var(--border); font-size:0.85rem;';
+        d.innerHTML = `<div>${c.text}</div><div style="font-size:0.7rem; color:var(--text-muted); margin-top:3px;">${c.date}</div>`;
         cList.appendChild(d);
       });
     }
@@ -533,7 +566,8 @@
     function filterVideos() {
       const q = document.getElementById('searchInput').value.toLowerCase();
       let filtered = allVideos.filter(v => v.title.toLowerCase().includes(q));
-      if (selectedCategory !== 'All') {
+      
+      if (currentMode === 'category' && selectedCategory !== 'All') {
         filtered = filtered.filter(v => (v.category || 'Animasi') === selectedCategory);
       }
       displayGrid(filtered);
