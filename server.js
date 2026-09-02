@@ -95,7 +95,7 @@ app.post('/api/upload', (req, res) => {
       category: category || 'Umum',
       description: description || '',
       thumbnail: thumbnail || 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=600&q=80',
-      episodes: episodes, // Menyimpan array list episode (Eps 1, Eps 2, dst)
+      episodes: episodes,
       views: 0,
       likes: 0,
       comments: []
@@ -110,7 +110,6 @@ app.post('/api/upload', (req, res) => {
   }
 });
 
-// Import Playlist M3U via File Upload
 app.post('/api/import-m3u', (req, res) => {
   try {
     let videos = loadMetadata();
@@ -145,7 +144,6 @@ app.post('/api/import-m3u', (req, res) => {
   }
 });
 
-// Hapus Konten Satuan
 app.delete('/api/videos/:id', (req, res) => {
   let videos = loadMetadata();
   const id = req.params.id;
@@ -154,7 +152,6 @@ app.delete('/api/videos/:id', (req, res) => {
   res.json({ success: true, message: 'Konten dihapus.' });
 });
 
-// Hapus Banyak Sekaligus (Bulk Delete)
 app.post('/api/videos/bulk-delete', (req, res) => {
   try {
     let videos = loadMetadata();
