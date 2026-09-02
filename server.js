@@ -11,11 +11,13 @@ app.use(express.static('public'));
 
 const uploadDir = path.join(__dirname, 'uploads');
 const metadataFile = path.join(__dirname, 'metadata.json');
+const adminsFile = path.join(__dirname, 'admins.json');
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
+// Inisialisasi Database Video
 function loadMetadata() {
   try {
     if (fs.existsSync(metadataFile)) {
@@ -34,6 +36,28 @@ function saveMetadata(videosArray) {
     fs.writeFileSync(metadataFile, JSON.stringify(videosArray, null, 2));
   } catch (e) {
     console.error("Gagal menyimpan ke metadata.json:", e);
+  }
+}
+
+// Inisialisasi Database Admin Tambahan
+function loadAdmins() {
+  try {
+    if (fs.existsSync(adminsFile)) {
+      const data = fs.readFileSync(adminsFile, 'utf8');
+      const parsed = data ? JSON.parse(data) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    }
+  } catch (e) {
+    console.error("Gagal membaca admins.json:", e);
+  }
+  return [];
+}
+
+function saveAdmins(adminsArray) {
+  try {
+    fs.writeFileSync(adminsFile, JSON.stringify(adminsArray, null, 2));
+  } catch (e) {
+    console.error("Gagal menyimpan ke admins.json:", e);
   }
 }
 
@@ -136,7 +160,7 @@ app.delete('/api/videos/:id', (req, res) => {
 app.post('/api/videos/bulk-delete', (req, res) => {
   try {
     let videos = loadMetadata();
-    const { ids } = req.body; // Menerima array ID yang ingin dihapus
+    const { ids } = req.body;
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ success: false, message: 'Tidak ada data yang dipilih untuk dihapus.' });
     }
@@ -186,14 +210,47 @@ app.post('/api/videos/:id/comment', (req, res) => {
   }
 });
 
+// Login Admin & Owner Utama
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
+  
   if (username === 'owner' && password === '123') {
-    res.json({ success: true, role: 'owner' });
-  } else if (username === 'admin' && password === '123') {
-    res.json({ success: true, role: 'admin' });
-  } else {
-    res.json({ success: false, message: 'Username atau Password salah!' });
+    return res.json({ success: true, role: 'owner' });
+  } 
+  
+  if (username === 'admin' && password === '123') {
+    return res.json({ success: true, role: 'admin' });
+  }
+
+  // Cek admin tambahan yang dibuat oleh owner
+  const customAdmins = loadAdmins();
+  const foundAdmin = customAdmins.find(a => a.username === username && a.password === password);
+  if (foundAdmin) {
+    return res.json({ success: true, role: 'admin' });
+  }
+
+  res.json({ success: false, message: 'Username atau Password salah!' });
+});
+
+// Endpoint Buat Akun Admin Baru (Khusus Owner)
+app.post('/api/create-admin', (req, res) => {
+  try {
+    const { newUsername, newPassword } = req.body;
+    if (!newUsername || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Username dan Password baru wajib diisi!' });
+    }
+
+    let customAdmins = loadAdmins();
+    if (customAdmins.some(a => a.username === newUsername) || newUsername === 'owner') {
+      return.status(400).json({ success: false, message: 'Username sudah digunakan!' });
+    }
+
+    customAdmins.push({ username: newUsername, password: newPassword });
+    saveAdmins(customAdmins);
+
+    res.json({ success: true, message: `Akun admin baru "${newUsername}" berhasil dibuat!` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal membuat akun admin.' });
   }
 });
 

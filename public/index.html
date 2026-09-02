@@ -75,7 +75,7 @@
     .hero-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; }
     .hero-subtitle { color: var(--text-muted); font-size: 0.85rem; max-width: 500px; line-height: 1.4; }
 
-    .section-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+    .section-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
     .section-block { margin-bottom: 40px; }
 
     .poster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
@@ -112,10 +112,8 @@
     .card-actions { position: absolute; top: 10px; right: 10px; z-index: 10; display: none; gap: 4px; }
     .btn-delete-card { background: rgba(231, 76, 60, 0.9); color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
 
-    /* Checkbox Hapus Massal */
     .bulk-checkbox {
-      position: absolute; top: 10px; left: 10px; z-index: 10; width: 18px; height: 18px; accent-var: var(--accent); cursor: pointer;
-      display: none;
+      position: absolute; top: 10px; left: 10px; z-index: 10; width: 18px; height: 18px; cursor: pointer; display: none;
     }
 
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 12px; overflow-y: auto; }
@@ -312,7 +310,7 @@
         
         if (userRole === 'owner') {
           btnCreateAdmin.style.display = 'flex';
-          btnDeleteBulk.style.display = 'flex'; // Tombol Hapus Terpilih hanya muncul untuk Owner
+          btnDeleteBulk.style.display = 'flex';
           roleBadge.innerText = 'STATUS: OWNER UTAMA';
           roleBadge.style.background = '#8e44ad';
         } else {
@@ -495,7 +493,6 @@
       `;
     }
 
-    // Fungsi Hapus Banyak Sekaligus (Bulk Delete)
     async function deleteSelectedVideos() {
       const checkboxes = document.querySelectorAll('.bulk-checkbox:checked');
       if (checkboxes.length === 0) {
@@ -542,7 +539,7 @@
         let html = '';
         html += `
           <div class="section-block">
-            <div class="section-title"><span style="display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-film" style="color: var(--accent);"></i> Koleksi Film & Series</span></div>
+            <div class="section-title"><i class="fa-solid fa-film" style="color: var(--accent);"></i> Koleksi Film & Series</div>
             <div class="poster-grid">
               ${films.length > 0 ? films.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada film.</p>'}
             </div>
@@ -550,7 +547,7 @@
         `;
         html += `
           <div class="section-block">
-            <div class="section-title"><span style="display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-tv" style="color: var(--accent);"></i> Siaran TV Langsung (Live)</span></div>
+            <div class="section-title"><i class="fa-solid fa-tv" style="color: var(--accent);"></i> Siaran TV Langsung (Live)</div>
             <div class="poster-grid">
               ${tvs.length > 0 ? tvs.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada siaran TV.</p>'}
             </div>
@@ -564,7 +561,7 @@
 
         mainContainer.innerHTML = `
           <div class="section-block">
-            <div class="section-title"><span style="display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-film" style="color: var(--accent);"></i> Koleksi Film & Series</span></div>
+            <div class="section-title"><i class="fa-solid fa-film" style="color: var(--accent);"></i> Koleksi Film & Series</div>
             <div class="poster-grid">
               ${films.length > 0 ? films.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada film.</p>'}
             </div>
@@ -576,7 +573,7 @@
 
         mainContainer.innerHTML = `
           <div class="section-block">
-            <div class="section-title"><span style="display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-tv" style="color: var(--accent);"></i> Siaran TV Langsung (Live)</span></div>
+            <div class="section-title"><i class="fa-solid fa-tv" style="color: var(--accent);"></i> Siaran TV Langsung (Live)</div>
             <div class="poster-grid">
               ${tvs.length > 0 ? tvs.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada siaran TV.</p>'}
             </div>
@@ -854,7 +851,7 @@
         if (res.ok && data.success) {
           alert('Konten Berhasil Disimpan!');
           closeModal('uploadModal');
-          document.getElementById('uploadForm'].reset();
+          document.getElementById('uploadForm').reset();
           fetchVideos();
         } else {
           alert('Gagal: ' + (data.message || 'Kesalahan server'));
