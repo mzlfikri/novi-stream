@@ -62,8 +62,8 @@
     .btn-import { background: #27ae60; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4); }
     .btn-delete-bulk { background: #c0392b; box-shadow: 0 4px 15px rgba(192, 57, 43, 0.4); display: none; }
     
-    .btn-edit-card { background: #f39c12; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; z-index: 20; }
-    .btn-delete-card { background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; z-index: 20; }
+    .btn-edit-card { background: #f39c12; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-delete-card { background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
     .admin-card-actions { display: flex; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
 
     .btn-small-action { background: rgba(255,255,255,0.1); border: 1px solid var(--border); color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600; }
@@ -500,7 +500,7 @@
       return `
         <div class="poster-card">
           ${userRole === 'owner' ? `
-            <input type="checkbox" class="bulk-checkbox" value="${v.id}" />
+            <input type="checkbox" class="bulk-checkbox" value="${v.id}" onclick="event.stopPropagation()" style="display: block;" />
           ` : ''}
           <div class="poster-frame" onclick="openPlayer('${v.id}')">
             <img src="${v.thumbnail}" class="poster-img" />
@@ -755,7 +755,8 @@
       }
     };
 
-    // Fungsi editVid yang dilengkapi penahan event klik
+    // PENGAMAN MUTLAK: event.stopPropagation() dan event.preventDefault() 
+    // agar klik tombol edit tidak bocor ke fungsi pemutar video kartu di belakangnya.
     function editVid(event, id) {
       if (event) {
         event.stopPropagation();
