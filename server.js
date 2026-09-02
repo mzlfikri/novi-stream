@@ -5,7 +5,6 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Mengatur batas ukuran data JSON agar file M3U besar atau upload video besar tidak ditolak
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 app.use(express.static('public'));
@@ -17,42 +16,39 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
-// Inisialisasi Database JSON yang aman dari error kosong
-let videos = [];
+// Fungsi Load Database yang memastikan hasilnya SELALU Berupa Array
 function loadMetadata() {
   try {
     if (fs.existsSync(metadataFile)) {
       const data = fs.readFileSync(metadataFile, 'utf8');
-      videos = data ? JSON.parse(data) : [];
-    } else {
-      videos = [];
+      const parsed = data ? JSON.parse(data) : [];
+      // Validasi ketat: jika bukan array, ubah jadi array kosong
+      return Array.isArray(parsed) ? parsed : [];
     }
   } catch (e) {
-    console.error("Gagal membaca metadata.json, membuat database baru:", e);
-    videos = [];
+    console.error("Gagal membaca metadata.json, membuat array baru:", e);
   }
+  return [];
 }
 
-function saveMetadata() {
+function saveMetadata(videosArray) {
   try {
-    fs.writeFileSync(metadataFile, JSON.stringify(videos, null, 2));
+    fs.writeFileSync(metadataFile, JSON.stringify(videosArray, null, 2));
   } catch (e) {
     console.error("Gagal menyimpan ke metadata.json:", e);
   }
 }
 
-loadMetadata();
-
 // Ambil daftar video
 app.get('/api/videos', (req, res) => {
-  loadMetadata();
+  const videos = loadMetadata();
   res.json(videos);
 });
 
 // Tambah / Edit Konten Satuan
 app.post('/api/upload', (req, res) => {
   try {
-    loadMetadata();
+    let videos = loadMetadata();
     const { id, type, title, category, description, thumbnail, videoUrl } = req.body;
     
     if (!title || !videoUrl) {
@@ -68,7 +64,7 @@ app.post('/api/upload', (req, res) => {
         videos[index].description = description || '';
         videos[index].thumbnail = thumbnail || videos[index].thumbnail;
         videos[index].episodes = [{ src: videoUrl }];
-        saveMetadata();
+        saveMetadata(videos);
         return res.json({ success: true, message: 'Konten berhasil diperbarui!' });
       }
     }
@@ -87,7 +83,7 @@ app.post('/api/upload', (req, res) => {
     };
 
     videos.unshift(newVideo);
-    saveMetadata();
+    saveMetadata(videos);
     res.json({ success: true, message: 'Konten berhasil ditambahkan!' });
   } catch (err) {
     console.error("Error pada /api/upload:", err);
@@ -98,7 +94,7 @@ app.post('/api/upload', (req, res) => {
 // Import Playlist M3U via File Upload (Massal)
 app.post('/api/import-m3u', (req, res) => {
   try {
-    loadMetadata();
+    let videos = loadMetadata();
     const { channels } = req.body;
     if (!channels || !Array.isArray(channels) || channels.length === 0) {
       return res.status(400).json({ success: false, message: 'File M3U kosong atau format tidak valid.' });
@@ -122,7 +118,7 @@ app.post('/api/import-m3u', (req, res) => {
       addedCount++;
     });
 
-    saveMetadata();
+    saveMetadata(videos);
     res.json({ success: true, message: `Berhasil mengimport ${addedCount} channel siaran TV dari file!` });
   } catch (err) {
     console.error("Error pada /api/import-m3u:", err);
@@ -132,31 +128,31 @@ app.post('/api/import-m3u', (req, res) => {
 
 // Hapus Konten
 app.delete('/api/videos/:id', (req, res) => {
-  loadMetadata();
+  let videos = loadMetadata();
   const id = req.params.id;
   videos = videos.filter(v => v.id != id);
-  saveMetadata();
+  saveMetadata(videos);
   res.json({ success: true, message: 'Konten dihapus.' });
 });
 
 // Tambah View
 app.post('/api/videos/:id/view', (req, res) => {
-  loadMetadata();
+  let videos = loadMetadata();
   const v = videos.find(item => item.id == req.params.id);
   if (v) {
     v.views = (v.views || 0) + 1;
-    saveMetadata();
+    saveMetadata(videos);
   }
   res.json({ success: true });
 });
 
 // Like Video
 app.post('/api/videos/:id/like', (req, res) => {
-  loadMetadata();
+  let videos = loadMetadata();
   const v = videos.find(item => item.id == req.params.id);
   if (v) {
     v.likes = (v.likes || 0) + 1;
-    saveMetadata();
+    saveMetadata(videos);
     res.json({ success: true, likes: v.likes });
   } else {
     res.status(404).json({ success: false });
@@ -165,13 +161,13 @@ app.post('/api/videos/:id/like', (req, res) => {
 
 // Komentar
 app.post('/api/videos/:id/comment', (req, res) => {
-  loadMetadata();
+  let videos = loadMetadata();
   const v = videos.find(item => item.id == req.params.id);
   const { text } = req.body;
   if (v && text) {
     if (!v.comments) v.comments = [];
     v.comments.push({ text, date: new Date().toLocaleDateString('id-ID') });
-    saveMetadata();
+    saveMetadata(videos);
     res.json({ success: true, comments: v.comments });
   } else {
     res.status(400).json({ success: false });
