@@ -1,17 +1,37 @@
 const express = require('express');
-const fs = require('fs');
+const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+
+// Buat folder uploads jika belum ada
+const uploadDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Konfigurasi Multer untuk Menyimpan File Video Lokal
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage: storage });
 
 const DB_FILE = path.join(__dirname, 'database.json');
 const ADMIN_FILE = path.join(__dirname, 'admin.json');
 
-// Inisialisasi file database jika belum ada
 if (!fs.existsSync(DB_FILE)) {
   fs.writeFileSync(DB_FILE, JSON.stringify([], null, 2));
 }
@@ -35,34 +55,45 @@ app.get('/api/videos', (req, res) => {
   }
 });
 
-// API Tambah / Edit Video (Upload)
-app.post('/api/upload', (req, res) => {
+// API Upload File Video & Data Series
+app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
   try {
-    const { id, title, category, description, thumbnail, episodes } = req.body;
+    const { id, title, category, description, thumbnail, existingEpisodes } = req.body;
     
     let videos = [];
     if (fs.existsSync(DB_FILE)) {
-      const fileData = fs.readFileSync(DB_FILE, 'utf8');
-      videos = JSON.parse(fileData);
+      videos = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
     }
 
-    let thumbFinal = thumbnail;
-    if (!thumbFinal || thumbFinal.trim() === '') {
-      thumbFinal = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
+    let thumbFinal = thumbnail && thumbnail.trim() !== '' 
+      ? thumbnail 
+      : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
+
+    let episodes = existingEpisodes ? JSON.parse(existingEpisodes) : [];
+
+    // Jika ada file video baru yang di-upload dari perangkat
+    if (req.files && req.files.length > 0) {
+      req.files.forEach((file) => {
+        const fileUrl = `/uploads/${file.filename}`;
+        episodes.push({
+          epNum: episodes.length + 1,
+          src: fileUrl
+        });
+      });
     }
 
     if (id) {
-      // Proses Edit
+      // Proses Edit Series
       videos = videos.map(v => v.id == id ? { ...v, title, category, description, thumbnail: thumbFinal, episodes } : v);
     } else {
-      // Proses Tambah Baru
+      // Proses Tambah Series Baru
       const newVideo = {
         id: Date.now(),
         title,
         category: category || 'Animasi',
         description,
         thumbnail: thumbFinal,
-        episodes: episodes || [],
+        episodes: episodes,
         likes: 0,
         comments: []
       };
@@ -70,14 +101,14 @@ app.post('/api/upload', (req, res) => {
     }
 
     fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2));
-    res.json({ success: true, message: 'Berhasil disimpan!' });
+    res.json({ success: true, message: 'Series & Video Berhasil Disimpan ke Server!' });
   } catch (err) {
-    console.error("Error di /api/upload:", err);
-    res.status(500).json({ success: false, message: 'Gagal menyimpan data ke server.' });
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Gagal mengunggah video ke server.' });
   }
 });
 
-// API Hapus Video
+// API Hapus Series
 app.delete('/api/videos/:id', (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -110,7 +141,7 @@ app.post('/api/login', (req, res) => {
   }
 });
 
-// API Buat Admin Baru (Khusus Owner)
+// API Buat Admin Baru
 app.post('/api/create-admin', (req, res) => {
   try {
     const { newUsername, newPassword } = req.body;
@@ -132,5 +163,5 @@ app.post('/api/create-admin', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server NOVI berjalan di http://localhost:${PORT}`);
+  console.log(`Server NOVI berjalan di port ${PORT}`);
 });
