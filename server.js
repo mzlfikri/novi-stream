@@ -39,7 +39,7 @@ app.get('/api/videos', (req, res) => {
 // API: Tambah View (Penonton)
 app.post('/api/videos/:id/view', (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseFloat(req.params.id);
     let videos = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
     videos = videos.map(v => {
       if (v.id === id) v.views = (v.views || 0) + 1;
@@ -55,7 +55,7 @@ app.post('/api/videos/:id/view', (req, res) => {
 // API: Tambah Like
 app.post('/api/videos/:id/like', (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseFloat(req.params.id);
     let videos = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
     let updatedLikes = 0;
     videos = videos.map(v => {
@@ -75,7 +75,7 @@ app.post('/api/videos/:id/like', (req, res) => {
 // API: Tambah Komentar
 app.post('/api/videos/:id/comment', (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseFloat(req.params.id);
     const { text } = req.body;
     let videos = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
     let updatedComments = [];
@@ -94,7 +94,80 @@ app.post('/api/videos/:id/comment', (req, res) => {
   }
 });
 
-// API: Simpan Konten (Film / Siaran TV via Link)
+// API: Import Massal dari Teks M3U
+app.post('/api/import-m3u', (req, res) => {
+  try {
+    const { m3uText } = req.body;
+    if (!m3uText) {
+      return res.status(400).json({ success: false, message: 'Teks M3U kosong!' });
+    }
+
+    let videos = [];
+    if (fs.existsSync(DB_FILE)) {
+      try {
+        videos = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+      } catch (e) {
+        videos = [];
+      }
+    }
+
+    const lines = m3uText.split('\n');
+    let currentTitle = 'Unknown Channel';
+    let currentLogo = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
+    let currentGroup = 'INDONESIA';
+    let currentType = 'tv';
+
+    for (let i = 0; i < lines.length; i++) {
+      let line = lines[i].trim();
+
+      if (line.startsWith('#EXTINF:')) {
+        const logoMatch = line.match(/tvg-logo="([^"]+)"/);
+        if (logoMatch) currentLogo = logoMatch[1];
+
+        const groupMatch = line.match(/group-title="([^"]+)"/);
+        if (groupMatch) {
+          currentGroup = groupMatch[1];
+          if (currentGroup.toLowerCase().includes('movie') || currentGroup.toLowerCase().includes('film')) {
+            currentType = 'film';
+          } else {
+            currentType = 'tv';
+          }
+        }
+
+        const parts = line.split(',');
+        if (parts.length > 1) {
+          currentTitle = parts[parts.length - 1].trim();
+        }
+      } else if (line && !line.startsWith('#')) {
+        let videoUrl = line;
+        const exists = videos.some(v => v.episodes && v.episodes[0] && v.episodes[0].src === videoUrl);
+        
+        if (!exists) {
+          videos.unshift({
+            id: Date.now() + Math.random(),
+            title: currentTitle,
+            type: currentType,
+            category: currentGroup,
+            description: `Channel Live / Streaming otomatis dari M3U (${currentGroup})`,
+            thumbnail: currentLogo,
+            episodes: [{ epNum: 1, src: videoUrl }],
+            views: 0,
+            likes: 0,
+            comments: []
+          });
+        }
+      }
+    }
+
+    fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2), 'utf8');
+    res.json({ success: true, message: 'Berhasil mengimpor seluruh channel M3U secara massal!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Gagal memproses M3U.' });
+  }
+});
+
+// API: Simpan Konten Satuan (Film / Siaran TV)
 app.post('/api/upload', (req, res) => {
   try {
     const { id, title, type, category, description, thumbnail, videoUrl } = req.body;
@@ -115,13 +188,14 @@ app.post('/api/upload', (req, res) => {
     let episodes = [{ epNum: 1, src: videoUrl }];
 
     if (id) {
-      videos = videos.map(v => v.id == id ? { ...v, title, type: type || 'film', category, description, thumbnail: thumbFinal, episodes } : v);
+      const numericId = parseFloat(id);
+      videos = videos.map(v => v.id === numericId ? { ...v, title, type: type || 'tv', category, description, thumbnail: thumbFinal, episodes } : v);
     } else {
       const newVideo = {
         id: Date.now(),
         title,
-        type: type || 'film',
-        category: category || 'Animasi',
+        type: type || 'tv',
+        category: category || 'INDONESIA',
         description,
         thumbnail: thumbFinal,
         episodes: episodes,
@@ -143,7 +217,7 @@ app.post('/api/upload', (req, res) => {
 // API: Hapus data
 app.delete('/api/videos/:id', (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseFloat(req.params.id);
     if (fs.existsSync(DB_FILE)) {
       let videos = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
       videos = videos.filter(v => v.id !== id);

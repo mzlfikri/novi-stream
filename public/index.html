@@ -59,6 +59,7 @@
     .btn-glass { background: rgba(255,255,255,0.06); border: 1px solid var(--border); box-shadow: none; }
     .btn-glass:hover { background: rgba(255,255,255,0.12); }
     .btn-owner { background: #8e44ad; }
+    .btn-import { background: #27ae60; }
     .btn-edit { background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
 
     .content-container { max-width: 1400px; margin: 0 auto; padding: 24px; }
@@ -148,6 +149,7 @@
       </div>
 
       <button class="btn btn-owner" id="btnCreateAdmin" style="display: none;"><i class="fa-solid fa-user-plus"></i></button>
+      <button class="btn btn-import" id="btnImportM3U" style="display: none;"><i class="fa-solid fa-file-arrow-down"></i> Import M3U</button>
       <button class="btn" id="btnUpload" style="display: none;"><i class="fa-solid fa-plus"></i> Tambah</button>
       <button class="btn btn-glass" id="btnAdmin"><i class="fa-solid fa-user-lock"></i> Login</button>
     </div>
@@ -202,6 +204,17 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="importM3UModal">
+    <div class="modal-box-wide" style="max-width: 600px; padding: 24px;">
+      <h3 style="margin-bottom: 12px; font-size: 1.2rem; font-weight: 800; color: #27ae60;"><i class="fa-solid fa-file-arrow-down"></i> Import Playlist M3U Massal</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">Tempelkan seluruh kode teks M3U (#EXTM3U ...) Anda di bawah ini untuk memasukkan ratusan channel sekaligus secara otomatis.</p>
+      <form id="importM3UForm">
+        <textarea id="m3uTextArea" class="form-input-dark" style="height: 250px; resize: vertical; font-family: monospace; font-size: 0.75rem;" placeholder="#EXTM3U..." required></textarea>
+        <button type="submit" class="btn btn-import" id="btnSubmitImport" style="width: 100%; justify-content: center; margin-top: 6px;">Proses & Masukkan Semua Channel</button>
+      </form>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="createAdminModal">
     <div class="modal-box-wide" style="max-width: 380px; padding: 24px;">
       <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800; color: #8e44ad;">Buat Akun Admin Baru</h3>
@@ -221,18 +234,20 @@
         
         <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Pilih Jenis Konten:</label>
         <select id="uType" class="form-input-dark" onchange="toggleUploadType()">
-          <option value="film">Film / Series (Bunny.net / YouTube / Embed)</option>
-          <option value="tv">Siaran TV Live Streaming (.m3u8 / Worker)</option>
+          <option value="film">Film / Series / Premium Movies</option>
+          <option value="tv">Siaran TV Live Streaming</option>
         </select>
 
         <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Film atau Nama Channel TV" required />
         
         <div id="catFieldGroup">
           <select id="uCat" class="form-input-dark">
-            <option value="Animasi">Animasi</option>
-            <option value="Drama">Drama</option>
-            <option value="Action">Action</option>
-            <option value="Hiburan">Hiburan</option>
+            <option value="INDONESIA">INDONESIA</option>
+            <option value="Sports">Sports</option>
+            <option value="KIDS">KIDS</option>
+            <option value="Entertainment & LifeStyle">Entertainment & LifeStyle</option>
+            <option value="KNOWLEDGE & DOCUMENTARY">KNOWLEDGE & DOCUMENTARY</option>
+            <option value="Premium Movies">Premium Movies</option>
           </select>
         </div>
 
@@ -241,8 +256,8 @@
 
         <hr style="border: 0; border-top: 1px solid var(--border); margin: 14px 0;">
         
-        <label id="labelVideoUrl" style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Link Video / Bunny Embed / M3U8:</label>
-        <input type="text" id="uVideoUrl" class="form-input-dark" placeholder="Tempel link embed atau URL video di sini" required style="margin:0;" />
+        <label id="labelVideoUrl" style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Link Streaming (.m3u8 / .mpd / Worker):</label>
+        <input type="text" id="uVideoUrl" class="form-input-dark" placeholder="Tempel link streaming di sini" required style="margin:0;" />
 
         <button type="submit" class="btn" id="btnSubmitUpload" style="width: 100%; justify-content: center; margin-top: 16px;">Simpan Konten</button>
       </form>
@@ -261,9 +276,11 @@
     const cList = document.getElementById('cList');
 
     const btnUpload = document.getElementById('btnUpload');
+    const btnImportM3U = document.getElementById('btnImportM3U');
     const btnCreateAdmin = document.getElementById('btnCreateAdmin');
     const btnAdmin = document.getElementById('btnAdmin');
     const loginModal = document.getElementById('loginModal');
+    const importM3UModal = document.getElementById('importM3UModal');
     const createAdminModal = document.getElementById('createAdminModal');
     const uploadModal = document.getElementById('uploadModal');
     const roleBadge = document.getElementById('roleBadge');
@@ -280,6 +297,7 @@
     function renderUI() {
       if (isLoggedIn) {
         btnUpload.style.display = 'flex';
+        btnImportM3U.style.display = 'flex';
         btnAdmin.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i>';
         
         if (userRole === 'owner') {
@@ -293,6 +311,7 @@
         }
       } else {
         btnUpload.style.display = 'none';
+        btnImportM3U.style.display = 'none';
         btnCreateAdmin.style.display = 'none';
         btnAdmin.innerHTML = '<i class="fa-solid fa-user-lock"></i>';
         roleBadge.innerText = 'STATUS: PENGUNJUNG';
@@ -322,15 +341,11 @@
 
     function toggleUploadType() {
       const type = document.getElementById('uType').value;
-      const catGroup = document.getElementById('catFieldGroup');
       const label = document.getElementById('labelVideoUrl');
-
       if (type === 'tv') {
-        catGroup.style.display = 'none';
-        label.innerText = 'Link Siaran TV (Format .m3u8 / Worker):';
+        label.innerText = 'Link Siaran TV (Format .m3u8 / .mpd / Worker):';
       } else {
-        catGroup.style.display = 'block';
-        label.innerText = 'Link Video / Bunny Embed / YouTube:';
+        label.innerText = 'Link Film / Premium Movies (.mpd / .m3u8):';
       }
     }
 
@@ -352,6 +367,11 @@
       modalUploadTitle.innerText = 'Tambah Konten Baru';
       toggleUploadType();
       uploadModal.style.display = 'flex';
+    };
+
+    btnImportM3U.onclick = () => {
+      document.getElementById('importM3UForm').reset();
+      importM3UModal.style.display = 'flex';
     };
 
     btnCreateAdmin.onclick = () => { createAdminModal.style.display = 'flex'; };
@@ -390,6 +410,35 @@
         }
       } catch (err) {
         alert('Kesalahan koneksi.');
+      }
+    };
+
+    document.getElementById('importM3UForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const m3uText = document.getElementById('m3uTextArea').value;
+      const btn = document.getElementById('btnSubmitImport');
+      btn.innerText = 'Memproses...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/import-m3u', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ m3uText })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert(data.message);
+          closeModal('importM3UModal');
+          fetchVideos();
+        } else {
+          alert(data.message || 'Gagal mengimpor M3U.');
+        }
+      } catch (err) {
+        alert('Terjadi kesalahan koneksi.');
+      } finally {
+        btn.innerText = 'Proses & Masukkan Semua Channel';
+        btn.disabled = false;
       }
     };
 
@@ -438,9 +487,9 @@
             </div>
           ` : ''}
           <div class="poster-frame">
-            <img src="${v.thumbnail}" class="poster-img" />
+            <img src="${v.thumbnail}" class="poster-img" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80'" />
             <div class="hover-overlay"><div class="play-glow-btn"><i class="fa-solid fa-play"></i></div></div>
-            <span class="tag-badge ${isTv ? 'live-badge' : ''}">${isTv ? '🔴 LIVE TV' : 'FILM'}</span>
+            <span class="tag-badge ${isTv ? 'live-badge' : ''}">${v.category || (isTv ? '🔴 LIVE TV' : 'FILM')}</span>
           </div>
           <div class="poster-meta">
             <div class="poster-title">${v.title}</div>
@@ -460,8 +509,8 @@
       mainContainer.innerHTML = '';
 
       if (currentMode === 'home') {
-        let films = allVideos.filter(v => v.type === 'film' || !v.type);
-        let tvs = allVideos.filter(v => v.type === 'tv');
+        let films = allVideos.filter(v => v.type === 'film' || v.category === 'Premium Movies');
+        let tvs = allVideos.filter(v => v.type === 'tv' && v.category !== 'Premium Movies');
 
         if (q) {
           films = films.filter(v => v.title.toLowerCase().includes(q));
@@ -471,7 +520,7 @@
         let html = '';
         html += `
           <div class="section-block">
-            <div class="section-title"><i class="fa-solid fa-film" style="color: var(--accent);"></i> Koleksi Film & Series</div>
+            <div class="section-title"><i class="fa-solid fa-film" style="color: var(--accent);"></i> Film & Premium Movies</div>
             <div class="poster-grid">
               ${films.length > 0 ? films.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada film.</p>'}
             </div>
@@ -479,7 +528,7 @@
         `;
         html += `
           <div class="section-block">
-            <div class="section-title"><i class="fa-solid fa-tv" style="color: var(--accent);"></i> Siaran TV Langsung (Live)</div>
+            <div class="section-title"><i class="fa-solid fa-tv" style="color: var(--accent);"></i> Siaran TV & Live Streaming</div>
             <div class="poster-grid">
               ${tvs.length > 0 ? tvs.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada siaran TV.</p>'}
             </div>
@@ -488,12 +537,12 @@
         mainContainer.innerHTML = html;
 
       } else if (currentMode === 'film') {
-        let films = allVideos.filter(v => v.type === 'film' || !v.type);
+        let films = allVideos.filter(v => v.type === 'film' || v.category === 'Premium Movies');
         if (q) films = films.filter(v => v.title.toLowerCase().includes(q));
 
         mainContainer.innerHTML = `
           <div class="section-block">
-            <div class="section-title"><i class="fa-solid fa-film" style="color: var(--accent);"></i> Koleksi Film & Series</div>
+            <div class="section-title"><i class="fa-solid fa-film" style="color: var(--accent);"></i> Film & Premium Movies</div>
             <div class="poster-grid">
               ${films.length > 0 ? films.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada film.</p>'}
             </div>
@@ -505,7 +554,7 @@
 
         mainContainer.innerHTML = `
           <div class="section-block">
-            <div class="section-title"><i class="fa-solid fa-tv" style="color: var(--accent);"></i> Siaran TV Langsung (Live)</div>
+            <div class="section-title"><i class="fa-solid fa-tv" style="color: var(--accent);"></i> Siaran TV & Live Streaming</div>
             <div class="poster-grid">
               ${tvs.length > 0 ? tvs.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada siaran TV.</p>'}
             </div>
@@ -541,8 +590,17 @@
     }
 
     function loadEpisodePlayer(src) {
-      // 1. Deteksi Siaran TV (m3u8 / workers.dev)
-      if (src.includes('.m3u8') || src.includes('workers.dev') || src.includes('m3u8')) {
+      if (src.includes('.mpd')) {
+        videoContainer.innerHTML = `
+          <div style="display:flex; align-items:center; justify-content:center; width:100%; height:100%; background:#111; color:#fff; text-align:center; padding:20px;">
+            <div>
+              <i class="fa-solid fa-circle-exclamation" style="font-size:2rem; color:#f39c12; margin-bottom:10px;"></i>
+              <p style="font-size:0.9rem; font-weight:700;">Format DASH (.mpd) dengan Proteksi Lisensi</p>
+              <p style="font-size:0.75rem; color:var://text-muted; margin-top:5px; color: #8c95a5;">Link ini menggunakan proteksi DRM/Clearkey yang memerlukan pemutar eksternal (VLC/Kodi).</p>
+              <input type="text" value="${src}" readonly class="form-input-dark" style="margin-top:10px; font-size:0.7rem; text-align:center;" onclick="this.select()">
+            </div>
+          </div>`;
+      } else if (src.includes('.m3u8') || src.includes('workers.dev') || src.includes('m3u8')) {
         videoContainer.innerHTML = `<video id="hlsVideo" controls autoplay style="width:100%; height:100%; position:absolute; inset:0;"></video>`;
         const videoElement = document.getElementById('hlsVideo');
         
@@ -553,40 +611,14 @@
         } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
           videoElement.src = src;
         }
-      } 
-      // 2. Deteksi Bunny.net, YouTube, atau Iframe
-      else if (src.includes('mediadelivery.net') || src.includes('youtube.com') || src.includes('youtu.be') || src.includes('<iframe')) {
+      } else if (src.includes('mediadelivery.net') || src.includes('youtube.com') || src.includes('youtu.be') || src.includes('<iframe')) {
         let finalSrc = src;
-
         if (src.includes('<iframe')) {
           const match = src.match(/src="([^"]+)"/);
-          if (match && match[1]) {
-            finalSrc = match[1];
-          }
+          if (match && match[1]) finalSrc = match[1];
         }
-
-        if (src.includes('youtu.be/')) {
-          const id = src.split('youtu.be/')[1].split('?')[0];
-          finalSrc = `https://www.youtube.com/embed/${id}`;
-        } else if (src.includes('/watch?v=')) {
-          const id = src.split('watch?v=')[1].split('&')[0];
-          finalSrc = `https://www.youtube.com/embed/${id}`;
-        }
-
-        if (finalSrc.includes('mediadelivery.net') && finalSrc.includes('muted=true')) {
-          finalSrc = finalSrc.replace('muted=true', 'muted=false');
-        }
-
-        videoContainer.innerHTML = `
-          <iframe 
-            src="${finalSrc}" 
-            style="width:100%; height:100%; border:none; position:absolute; inset:0;" 
-            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen" 
-            allowfullscreen="true">
-          </iframe>`;
-      } 
-      // 3. Video MP4 biasa
-      else {
+        videoContainer.innerHTML = `<iframe src="${finalSrc}" style="width:100%; height:100%; border:none; position:absolute; inset:0;" allowfullscreen="true"></iframe>`;
+      } else {
         videoContainer.innerHTML = `<video src="${src}" controls autoplay preload="metadata" style="width:100%; height:100%; position:absolute; inset:0;"></video>`;
       }
     }
@@ -614,9 +646,7 @@
           activeVid.likes = data.likes;
           likeNum.innerText = data.likes;
         }
-      } catch (err) {
-        console.error(err);
-      }
+      } catch (err) { console.error(err); }
     };
 
     document.getElementById('commentForm').onsubmit = async (e) => {
@@ -637,9 +667,7 @@
           renderComments(activeVid.comments);
           input.value = '';
         }
-      } catch (err) {
-        console.error(err);
-      }
+      } catch (err) { console.error(err); }
     };
 
     function editVid(e, id) {
@@ -648,9 +676,9 @@
       if (!v) return;
 
       document.getElementById('editSeriesId').value = v.id;
-      document.getElementById('uType').value = v.type || 'film';
+      document.getElementById('uType').value = v.type || 'tv';
       document.getElementById('uTitle').value = v.title;
-      document.getElementById('uCat').value = v.category || 'Animasi';
+      document.getElementById('uCat').value = v.category || 'INDONESIA';
       document.getElementById('uDesc').value = v.description;
       document.getElementById('uThumb').value = v.thumbnail;
       if (v.episodes && v.episodes.length > 0) {
@@ -669,14 +697,11 @@
         const res = await fetch(`/api/videos/${id}`, { method: 'DELETE' });
         if (res.ok) fetchVideos();
         else alert("Gagal menghapus.");
-      } catch (err) {
-        alert("Gagal menghapus.");
-      }
+      } catch (err) { alert("Gagal menghapus."); }
     }
 
     document.getElementById('uploadForm').addEventListener('submit', async function(e) {
       e.preventDefault();
-      
       const submitBtn = document.getElementById('btnSubmitUpload');
       submitBtn.innerText = 'Sedang Menyimpan...';
       submitBtn.disabled = true;
@@ -689,23 +714,12 @@
       const videoUrl = document.getElementById('uVideoUrl').value;
       const id = document.getElementById('editSeriesId').value;
 
-      const payload = {
-        id: id || undefined,
-        type,
-        title,
-        category,
-        description,
-        thumbnail,
-        videoUrl
-      };
-
       try {
         const res = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({ id: id || undefined, type, title, category, description, thumbnail, videoUrl })
         });
-        
         const data = await res.json();
         if (res.ok && data.success) {
           alert('Konten Berhasil Disimpan!');
@@ -716,7 +730,6 @@
           alert('Gagal: ' + (data.message || 'Kesalahan server'));
         }
       } catch (err) {
-        console.error(err);
         alert('Terjadi kesalahan koneksi.');
       } finally {
         submitBtn.innerText = 'Simpan Konten';
