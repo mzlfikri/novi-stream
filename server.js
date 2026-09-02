@@ -16,17 +16,15 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
-// Fungsi Load Database yang memastikan hasilnya SELALU Berupa Array
 function loadMetadata() {
   try {
     if (fs.existsSync(metadataFile)) {
       const data = fs.readFileSync(metadataFile, 'utf8');
       const parsed = data ? JSON.parse(data) : [];
-      // Validasi ketat: jika bukan array, ubah jadi array kosong
       return Array.isArray(parsed) ? parsed : [];
     }
   } catch (e) {
-    console.error("Gagal membaca metadata.json, membuat array baru:", e);
+    console.error("Gagal membaca metadata.json:", e);
   }
   return [];
 }
@@ -39,7 +37,6 @@ function saveMetadata(videosArray) {
   }
 }
 
-// Ambil daftar video
 app.get('/api/videos', (req, res) => {
   const videos = loadMetadata();
   res.json(videos);
@@ -70,7 +67,7 @@ app.post('/api/upload', (req, res) => {
     }
 
     const newVideo = {
-      id: Date.now(),
+      id: Date.now() + Math.random(),
       type: type || 'film',
       title,
       category: category || 'Umum',
@@ -91,7 +88,7 @@ app.post('/api/upload', (req, res) => {
   }
 });
 
-// Import Playlist M3U via File Upload (Massal)
+// Import Playlist M3U via File Upload
 app.post('/api/import-m3u', (req, res) => {
   try {
     let videos = loadMetadata();
@@ -126,7 +123,7 @@ app.post('/api/import-m3u', (req, res) => {
   }
 });
 
-// Hapus Konten
+// Hapus Konten Satuan
 app.delete('/api/videos/:id', (req, res) => {
   let videos = loadMetadata();
   const id = req.params.id;
@@ -135,7 +132,24 @@ app.delete('/api/videos/:id', (req, res) => {
   res.json({ success: true, message: 'Konten dihapus.' });
 });
 
-// Tambah View
+// Hapus Banyak Sekaligus (Bulk Delete) - Khusus Owner
+app.post('/api/videos/bulk-delete', (req, res) => {
+  try {
+    let videos = loadMetadata();
+    const { ids } = req.body; // Menerima array ID yang ingin dihapus
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ success: false, message: 'Tidak ada data yang dipilih untuk dihapus.' });
+    }
+
+    videos = videos.filter(v => !ids.includes(v.id));
+    saveMetadata(videos);
+    res.json({ success: true, message: `Berhasil menghapus ${ids.length} konten terpilih!` });
+  } catch (err) {
+    console.error("Error pada bulk-delete:", err);
+    res.status(500).json({ success: false, message: 'Gagal menghapus data secara massal.' });
+  }
+});
+
 app.post('/api/videos/:id/view', (req, res) => {
   let videos = loadMetadata();
   const v = videos.find(item => item.id == req.params.id);
@@ -146,7 +160,6 @@ app.post('/api/videos/:id/view', (req, res) => {
   res.json({ success: true });
 });
 
-// Like Video
 app.post('/api/videos/:id/like', (req, res) => {
   let videos = loadMetadata();
   const v = videos.find(item => item.id == req.params.id);
@@ -159,7 +172,6 @@ app.post('/api/videos/:id/like', (req, res) => {
   }
 });
 
-// Komentar
 app.post('/api/videos/:id/comment', (req, res) => {
   let videos = loadMetadata();
   const v = videos.find(item => item.id == req.params.id);
@@ -174,7 +186,6 @@ app.post('/api/videos/:id/comment', (req, res) => {
   }
 });
 
-// Login Admin
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
   if (username === 'owner' && password === '123') {
