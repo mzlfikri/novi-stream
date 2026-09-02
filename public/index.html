@@ -755,8 +755,6 @@
       }
     };
 
-    // PENGAMAN MUTLAK: event.stopPropagation() dan event.preventDefault() 
-    // agar klik tombol edit tidak bocor ke fungsi pemutar video kartu di belakangnya.
     function editVid(event, id) {
       if (event) {
         event.stopPropagation();
