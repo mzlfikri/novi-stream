@@ -110,11 +110,11 @@
     .poster-desc { font-size: 0.75rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 10px; line-height: 1.3; }
     .card-footer-stats { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); }
 
-    .card-actions { position: absolute; top: 10px; right: 10px; z-index: 10; display: none; gap: 4px; }
+    .card-actions { position: absolute; top: 10px; right: 10px; z-index: 25; display: none; gap: 4px; }
     .btn-delete-card { background: rgba(231, 76, 60, 0.9); color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
 
     .bulk-checkbox {
-      position: absolute; top: 10px; left: 10px; z-index: 20; width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent); display: none;
+      position: absolute; top: 10px; left: 10px; z-index: 25; width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent); display: none;
     }
 
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 12px; overflow-y: auto; }
@@ -126,7 +126,6 @@
     .modal-body-padding { padding: 20px; }
     .form-input-dark { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-base); color: white; margin-bottom: 12px; outline: none; font-size: 0.88rem; }
 
-    /* Pilihan Episode di Player */
     .episodes-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
     .episode-btn { background: var(--bg-base); border: 1px solid var(--border); color: var(--text-muted); padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
     .episode-btn:hover, .episode-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
@@ -263,8 +262,7 @@
             <label style="font-size: 0.85rem; font-weight: 700;">Daftar Link Episode (Eps 1, Eps 2, dst.):</label>
             <button type="button" class="btn-small-action" onclick="addEpisodeInput()"><i class="fa-solid fa-plus"></i> Tambah Episode</button>
           </div>
-          <div id="episodeInputsContainer" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; margin-bottom: 16px; padding-right: 4px;">
-            </div>
+          <div id="episodeInputsContainer" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; margin-bottom: 16px; padding-right: 4px;"></div>
         </div>
 
         <button type="submit" class="btn" id="btnSubmitUpload" style="width: 100%; justify-content: center; margin-top: 10px;">Simpan Konten</button>
@@ -374,14 +372,13 @@
 
       if (type === 'tv') {
         catGroup.style.display = 'none';
-        episodeSec.style.display = 'block'; // Live TV juga bisa dianggap 1 episode stream
+        episodeSec.style.display = 'block';
       } else {
         catGroup.style.display = 'block';
         episodeSec.style.display = 'block';
       }
     }
 
-    // Fungsi Menambah Input Episode secara Dinamis di Modal Upload
     function addEpisodeInput(titleVal = '', srcVal = '') {
       const count = episodeInputsContainer.children.length + 1;
       const row = document.createElement('div');
@@ -413,7 +410,7 @@
       episodeInputsContainer.innerHTML = '';
       modalUploadTitle.innerText = 'Tambah Konten Baru';
       toggleUploadType();
-      addEpisodeInput('Episode 1', ''); // Default minimal 1 episode
+      addEpisodeInput('Episode 1', '');
       uploadModal.style.display = 'flex';
     };
 
@@ -505,8 +502,8 @@
           ` : ''}
           ${isLoggedIn ? `
             <div class="card-actions" style="display:flex;">
-              <button class="btn-edit" onclick="editVid(event, ${v.id})"><i class="fa-solid fa-pen"></i></button>
-              <button class="btn-delete-card" onclick="delVid(event, ${v.id})"><i class="fa-solid fa-trash"></i></button>
+              <button type="button" class="btn-edit" onclick="editVid(event, ${v.id})"><i class="fa-solid fa-pen"></i></button>
+              <button type="button" class="btn-delete-card" onclick="delVid(event, ${v.id})"><i class="fa-solid fa-trash"></i></button>
             </div>
           ` : ''}
           <div class="poster-frame">
@@ -635,7 +632,6 @@
       likeNum.innerText = v.likes || 0;
       renderComments(v.comments || []);
 
-      // Render Tombol Pilihan Episode
       episodeBarContainer.innerHTML = '';
       if (v.episodes && v.episodes.length > 0) {
         v.episodes.forEach((eps, idx) => {
@@ -650,7 +646,6 @@
           episodeBarContainer.appendChild(btn);
         });
 
-        // Putar episode pertama secara default
         loadEpisodePlayer(v.episodes[0].src);
       }
 
@@ -756,8 +751,9 @@
       }
     };
 
+    // Fungsi Edit yang Sekarang Aman dari Bug Fullscreen Player
     function editVid(e, id) {
-      e.stopPropagation();
+      e.stopPropagation(); // Mencegah event klik merembet ke kartu poster
       const v = allVideos.find(item => item.id == id);
       if (!v) return;
 
@@ -778,12 +774,12 @@
       }
       
       toggleUploadType();
-      modalUploadTitle.innerText = 'Edit Konten';
+      modalUploadTitle.innerText = 'Edit Konten & Episode';
       uploadModal.style.display = 'flex';
     }
 
     async function delVid(e, id) {
-      e.stopPropagation();
+      e.stopPropagation(); // Mencegah event klik merembet ke kartu poster
       if (!confirm("Hapus konten ini?")) return;
       try {
         const res = await fetch(`/api/videos/${id}`, { method: 'DELETE' });
@@ -884,7 +880,6 @@
       const thumbnail = document.getElementById('uThumb').value;
       const id = document.getElementById('editSeriesId').value;
 
-      // Mengumpulkan semua episode dari input dinamis
       const epsRows = episodeInputsContainer.querySelectorAll('div');
       let episodesList = [];
       epsRows.forEach(row => {
