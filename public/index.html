@@ -225,32 +225,28 @@
   <div class="modal-backdrop" id="uploadModal">
     <div class="modal-box-wide" style="max-width: 500px; padding: 24px;">
       <h3 id="modalUploadTitle" style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800;">Tambah Series & Video</h3>
-      <form id="uploadForm" enctype="multipart/form-data">
+      <form id="uploadForm">
         <input type="hidden" id="editSeriesId" value="" />
-        <input type="text" id="uTitle" name="title" class="form-input-dark" placeholder="Judul Series" required />
-        <select id="uCat" name="category" class="form-input-dark">
+        <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Series" required />
+        <select id="uCat" class="form-input-dark">
           <option value="Animasi">Animasi</option>
           <option value="Drama">Drama</option>
           <option value="Action">Action</option>
           <option value="Hiburan">Hiburan</option>
         </select>
-        <textarea id="uDesc" name="description" class="form-input-dark" style="height: 70px; resize: none;" placeholder="Deskripsi Singkat"></textarea>
-        <input type="text" id="uThumb" name="thumbnail" class="form-input-dark" placeholder="Link Gambar Cover Poster (Opsional)" />
+        <textarea id="uDesc" class="form-input-dark" style="height: 70px; resize: none;" placeholder="Deskripsi Singkat"></textarea>
+        <input type="text" id="uThumb" class="form-input-dark" placeholder="Link Gambar Cover Poster (Opsional)" />
 
         <hr style="border: 0; border-top: 1px solid var(--border); margin: 14px 0;">
         
         <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 8px;">Upload File Video (.mp4) dari Perangkat:</label>
         <div id="dynamicEpisodesContainer">
           <div class="ep-input-group">
-            <input type="file" name="videoFiles" class="form-input-dark" accept="video/mp4" style="margin:0; padding: 6px;" required />
+            <input type="file" id="videoFile" class="form-input-dark" accept="video/mp4" style="margin:0; padding: 6px;" required />
           </div>
         </div>
 
-        <button type="button" class="btn btn-glass" onclick="addVideoFileInput()" style="width: 100%; justify-content: center; margin-bottom: 16px; font-size: 0.82rem;">
-          <i class="fa-solid fa-plus"></i> Tambah File Episode Lain
-        </button>
-
-        <button type="submit" class="btn" style="width: 100%; justify-content: center;">Simpan Series & Video</button>
+        <button type="submit" class="btn" id="btnSubmitUpload" style="width: 100%; justify-content: center; margin-top: 10px;">Simpan Series & Video</button>
       </form>
     </div>
   </div>
@@ -353,11 +349,7 @@
       document.getElementById('uploadForm').reset();
       document.getElementById('editSeriesId').value = '';
       modalUploadTitle.innerText = 'Tambah Series & Video Baru';
-      document.getElementById('dynamicEpisodesContainer').innerHTML = `
-        <div class="ep-input-group">
-          <input type="file" name="videoFiles" class="form-input-dark" accept="video/mp4" style="margin:0; padding: 6px;" required />
-        </div>
-      `;
+      document.getElementById('videoFile').required = true;
       uploadModal.style.display = 'flex';
     };
 
@@ -368,14 +360,6 @@
       if (id === 'playerModal') {
         videoContainer.innerHTML = '';
       }
-    }
-
-    function addVideoFileInput() {
-      const container = document.getElementById('dynamicEpisodesContainer');
-      const div = document.createElement('div');
-      div.className = 'ep-input-group';
-      div.innerHTML = `<input type="file" name="videoFiles" class="form-input-dark" accept="video/mp4" style="margin:0; padding: 6px;" required />`;
-      container.appendChild(div);
     }
 
     document.getElementById('loginForm').onsubmit = async (e) => {
@@ -568,10 +552,8 @@
       document.getElementById('uCat').value = v.category || 'Animasi';
       document.getElementById('uDesc').value = v.description;
       document.getElementById('uThumb').value = v.thumbnail;
+      document.getElementById('videoFile').required = false;
 
-      const container = document.getElementById('dynamicEpisodesContainer');
-      container.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;">Episode yang sudah ada akan tetap dipertahankan. Pilih file baru jika ingin menambah episode.</p>';
-      
       modalUploadTitle.innerText = 'Edit Series & Video';
       uploadModal.style.display = 'flex';
     }
@@ -588,19 +570,36 @@
       }
     }
 
-    document.getElementById('uploadForm').onsubmit = async (e) => {
+    // EVENT LISTENER FORM UPLOAD YANG DIJAMIN MERESPON DAN MENAMPILKAN STATUS
+    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
-      const formElement = document.getElementById('uploadForm');
-      const formData = new FormData(formElement);
-      
+      const submitBtn = document.getElementById('btnSubmitUpload');
+      submitBtn.innerText = 'Sedang Mengunggah, Mohon Tunggu...';
+      submitBtn.disabled = true;
+
+      const title = document.getElementById('uTitle').value;
+      const category = document.getElementById('uCat').value;
+      const description = document.getElementById('uDesc').value;
+      const thumbnail = document.getElementById('uThumb').value;
+      const fileInput = document.getElementById('videoFile');
       const id = document.getElementById('editSeriesId').value;
+
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('category', category);
+      formData.append('description', description);
+      formData.append('thumbnail', thumbnail);
       if (id) {
         formData.append('id', id);
         const v = allVideos.find(item => item.id == id);
         if (v && v.episodes) {
           formData.append('existingEpisodes', JSON.stringify(v.episodes));
         }
+      }
+
+      if (fileInput.files.length > 0) {
+        formData.append('videoFiles', fileInput.files[0]);
       }
 
       try {
@@ -611,17 +610,21 @@
         
         const data = await res.json();
         if (res.ok && data.success) {
-          alert('Series & Video Berhasil Disimpan ke Server!');
+          alert('Berhasil Disimpan!');
           closeModal('uploadModal');
-          formElement.reset();
+          document.getElementById('uploadForm').reset();
           fetchVideos();
         } else {
-          alert('Gagal menyimpan: ' + (data.message || 'Kesalahan server'));
+          alert('Gagal: ' + (data.message || 'Kesalahan server'));
         }
       } catch (err) {
-        alert('Kesalahan koneksi jaringan.');
+        console.error(err);
+        alert('Terjadi kesalahan koneksi saat mengunggah video.');
+      } finally {
+        submitBtn.innerText = 'Simpan Series & Video';
+        submitBtn.disabled = false;
       }
-    };
+    });
 
     renderUI();
   </script>

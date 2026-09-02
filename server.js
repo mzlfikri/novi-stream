@@ -11,13 +11,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
-// Buat folder uploads jika belum ada
+// Pastikan folder uploads ada di dalam folder public
 const uploadDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Konfigurasi Multer untuk Menyimpan File Video Lokal
+// Konfigurasi Multer untuk penyimpanan video lokal
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -41,7 +41,7 @@ if (!fs.existsSync(ADMIN_FILE)) {
   fs.writeFileSync(ADMIN_FILE, JSON.stringify(defaultAdmin, null, 2));
 }
 
-// API Ambil Daftar Video
+// API: Ambil semua data video
 app.get('/api/videos', (req, res) => {
   try {
     if (fs.existsSync(DB_FILE)) {
@@ -55,7 +55,7 @@ app.get('/api/videos', (req, res) => {
   }
 });
 
-// API Upload File Video & Data Series
+// API: Upload video & simpan data series
 app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
   try {
     const { id, title, category, description, thumbnail, existingEpisodes } = req.body;
@@ -71,7 +71,6 @@ app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
 
     let episodes = existingEpisodes ? JSON.parse(existingEpisodes) : [];
 
-    // Jika ada file video baru yang di-upload dari perangkat
     if (req.files && req.files.length > 0) {
       req.files.forEach((file) => {
         const fileUrl = `/uploads/${file.filename}`;
@@ -83,10 +82,8 @@ app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
     }
 
     if (id) {
-      // Proses Edit Series
       videos = videos.map(v => v.id == id ? { ...v, title, category, description, thumbnail: thumbFinal, episodes } : v);
     } else {
-      // Proses Tambah Series Baru
       const newVideo = {
         id: Date.now(),
         title,
@@ -101,14 +98,14 @@ app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
     }
 
     fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2));
-    res.json({ success: true, message: 'Series & Video Berhasil Disimpan ke Server!' });
+    res.json({ success: true, message: 'Series & Video berhasil disimpan ke server!' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: 'Gagal mengunggah video ke server.' });
   }
 });
 
-// API Hapus Series
+// API: Hapus series
 app.delete('/api/videos/:id', (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -123,7 +120,7 @@ app.delete('/api/videos/:id', (req, res) => {
   }
 });
 
-// API Login Admin
+// API: Login Admin
 app.post('/api/login', (req, res) => {
   try {
     const { username, password } = req.body;
@@ -141,7 +138,7 @@ app.post('/api/login', (req, res) => {
   }
 });
 
-// API Buat Admin Baru
+// API: Buat Admin Baru
 app.post('/api/create-admin', (req, res) => {
   try {
     const { newUsername, newPassword } = req.body;
