@@ -222,7 +222,7 @@
         <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Pilih Jenis Konten:</label>
         <select id="uType" class="form-input-dark" onchange="toggleUploadType()">
           <option value="film">Film / Series (Bunny.net / YouTube / Embed)</option>
-          <option value="tv">Siaran TV Live Streaming (.m3u8)</option>
+          <option value="tv">Siaran TV Live Streaming (.m3u8 / Worker)</option>
         </select>
 
         <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Film atau Nama Channel TV" required />
@@ -241,7 +241,7 @@
 
         <hr style="border: 0; border-top: 1px solid var(--border); margin: 14px 0;">
         
-        <label id="labelVideoUrl" style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Link Video / Bunny Embed / YouTube:</label>
+        <label id="labelVideoUrl" style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Link Video / Bunny Embed / M3U8:</label>
         <input type="text" id="uVideoUrl" class="form-input-dark" placeholder="Tempel link embed atau URL video di sini" required style="margin:0;" />
 
         <button type="submit" class="btn" id="btnSubmitUpload" style="width: 100%; justify-content: center; margin-top: 16px;">Simpan Konten</button>
@@ -327,7 +327,7 @@
 
       if (type === 'tv') {
         catGroup.style.display = 'none';
-        label.innerText = 'Link Siaran TV (Format .m3u8):';
+        label.innerText = 'Link Siaran TV (Format .m3u8 / Worker):';
       } else {
         catGroup.style.display = 'block';
         label.innerText = 'Link Video / Bunny Embed / YouTube:';
@@ -541,8 +541,21 @@
     }
 
     function loadEpisodePlayer(src) {
-      // Penanganan Bunny.net, YouTube, atau Iframe
-      if (src.includes('mediadelivery.net') || src.includes('youtube.com') || src.includes('youtu.be') || src.includes('<iframe')) {
+      // 1. Deteksi Siaran TV (m3u8 / workers.dev)
+      if (src.includes('.m3u8') || src.includes('workers.dev') || src.includes('m3u8')) {
+        videoContainer.innerHTML = `<video id="hlsVideo" controls autoplay style="width:100%; height:100%; position:absolute; inset:0;"></video>`;
+        const videoElement = document.getElementById('hlsVideo');
+        
+        if (Hls.isSupported()) {
+          const hls = new Hls();
+          hls.loadSource(src);
+          hls.attachMedia(videoElement);
+        } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+          videoElement.src = src;
+        }
+      } 
+      // 2. Deteksi Bunny.net, YouTube, atau Iframe
+      else if (src.includes('mediadelivery.net') || src.includes('youtube.com') || src.includes('youtu.be') || src.includes('<iframe')) {
         let finalSrc = src;
 
         if (src.includes('<iframe')) {
@@ -560,7 +573,6 @@
           finalSrc = `https://www.youtube.com/embed/${id}`;
         }
 
-        // Pastikan parameter muted false agar suara aktif dan video langsung tampil terang
         if (finalSrc.includes('mediadelivery.net') && finalSrc.includes('muted=true')) {
           finalSrc = finalSrc.replace('muted=true', 'muted=false');
         }
@@ -573,20 +585,7 @@
             allowfullscreen="true">
           </iframe>`;
       } 
-      // Siaran TV (.m3u8)
-      else if (src.includes('.m3u8')) {
-        videoContainer.innerHTML = `<video id="hlsVideo" controls autoplay style="width:100%; height:100%; position:absolute; inset:0;"></video>`;
-        const videoElement = document.getElementById('hlsVideo');
-        
-        if (Hls.isSupported()) {
-          const hls = new Hls();
-          hls.loadSource(src);
-          hls.attachMedia(videoElement);
-        } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-          videoElement.src = src;
-        }
-      } 
-      // Video MP4 biasa
+      // 3. Video MP4 biasa
       else {
         videoContainer.innerHTML = `<video src="${src}" controls autoplay preload="metadata" style="width:100%; height:100%; position:absolute; inset:0;"></video>`;
       }
