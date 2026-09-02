@@ -178,8 +178,12 @@
       
       <div class="modal-body-padding">
         <h2 id="mHeader" style="font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;"></h2>
-        <p id="mDesc" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; line-height: 1.5;"></p>
+        <p id="mDesc" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 12px; line-height: 1.5;"></p>
         
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px;">
+          <span><i class="fa-solid fa-eye"></i> <span id="viewNum">0</span> Penonton</span>
+        </div>
+
         <div id="episodeSection" style="display: none;">
           <h4 style="margin-bottom: 10px; font-weight: 700; font-size: 0.9rem;"><i class="fa-solid fa-list-ul" style="color: var(--accent);"></i> Pilih Episode:</h4>
           <div class="episodes-container" id="episodesListContainer"></div>
@@ -249,7 +253,6 @@
         
         <div id="filmUploadSection">
           <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Upload File Video Episode (.mp4):</label>
-          <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">Bisa pilih banyak file video sekaligus untuk episode 1, 2, dst.</p>
           <div class="ep-input-group">
             <input type="file" id="videoFile" class="form-input-dark" accept="video/mp4" multiple style="margin:0; padding: 6px;" />
           </div>
@@ -272,6 +275,7 @@
     const mTitle = document.getElementById('mTitle');
     const mHeader = document.getElementById('mHeader');
     const mDesc = document.getElementById('mDesc');
+    const viewNum = document.getElementById('viewNum');
     const likeNum = document.getElementById('likeNum');
     const cList = document.getElementById('cList');
     const episodesListContainer = document.getElementById('episodesListContainer');
@@ -383,6 +387,7 @@
       document.getElementById(id).style.display = 'none';
       if (id === 'playerModal') {
         videoContainer.innerHTML = '';
+        fetchVideos(); // Refresh data agar jumlah view/like/komentar terbaru tampil di kartu
       }
     }
 
@@ -453,7 +458,7 @@
       const isTv = v.type === 'tv';
       const totalEp = v.episodes ? v.episodes.length : 0;
       return `
-        <div class="poster-card" onclick="playSeries(allVideos.find(item => item.id === ${v.id}))">
+        <div class="poster-card" onclick="openPlayer(${v.id})">
           ${isLoggedIn ? `
             <div class="card-actions" style="display:flex;">
               <button class="btn-edit" onclick="editVid(event, ${v.id})"><i class="fa-solid fa-pen"></i></button>
@@ -469,6 +474,7 @@
             <div class="poster-title">${v.title}</div>
             <div class="poster-desc">${v.description}</div>
             <div class="card-footer-stats">
+              <span><i class="fa-solid fa-eye"></i> ${v.views || 0}</span>
               <span><i class="fa-solid fa-heart" style="color: var(--accent);"></i> ${v.likes || 0}</span>
               <span><i class="fa-solid fa-comment"></i> ${v.comments ? v.comments.length : 0}</span>
             </div>
@@ -491,8 +497,6 @@
         }
 
         let html = '';
-        
-        // Section Film & Series
         html += `
           <div class="section-block">
             <div class="section-title"><i class="fa-solid fa-film" style="color: var(--accent);"></i> Koleksi Film & Series</div>
@@ -501,8 +505,6 @@
             </div>
           </div>
         `;
-
-        // Section Siaran TV
         html += `
           <div class="section-block">
             <div class="section-title"><i class="fa-solid fa-tv" style="color: var(--accent);"></i> Siaran TV Langsung (Live)</div>
@@ -511,7 +513,6 @@
             </div>
           </div>
         `;
-
         mainContainer.innerHTML = html;
 
       } else if (currentMode === 'film') {
@@ -541,12 +542,24 @@
       }
     }
 
-    function playSeries(v) {
+    // Fungsi saat kartu diklik (Mencatat View ke Server)
+    async function openPlayer(id) {
+      const v = allVideos.find(item => item.id === id);
       if (!v) return;
       activeVid = v;
+
+      // Kirim permintaan tambah view ke server
+      try {
+        await fetch(`/api/videos/${id}/view`, { method: 'POST' });
+        v.views = (v.views || 0) + 1;
+      } catch (err) {
+        console.error(err);
+      }
+
       mTitle.innerText = v.title;
       mHeader.innerText = v.title;
       mDesc.innerText = v.description;
+      viewNum.innerText = v.views || 0;
       likeNum.innerText = v.likes || 0;
       renderComments(v.comments || []);
 
@@ -616,20 +629,43 @@
       });
     }
 
+    // Tombol Like Sinkron ke Server
     document.getElementById('btnLike').onclick = async () => {
       if (!activeVid) return;
-      activeVid.likes = (activeVid.likes || 0) + 1;
-      likeNum.innerText = activeVid.likes;
+      try {
+        const res = await fetch(`/api/videos/${activeVid.id}/like`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          activeVid.likes = data.likes;
+          likeNum.innerText = data.likes;
+        }
+      } catch (err) {
+        console.error(err);
+      }
     };
 
+    // Form Komentar Sinkron ke Server
     document.getElementById('commentForm').onsubmit = async (e) => {
       e.preventDefault();
       if (!activeVid) return;
       const input = document.getElementById('cInput');
-      if (!activeVid.comments) activeVid.comments = [];
-      activeVid.comments.push({ text: input.value, date: new Date().toLocaleDateString('id-ID') });
-      renderComments(activeVid.comments);
-      input.value = '';
+      const text = input.value;
+
+      try {
+        const res = await fetch(`/api/videos/${activeVid.id}/comment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        const data = await res.json();
+        if (data.success) {
+          activeVid.comments = data.comments;
+          renderComments(activeVid.comments);
+          input.value = '';
+        }
+      } catch (err) {
+        console.error(err);
+      }
     };
 
     function editVid(e, id) {

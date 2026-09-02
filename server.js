@@ -30,8 +30,6 @@ const upload = multer({ storage: storage });
 const DB_FILE = path.join(__dirname, 'database.json');
 const ADMIN_FILE = path.join(__dirname, 'admin.json');
 
-// PROTEKSI MUTLAK: Hanya buat database.json jika file tersebut BENAR-BENAR BELUM ADA.
-// Jika file sudah ada, isi datanya dijamin AMAN dan tidak akan ditimpa!
 if (!fs.existsSync(DB_FILE)) {
   fs.writeFileSync(DB_FILE, JSON.stringify([], null, 2), 'utf8');
 }
@@ -52,6 +50,68 @@ app.get('/api/videos', (req, res) => {
     }
   } catch (err) {
     res.json([]);
+  }
+});
+
+// API: Tambah View (Penonton)
+app.post('/api/videos/:id/view', (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    let videos = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    videos = videos.map(v => {
+      if (v.id === id) {
+        v.views = (v.views || 0) + 1;
+      }
+      return v;
+    });
+    fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2), 'utf8');
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// API: Tambah Like
+app.post('/api/videos/:id/like', (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    let videos = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    let updatedLikes = 0;
+    videos = videos.map(v => {
+      if (v.id === id) {
+        v.likes = (v.likes || 0) + 1;
+        updatedLikes = v.likes;
+      }
+      return v;
+    });
+    fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2), 'utf8');
+    res.json({ success: true, likes: updatedLikes });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// API: Tambah Komentar
+app.post('/api/videos/:id/comment', (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { text } = req.body;
+    let videos = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    let updatedComments = [];
+    
+    videos = videos.map(v => {
+      if (v.id === id) {
+        if (!v.comments) v.comments = [];
+        const newComment = { text, date: new Date().toLocaleDateString('id-ID') };
+        v.comments.push(newComment);
+        updatedComments = v.comments;
+      }
+      return v;
+    });
+    fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2), 'utf8');
+    res.json({ success: true, comments: updatedComments });
+  } catch (err) {
+    res.status(500).json({ success: false });
   }
 });
 
@@ -100,6 +160,7 @@ app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
         description,
         thumbnail: thumbFinal,
         episodes: episodes,
+        views: 0,
         likes: 0,
         comments: []
       };
