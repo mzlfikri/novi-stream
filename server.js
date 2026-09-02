@@ -64,7 +64,6 @@ app.get('/api/videos', (req, res) => {
   res.json(videos);
 });
 
-// Tambah / Edit Konten Multi-Episode
 app.post('/api/upload', (req, res) => {
   try {
     let videos = loadMetadata();
