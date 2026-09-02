@@ -696,7 +696,7 @@
       }
     }
 
-    // Fungsi parsing file M3U/M3U8 otomatis
+    // Fungsi Proses Import M3U secara Massal
     async function processImportM3U() {
       const fileInput = document.getElementById('m3uFile');
       if (!fileInput.files || fileInput.files.length === 0) {
@@ -710,7 +710,7 @@
       reader.onload = async function(e) {
         const content = e.target.result;
         const lines = content.split('\n');
-        let importedCount = 0;
+        let channelsToImport = [];
 
         let currentTitle = 'Live Channel';
         let currentLogo = '';
@@ -732,34 +732,42 @@
           } else if (line && !line.startsWith('#')) {
             let streamUrl = line;
             
-            // Simpan channel ke backend satu per satu
-            try {
-              await fetch('/api/upload', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  type: 'tv',
-                  title: currentTitle,
-                  category: currentGroup,
-                  description: `Imported from M3U (${currentGroup})`,
-                  thumbnail: currentLogo || 'https://images.unsplash.com/photo-1593784991095-a205069470b6?auto=format&fit=crop&w=400&q=80',
-                  videoUrl: streamUrl
-                })
-              });
-              importedCount++;
-            } catch (err) {
-              console.error('Gagal import item:', currentTitle);
-            }
+            channelsToImport.push({
+              title: currentTitle,
+              category: currentGroup,
+              thumbnail: currentLogo,
+              url: streamUrl
+            });
 
-            // Reset variabel sementara
             currentTitle = 'Live Channel';
             currentLogo = '';
           }
         }
 
-        alert(`Berhasil mengimport ${importedCount} channel siaran TV!`);
-        closeModal('importModal');
-        fetchVideos();
+        if (channelsToImport.length === 0) {
+          alert('Tidak ada link streaming yang ditemukan di dalam file M3U ini.');
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/import-m3u', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channels: channelsToImport })
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            alert(data.message);
+            closeModal('importModal');
+            fetchVideos();
+          } else {
+            alert('Gagal memproses import: ' + (data.message || 'Kesalahan server'));
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Terjadi kesalahan jaringan saat mengirim data M3U.');
+        }
       };
 
       reader.readAsText(file);
