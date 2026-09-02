@@ -59,6 +59,7 @@
     .btn-glass { background: rgba(255,255,255,0.06); border: 1px solid var(--border); box-shadow: none; }
     .btn-glass:hover { background: rgba(255,255,255,0.12); }
     .btn-owner { background: #8e44ad; }
+    .btn-import { background: #27ae60; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4); }
     .btn-edit { background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
 
     .content-container { max-width: 1400px; margin: 0 auto; padding: 24px; }
@@ -148,6 +149,7 @@
       </div>
 
       <button class="btn btn-owner" id="btnCreateAdmin" style="display: none;"><i class="fa-solid fa-user-plus"></i></button>
+      <button class="btn btn-import" id="btnImport" style="display: none;"><i class="fa-solid fa-file-arrow-up"></i> Import M3U</button>
       <button class="btn" id="btnUpload" style="display: none;"><i class="fa-solid fa-plus"></i> Tambah</button>
       <button class="btn btn-glass" id="btnAdmin"><i class="fa-solid fa-user-lock"></i> Login</button>
     </div>
@@ -249,6 +251,20 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="importModal">
+    <div class="modal-box-wide" style="max-width: 480px; padding: 24px;">
+      <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800; color: #27ae60;">Import Playlist M3U / M3U8</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">Pilih file playlist dari komputer Anda untuk memasukkan banyak channel siaran TV sekaligus secara otomatis.</p>
+      
+      <input type="file" id="m3uFile" accept=".m3u,.m3u8" class="form-input-dark" style="padding: 12px; cursor: pointer;" />
+      
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+        <button type="button" class="btn btn-glass" onclick="closeModal('importModal')">Batal</button>
+        <button type="button" class="btn btn-import" onclick="processImportM3U()">Proses Import</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const mainContainer = document.getElementById('dynamicMainContent');
     const playerModal = document.getElementById('playerModal');
@@ -261,11 +277,13 @@
     const cList = document.getElementById('cList');
 
     const btnUpload = document.getElementById('btnUpload');
+    const btnImport = document.getElementById('btnImport');
     const btnCreateAdmin = document.getElementById('btnCreateAdmin');
     const btnAdmin = document.getElementById('btnAdmin');
     const loginModal = document.getElementById('loginModal');
     const createAdminModal = document.getElementById('createAdminModal');
     const uploadModal = document.getElementById('uploadModal');
+    const importModal = document.getElementById('importModal');
     const roleBadge = document.getElementById('roleBadge');
     const modalUploadTitle = document.getElementById('modalUploadTitle');
     const heroBanner = document.getElementById('heroBanner');
@@ -280,6 +298,7 @@
     function renderUI() {
       if (isLoggedIn) {
         btnUpload.style.display = 'flex';
+        btnImport.style.display = 'flex';
         btnAdmin.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i>';
         
         if (userRole === 'owner') {
@@ -293,6 +312,7 @@
         }
       } else {
         btnUpload.style.display = 'none';
+        btnImport.style.display = 'none';
         btnCreateAdmin.style.display = 'none';
         btnAdmin.innerHTML = '<i class="fa-solid fa-user-lock"></i>';
         roleBadge.innerText = 'STATUS: PENGUNJUNG';
@@ -352,6 +372,11 @@
       modalUploadTitle.innerText = 'Tambah Konten Baru';
       toggleUploadType();
       uploadModal.style.display = 'flex';
+    };
+
+    btnImport.onclick = () => {
+      document.getElementById('m3uFile').value = '';
+      importModal.style.display = 'flex';
     };
 
     btnCreateAdmin.onclick = () => { createAdminModal.style.display = 'flex'; };
@@ -541,12 +566,9 @@
     }
 
     function loadEpisodePlayer(src) {
-      // 1. Deteksi Format .mpd (DASH) - Langsung muat tanpa pesan peringatan
       if (src.includes('.mpd')) {
         videoContainer.innerHTML = `<video src="${src}" controls autoplay style="width:100%; height:100%; position:absolute; inset:0; background:#000;"></video>`;
-      } 
-      // 2. Deteksi Siaran TV (m3u8 / workers.dev)
-      else if (src.includes('.m3u8') || src.includes('workers.dev')) {
+      } else if (src.includes('.m3u8') || src.includes('workers.dev')) {
         videoContainer.innerHTML = `<video id="hlsVideo" controls autoplay style="width:100%; height:100%; position:absolute; inset:0;"></video>`;
         const videoElement = document.getElementById('hlsVideo');
         
@@ -557,9 +579,7 @@
         } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
           videoElement.src = src;
         }
-      } 
-      // 3. Deteksi Bunny.net, YouTube, atau Iframe
-      else if (src.includes('mediadelivery.net') || src.includes('youtube.com') || src.includes('youtu.be') || src.includes('<iframe')) {
+      } else if (src.includes('mediadelivery.net') || src.includes('youtube.com') || src.includes('youtu.be') || src.includes('<iframe')) {
         let finalSrc = src;
 
         if (src.includes('<iframe')) {
@@ -588,9 +608,7 @@
             allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen" 
             allowfullscreen="true">
           </iframe>`;
-      } 
-      // 4. Video MP4 biasa
-      else {
+      } else {
         videoContainer.innerHTML = `<video src="${src}" controls autoplay preload="metadata" style="width:100%; height:100%; position:absolute; inset:0;"></video>`;
       }
     }
@@ -676,6 +694,75 @@
       } catch (err) {
         alert("Gagal menghapus.");
       }
+    }
+
+    // Fungsi parsing file M3U/M3U8 otomatis
+    async function processImportM3U() {
+      const fileInput = document.getElementById('m3uFile');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Pilih file M3U terlebih dahulu!');
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = async function(e) {
+        const content = e.target.result;
+        const lines = content.split('\n');
+        let importedCount = 0;
+
+        let currentTitle = 'Live Channel';
+        let currentLogo = '';
+        let currentGroup = 'Live TV';
+
+        for (let i = 0; i < lines.length; i++) {
+          let line = lines[i].trim();
+          if (line.startsWith('#EXTINF:')) {
+            let tvgLogoMatch = line.match(/tvg-logo="([^"]*)"/);
+            if (tvgLogoMatch) currentLogo = tvgLogoMatch[1];
+
+            let groupMatch = line.match(/group-title="([^"]*)"/);
+            if (groupMatch) currentGroup = groupMatch[1];
+
+            let parts = line.split(',');
+            if (parts.length > 1) {
+              currentTitle = parts[parts.length - 1].trim();
+            }
+          } else if (line && !line.startsWith('#')) {
+            let streamUrl = line;
+            
+            // Simpan channel ke backend satu per satu
+            try {
+              await fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'tv',
+                  title: currentTitle,
+                  category: currentGroup,
+                  description: `Imported from M3U (${currentGroup})`,
+                  thumbnail: currentLogo || 'https://images.unsplash.com/photo-1593784991095-a205069470b6?auto=format&fit=crop&w=400&q=80',
+                  videoUrl: streamUrl
+                })
+              });
+              importedCount++;
+            } catch (err) {
+              console.error('Gagal import item:', currentTitle);
+            }
+
+            // Reset variabel sementara
+            currentTitle = 'Live Channel';
+            currentLogo = '';
+          }
+        }
+
+        alert(`Berhasil mengimport ${importedCount} channel siaran TV!`);
+        closeModal('importModal');
+        fetchVideos();
+      };
+
+      reader.readAsText(file);
     }
 
     document.getElementById('uploadForm').addEventListener('submit', async function(e) {
