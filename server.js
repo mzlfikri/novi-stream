@@ -1,5 +1,4 @@
 const express = require('express');
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
@@ -9,29 +8,11 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
-
-// Pastikan folder public/uploads ada
-const uploadDir = path.join(__dirname, 'public', 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Konfigurasi Multer
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-const upload = multer({ storage: storage });
 
 const DB_FILE = path.join(__dirname, 'database.json');
 const ADMIN_FILE = path.join(__dirname, 'admin.json');
 
+// Proteksi Database agar tidak ter-reset kosong saat server restart
 if (!fs.existsSync(DB_FILE)) {
   fs.writeFileSync(DB_FILE, JSON.stringify([], null, 2), 'utf8');
 }
@@ -41,6 +22,7 @@ if (!fs.existsSync(ADMIN_FILE)) {
   fs.writeFileSync(ADMIN_FILE, JSON.stringify(defaultAdmin, null, 2), 'utf8');
 }
 
+// API: Ambil semua data video
 app.get('/api/videos', (req, res) => {
   try {
     if (fs.existsSync(DB_FILE)) {
@@ -54,6 +36,7 @@ app.get('/api/videos', (req, res) => {
   }
 });
 
+// API: Tambah View (Penonton)
 app.post('/api/videos/:id/view', (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -69,6 +52,7 @@ app.post('/api/videos/:id/view', (req, res) => {
   }
 });
 
+// API: Tambah Like
 app.post('/api/videos/:id/like', (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -88,6 +72,7 @@ app.post('/api/videos/:id/like', (req, res) => {
   }
 });
 
+// API: Tambah Komentar
 app.post('/api/videos/:id/comment', (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -109,10 +94,10 @@ app.post('/api/videos/:id/comment', (req, res) => {
   }
 });
 
-// ROUTE UPLOAD UTAMA (Menangani upload.array('videoFiles'))
-app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
+// API: Simpan Konten (Film / Siaran TV via Link)
+app.post('/api/upload', (req, res) => {
   try {
-    const { id, title, type, category, description, thumbnail, tvUrl, existingEpisodes } = req.body;
+    const { id, title, type, category, description, thumbnail, videoUrl } = req.body;
     
     let videos = [];
     if (fs.existsSync(DB_FILE)) {
@@ -127,21 +112,7 @@ app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
       ? thumbnail 
       : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
 
-    let episodes = existingEpisodes ? JSON.parse(existingEpisodes) : [];
-
-    if (type === 'tv') {
-      episodes = [{ epNum: 1, src: tvUrl }];
-    } else {
-      if (req.files && req.files.length > 0) {
-        req.files.forEach((file) => {
-          const fileUrl = `/uploads/${file.filename}`;
-          episodes.push({
-            epNum: episodes.length + 1,
-            src: fileUrl
-          });
-        });
-      }
-    }
+    let episodes = [{ epNum: 1, src: videoUrl }];
 
     if (id) {
       videos = videos.map(v => v.id == id ? { ...v, title, type: type || 'film', category, description, thumbnail: thumbFinal, episodes } : v);
@@ -162,13 +133,14 @@ app.post('/api/upload', upload.array('videoFiles'), (req, res) => {
     }
 
     fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2), 'utf8');
-    res.json({ success: true, message: 'Berhasil disimpan!' });
+    res.json({ success: true, message: 'Konten berhasil disimpan!' });
   } catch (err) {
-    console.error("ERROR UPLOAD:", err);
-    res.status(500).json({ success: false, message: 'Gagal memproses upload di server.' });
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Gagal menyimpan ke server.' });
   }
 });
 
+// API: Hapus data
 app.delete('/api/videos/:id', (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -179,10 +151,11 @@ app.delete('/api/videos/:id', (req, res) => {
     }
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ success: false });
+    res.status(500).json({ success: false, message: 'Gagal menghapus.' });
   }
 });
 
+// API: Login Admin
 app.post('/api/login', (req, res) => {
   try {
     const { username, password } = req.body;
@@ -194,12 +167,13 @@ app.post('/api/login', (req, res) => {
         return;
       }
     }
-    res.status(401).json({ success: false, message: 'Username/password salah!' });
+    res.status(401).json({ success: false, message: 'Username atau password salah!' });
   } catch (err) {
-    res.status(500).json({ success: false });
+    res.status(500).json({ success: false, message: 'Kesalahan server.' });
   }
 });
 
+// API: Buat Admin Baru
 app.post('/api/create-admin', (req, res) => {
   try {
     const { newUsername, newPassword } = req.body;
@@ -207,14 +181,16 @@ app.post('/api/create-admin', (req, res) => {
     if (fs.existsSync(ADMIN_FILE)) {
       admins = JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8'));
     }
+    
     if (admins.some(a => a.username === newUsername)) {
-      return res.status(400).json({ success: false, message: 'Username sudah ada!' });
+      return res.status(400).json({ success: false, message: 'Username admin sudah digunakan!' });
     }
+
     admins.push({ username: newUsername, password: newPassword, role: 'admin' });
     fs.writeFileSync(ADMIN_FILE, JSON.stringify(admins, null, 2), 'utf8');
-    res.json({ success: true, message: 'Admin baru dibuat!' });
+    res.json({ success: true, message: 'Akun admin baru berhasil dibuat!' });
   } catch (err) {
-    res.status(500).json({ success: false });
+    res.status(500).json({ success: false, message: 'Gagal membuat admin.' });
   }
 });
 

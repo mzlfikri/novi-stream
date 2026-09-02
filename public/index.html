@@ -119,11 +119,6 @@
     .modal-body-padding { padding: 20px; }
     .form-input-dark { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-base); color: white; margin-bottom: 12px; outline: none; font-size: 0.88rem; }
 
-    .episodes-container { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
-    .ep-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); padding: 8px 16px; border-radius: 10px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    .ep-btn:hover, .ep-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-    .ep-input-group { background: var(--bg-base); border: 1px solid var(--border); padding: 10px; border-radius: 10px; margin-bottom: 8px; display: flex; gap: 8px; align-items: center; }
-
     @media (min-width: 768px) {
       header { padding: 16px 48px; }
       .content-container { padding: 32px 48px; }
@@ -184,11 +179,6 @@
           <span><i class="fa-solid fa-eye"></i> <span id="viewNum">0</span> Penonton</span>
         </div>
 
-        <div id="episodeSection" style="display: none;">
-          <h4 style="margin-bottom: 10px; font-weight: 700; font-size: 0.9rem;"><i class="fa-solid fa-list-ul" style="color: var(--accent);"></i> Pilih Episode:</h4>
-          <div class="episodes-container" id="episodesListContainer"></div>
-        </div>
-
         <button class="btn btn-glass" id="btnLike" style="margin-bottom: 24px;"><i class="fa-solid fa-heart" style="color: var(--accent);"></i> <span id="likeNum">0</span> Suka</button>
 
         <h4 style="margin-bottom: 10px; font-weight: 700; font-size: 0.95rem;">Komentar Pengguna</h4>
@@ -231,8 +221,8 @@
         
         <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Pilih Jenis Konten:</label>
         <select id="uType" class="form-input-dark" onchange="toggleUploadType()">
-          <option value="film">Film / Series</option>
-          <option value="tv">Siaran TV (Live Streaming)</option>
+          <option value="film">Film / Series (YouTube / Embed / MP4 URL)</option>
+          <option value="tv">Siaran TV Live Streaming (.m3u8)</option>
         </select>
 
         <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Film atau Nama Channel TV" required />
@@ -251,17 +241,8 @@
 
         <hr style="border: 0; border-top: 1px solid var(--border); margin: 14px 0;">
         
-        <div id="filmUploadSection">
-          <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Upload File Video Episode (.mp4):</label>
-          <div class="ep-input-group">
-            <input type="file" id="videoFile" class="form-input-dark" accept="video/mp4" multiple style="margin:0; padding: 6px;" />
-          </div>
-        </div>
-
-        <div id="tvUploadSection" style="display: none;">
-          <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Link Siaran TV (Format .m3u8):</label>
-          <input type="text" id="uTvUrl" class="form-input-dark" placeholder="https://contoh.com/live/stream.m3u8" style="margin:0;" />
-        </div>
+        <label id="labelVideoUrl" style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 4px;">Link Video / M3U8 / Embed:</label>
+        <input type="text" id="uVideoUrl" class="form-input-dark" placeholder="Contoh: https://... atau link YouTube/m3u8" required style="margin:0;" />
 
         <button type="submit" class="btn" id="btnSubmitUpload" style="width: 100%; justify-content: center; margin-top: 16px;">Simpan Konten</button>
       </form>
@@ -278,8 +259,6 @@
     const viewNum = document.getElementById('viewNum');
     const likeNum = document.getElementById('likeNum');
     const cList = document.getElementById('cList');
-    const episodesListContainer = document.getElementById('episodesListContainer');
-    const episodeSection = document.getElementById('episodeSection');
 
     const btnUpload = document.getElementById('btnUpload');
     const btnCreateAdmin = document.getElementById('btnCreateAdmin');
@@ -343,21 +322,15 @@
 
     function toggleUploadType() {
       const type = document.getElementById('uType').value;
-      const filmSec = document.getElementById('filmUploadSection');
-      const tvSec = document.getElementById('tvUploadSection');
       const catGroup = document.getElementById('catFieldGroup');
+      const label = document.getElementById('labelVideoUrl');
 
       if (type === 'tv') {
-        filmSec.style.display = 'none';
-        tvSec.style.display = 'block';
         catGroup.style.display = 'none';
-        document.getElementById('uTvUrl').required = true;
-        document.getElementById('videoFile').required = false;
+        label.innerText = 'Link Siaran TV (Format .m3u8):';
       } else {
-        filmSec.style.display = 'block';
-        tvSec.style.display = 'none';
         catGroup.style.display = 'block';
-        document.getElementById('uTvUrl').required = false;
+        label.innerText = 'Link Video / YouTube / Embed:';
       }
     }
 
@@ -456,7 +429,6 @@
 
     function createCardHTML(v) {
       const isTv = v.type === 'tv';
-      const totalEp = v.episodes ? v.episodes.length : 0;
       return `
         <div class="poster-card" onclick="openPlayer(${v.id})">
           ${isLoggedIn ? `
@@ -468,7 +440,7 @@
           <div class="poster-frame">
             <img src="${v.thumbnail}" class="poster-img" />
             <div class="hover-overlay"><div class="play-glow-btn"><i class="fa-solid fa-play"></i></div></div>
-            <span class="tag-badge ${isTv ? 'live-badge' : ''}">${isTv ? '🔴 LIVE TV' : totalEp + ' Ep'}</span>
+            <span class="tag-badge ${isTv ? 'live-badge' : ''}">${isTv ? '🔴 LIVE TV' : 'FILM'}</span>
           </div>
           <div class="poster-meta">
             <div class="poster-title">${v.title}</div>
@@ -561,25 +533,7 @@
       likeNum.innerText = v.likes || 0;
       renderComments(v.comments || []);
 
-      episodesListContainer.innerHTML = '';
-      if (v.type === 'tv' || !v.episodes || v.episodes.length <= 1) {
-        episodeSection.style.display = 'none';
-        if (v.episodes && v.episodes.length > 0) {
-          loadEpisodePlayer(v.episodes[0].src);
-        }
-      } else {
-        episodeSection.style.display = 'block';
-        v.episodes.forEach((ep, index) => {
-          const btn = document.createElement('button');
-          btn.className = `ep-btn ${index === 0 ? 'active' : ''}`;
-          btn.innerText = `Ep ${ep.epNum}`;
-          btn.onclick = () => {
-            document.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            loadEpisodePlayer(ep.src);
-          };
-          episodesListContainer.appendChild(btn);
-        });
+      if (v.episodes && v.episodes.length > 0) {
         loadEpisodePlayer(v.episodes[0].src);
       }
 
@@ -675,12 +629,11 @@
       document.getElementById('uCat').value = v.category || 'Animasi';
       document.getElementById('uDesc').value = v.description;
       document.getElementById('uThumb').value = v.thumbnail;
+      if (v.episodes && v.episodes.length > 0) {
+        document.getElementById('uVideoUrl').value = v.episodes[0].src;
+      }
       
       toggleUploadType();
-      if (v.type === 'tv' && v.episodes && v.episodes.length > 0) {
-        document.getElementById('uTvUrl').value = v.episodes[0].src;
-      }
-
       modalUploadTitle.innerText = 'Edit Konten';
       uploadModal.style.display = 'flex';
     }
@@ -697,7 +650,6 @@
       }
     }
 
-    // EVENT UPLOAD DENGAN PENGIRIMAN MULTIPLE FILES YANG SESUAI KE BACKEND
     document.getElementById('uploadForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
@@ -710,37 +662,24 @@
       const category = document.getElementById('uCat').value;
       const description = document.getElementById('uDesc').value;
       const thumbnail = document.getElementById('uThumb').value;
-      const tvUrl = document.getElementById('uTvUrl').value;
-      const fileInput = document.getElementById('videoFile');
+      const videoUrl = document.getElementById('uVideoUrl').value;
       const id = document.getElementById('editSeriesId').value;
 
-      const formData = new FormData();
-      formData.append('type', type);
-      formData.append('title', title);
-      formData.append('category', category);
-      formData.append('description', description);
-      formData.append('thumbnail', thumbnail);
-      formData.append('tvUrl', tvUrl);
-      
-      if (id) {
-        formData.append('id', id);
-        const v = allVideos.find(item => item.id == id);
-        if (v && v.episodes) {
-          formData.append('existingEpisodes', JSON.stringify(v.episodes));
-        }
-      }
-
-      // Pastikan nama field-nya 'videoFiles' sesuai dengan upload.array('videoFiles') di server.js
-      if (type === 'film' && fileInput.files.length > 0) {
-        for (let i = 0; i < fileInput.files.length; i++) {
-          formData.append('videoFiles', fileInput.files[i]);
-        }
-      }
+      const payload = {
+        id: id || undefined,
+        type,
+        title,
+        category,
+        description,
+        thumbnail,
+        videoUrl
+      };
 
       try {
         const res = await fetch('/api/upload', {
           method: 'POST',
-          body: formData
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
         
         const data = await res.json();
