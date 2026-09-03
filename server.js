@@ -6,7 +6,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data.json');
 
-// Memperbesar limit payload agar import file M3U ukuran besar tidak error
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -26,7 +25,6 @@ function saveData(data) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
 
-// API Login
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
   const db = readData();
@@ -39,7 +37,6 @@ app.post('/api/login', (req, res) => {
   }
 });
 
-// API Buat Admin Baru
 app.post('/api/create-admin', (req, res) => {
   const { newUsername, newPassword } = req.body;
   const db = readData();
@@ -53,15 +50,13 @@ app.post('/api/create-admin', (req, res) => {
   res.json({ success: true, message: `Akun admin ${newUsername} berhasil dibuat!` });
 });
 
-// API Ambil Video
 app.get('/api/videos', (req, res) => {
   const db = readData();
   res.json(db.videos);
 });
 
-// API Upload / Edit Konten
 app.post('/api/upload', (req, res) => {
-  const { id, type, title, category, description, thumbnail, episodes } = req.body;
+  const { id, type, title, category, year, country, genre, description, thumbnail, episodes } = req.body;
   const db = readData();
 
   if (id) {
@@ -72,6 +67,9 @@ app.post('/api/upload', (req, res) => {
         type: type || 'film',
         title,
         category: category || 'Animasi',
+        year: year || '2026',
+        country: country || 'Indonesia',
+        genre: genre || 'Film',
         description,
         thumbnail: thumbnail || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=800&q=80',
         episodes: episodes || []
@@ -86,6 +84,9 @@ app.post('/api/upload', (req, res) => {
     type: type || 'film',
     title,
     category: category || 'Animasi',
+    year: year || '2026',
+    country: country || 'Indonesia',
+    genre: genre || 'Film',
     description,
     thumbnail: thumbnail || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=800&q=80',
     episodes: episodes || [],
@@ -99,7 +100,6 @@ app.post('/api/upload', (req, res) => {
   res.json({ success: true, message: 'Konten berhasil ditambahkan!' });
 });
 
-// API Hapus Satuan
 app.delete('/api/videos/:id', (req, res) => {
   const { id } = req.params;
   const db = readData();
@@ -108,7 +108,6 @@ app.delete('/api/videos/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// API Hapus Massal (Bulk Delete)
 app.post('/api/videos/bulk-delete', (req, res) => {
   const { ids } = req.body;
   if (!ids || !Array.isArray(ids)) {
@@ -120,7 +119,6 @@ app.post('/api/videos/bulk-delete', (req, res) => {
   res.json({ success: true, message: `Berhasil menghapus ${ids.length} konten terpilih!` });
 });
 
-// API Views & Likes & Comments
 app.post('/api/videos/:id/view', (req, res) => {
   const { id } = req.params;
   const db = readData();
@@ -166,7 +164,6 @@ app.post('/api/videos/:id/comment', (req, res) => {
   }
 });
 
-// API Import M3U
 app.post('/api/import-m3u', (req, res) => {
   const { channels } = req.body;
   if (!channels || !Array.isArray(channels)) {
@@ -182,6 +179,9 @@ app.post('/api/import-m3u', (req, res) => {
       type: 'tv',
       title: ch.title || 'Live Channel',
       category: ch.category || 'Live TV',
+      year: '2026',
+      country: 'Global',
+      genre: 'Live TV',
       description: 'Siaran langsung dari import playlist M3U',
       thumbnail: ch.thumbnail || 'https://images.unsplash.com/photo-1593784991095-a205069470b6?auto=format&fit=crop&w=800&q=80',
       episodes: [{ title: 'Live Stream', src: ch.url }],
@@ -197,7 +197,6 @@ app.post('/api/import-m3u', (req, res) => {
   res.json({ success: true, message: `Berhasil mengimport ${count} channel siaran TV!` });
 });
 
-// API Proxy Stream
 app.get('/api/proxy-stream', async (req, res) => {
   const targetUrl = req.query.url;
   if (!targetUrl) {

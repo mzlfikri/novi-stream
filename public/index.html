@@ -83,7 +83,7 @@
     .section-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .section-block { margin-bottom: 40px; }
 
-    .poster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+    .poster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; }
     .poster-card {
       background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border);
       overflow: hidden; transition: all 0.25s ease; position: relative; display: flex; flex-direction: column;
@@ -112,6 +112,10 @@
     .poster-meta { padding: 14px; flex: 1; display: flex; flex-direction: column; }
     .poster-title { font-size: 0.88rem; font-weight: 700; color: #fff; margin-bottom: 4px; cursor: pointer; }
     .poster-title:hover { color: var(--accent); }
+    
+    .poster-info-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; font-size: 0.7rem; color: #e74c3c; font-weight: 700; }
+    .poster-info-tags span { background: rgba(229, 9, 20, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(229, 9, 20, 0.2); }
+
     .poster-desc { font-size: 0.75rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 10px; line-height: 1.3; }
     .card-footer-stats { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); }
 
@@ -237,6 +241,7 @@
     </div>
   </div>
 
+  <!-- MODAL UPLOAD / EDIT DENGAN INPUT TAHUN, NEGARA, & JENIS FILM -->
   <div class="modal-backdrop" id="uploadModal">
     <div class="modal-box-wide" style="max-width: 550px; padding: 24px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -255,13 +260,36 @@
 
         <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Film atau Serial" required />
         
-        <div id="catFieldGroup">
-          <select id="uCat" class="form-input-dark">
-            <option value="Animasi">Animasi</option>
-            <option value="Drama">Drama</option>
-            <option value="Action">Action</option>
-            <option value="Hiburan">Hiburan</option>
-          </select>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Jenis Tontonan:</label>
+            <select id="uGenre" class="form-input-dark">
+              <option value="Drakor">Drakor (Drama Korea)</option>
+              <option value="Anime">Anime</option>
+              <option value="Series Barat">Series Barat</option>
+              <option value="Film Bioskop">Film Bioskop</option>
+              <option value="Anime Movie">Anime Movie</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Kategori Genre:</label>
+            <select id="uCat" class="form-input-dark">
+              <option value="Animasi">Animasi</option>
+              <option value="Drama">Drama</option>
+              <option value="Action">Action</option>
+              <option value="Hiburan">Hiburan</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <input type="text" id="uYear" class="form-input-dark" placeholder="Tahun (Cth: 2026)" required />
+          </div>
+          <div>
+            <input type="text" id="uCountry" class="form-input-dark" placeholder="Negara (Cth: Korea Selatan)" required />
+          </div>
         </div>
 
         <textarea id="uDesc" class="form-input-dark" style="height: 60px; resize: none;" placeholder="Deskripsi Singkat"></textarea>
@@ -547,6 +575,51 @@
       }
     }
 
+    function renderCard(v) {
+      const isTv = v.type === 'tv';
+      const totalEps = v.episodes ? v.episodes.length : 0;
+      const genre = v.genre || 'Film';
+      const year = v.year || '2026';
+      const country = v.country || 'Indonesia';
+
+      return `
+        <div class="poster-card">
+          ${userRole === 'owner' ? `
+            <input type="checkbox" class="bulk-checkbox bulk-checkbox-${v.type || 'film'}" value="${v.id}" onclick="event.stopPropagation(); event.stopImmediatePropagation();" style="display: block;" />
+          ` : ''}
+          <div class="poster-frame" onclick="openPlayer('${v.id}')">
+            <img src="${v.thumbnail}" class="poster-img" />
+            <div class="hover-overlay"><div class="play-glow-btn"><i class="fa-solid fa-play"></i></div></div>
+            <span class="tag-badge ${isTv ? 'live-badge' : ''}">${isTv ? '🔴 LIVE TV' : (totalEps > 1 ? totalEps + ' EPS' : 'FILM')}</span>
+          </div>
+          <div class="poster-meta">
+            <div class="poster-title" onclick="openPlayer('${v.id}')">${v.title}</div>
+            
+            <div class="poster-info-tags">
+              <span>${genre}</span>
+              <span>${year}</span>
+              <span>${country}</span>
+            </div>
+
+            <div class="poster-desc">${v.description}</div>
+            
+            ${isLoggedIn ? `
+              <div class="admin-card-actions">
+                <button type="button" class="btn-edit-card" onclick="editVid(event, '${v.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                <button type="button" class="btn-delete-card" onclick="delVid(event, '${v.id}')"><i class="fa-solid fa-trash"></i> Hapus</button>
+              </div>
+            ` : ''}
+
+            <div class="card-footer-stats">
+              <span><i class="fa-solid fa-eye"></i> ${v.views || 0}</span>
+              <span><i class="fa-solid fa-heart" style="color: var(--accent);"></i> ${v.likes || 0}</span>
+              <span><i class="fa-solid fa-comment"></i> ${v.comments ? v.comments.length : 0}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     function filterVideos() {
       const q = document.getElementById('searchInput').value.toLowerCase();
       mainContainer.innerHTML = '';
@@ -572,37 +645,7 @@
               ` : ''}
             </div>
             <div class="poster-grid">
-              ${films.length > 0 ? films.map(v => {
-                const isTv = v.type === 'tv';
-                const totalEps = v.episodes ? v.episodes.length : 0;
-                return `
-                  <div class="poster-card">
-                    ${userRole === 'owner' ? `
-                      <input type="checkbox" class="bulk-checkbox bulk-checkbox-film" value="${v.id}" onclick="event.stopPropagation(); event.stopImmediatePropagation();" style="display: block;" />
-                    ` : ''}
-                    <div class="poster-frame" onclick="openPlayer('${v.id}')">
-                      <img src="${v.thumbnail}" class="poster-img" />
-                      <div class="hover-overlay"><div class="play-glow-btn"><i class="fa-solid fa-play"></i></div></div>
-                      <span class="tag-badge ${isTv ? 'live-badge' : ''}">${isTv ? '🔴 LIVE TV' : (totalEps > 1 ? totalEps + ' EPS' : 'FILM')}</span>
-                    </div>
-                    <div class="poster-meta">
-                      <div class="poster-title" onclick="openPlayer('${v.id}')">${v.title}</div>
-                      <div class="poster-desc">${v.description}</div>
-                      ${isLoggedIn ? `
-                        <div class="admin-card-actions">
-                          <button type="button" class="btn-edit-card" onclick="editVid(event, '${v.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
-                          <button type="button" class="btn-delete-card" onclick="delVid(event, '${v.id}')"><i class="fa-solid fa-trash"></i> Hapus</button>
-                        </div>
-                      ` : ''}
-                      <div class="card-footer-stats">
-                        <span><i class="fa-solid fa-eye"></i> ${v.views || 0}</span>
-                        <span><i class="fa-solid fa-heart" style="color: var(--accent);"></i> ${v.likes || 0}</span>
-                        <span><i class="fa-solid fa-comment"></i> ${v.comments ? v.comments.length : 0}</span>
-                      </div>
-                    </div>
-                  </div>
-                `;
-              }).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada film.</p>'}
+              ${films.length > 0 ? films.map(renderCard).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada film.</p>'}
             </div>
           </div>
         `;
@@ -618,37 +661,7 @@
               ` : ''}
             </div>
             <div class="poster-grid">
-              ${tvs.length > 0 ? tvs.map(v => {
-                const isTv = v.type === 'tv';
-                const totalEps = v.episodes ? v.episodes.length : 0;
-                return `
-                  <div class="poster-card">
-                    ${userRole === 'owner' ? `
-                      <input type="checkbox" class="bulk-checkbox bulk-checkbox-tv" value="${v.id}" onclick="event.stopPropagation(); event.stopImmediatePropagation();" style="display: block;" />
-                    ` : ''}
-                    <div class="poster-frame" onclick="openPlayer('${v.id}')">
-                      <img src="${v.thumbnail}" class="poster-img" />
-                      <div class="hover-overlay"><div class="play-glow-btn"><i class="fa-solid fa-play"></i></div></div>
-                      <span class="tag-badge ${isTv ? 'live-badge' : ''}">${isTv ? '🔴 LIVE TV' : (totalEps > 1 ? totalEps + ' EPS' : 'FILM')}</span>
-                    </div>
-                    <div class="poster-meta">
-                      <div class="poster-title" onclick="openPlayer('${v.id}')">${v.title}</div>
-                      <div class="poster-desc">${v.description}</div>
-                      ${isLoggedIn ? `
-                        <div class="admin-card-actions">
-                          <button type="button" class="btn-edit-card" onclick="editVid(event, '${v.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
-                          <button type="button" class="btn-delete-card" onclick="delVid(event, '${v.id}')"><i class="fa-solid fa-trash"></i> Hapus</button>
-                        </div>
-                      ` : ''}
-                      <div class="card-footer-stats">
-                        <span><i class="fa-solid fa-eye"></i> ${v.views || 0}</span>
-                        <span><i class="fa-solid fa-heart" style="color: var(--accent);"></i> ${v.likes || 0}</span>
-                        <span><i class="fa-solid fa-comment"></i> ${v.comments ? v.comments.length : 0}</span>
-                      </div>
-                    </div>
-                  </div>
-                `;
-              }).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada siaran TV.</p>'}
+              ${tvs.length > 0 ? tvs.map(renderCard).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada siaran TV.</p>'}
             </div>
           </div>
         `;
@@ -669,37 +682,7 @@
               ` : ''}
             </div>
             <div class="poster-grid">
-              ${items.length > 0 ? items.map(v => {
-                const isTv = v.type === 'tv';
-                const totalEps = v.episodes ? v.episodes.length : 0;
-                return `
-                  <div class="poster-card">
-                    ${userRole === 'owner' ? `
-                      <input type="checkbox" class="bulk-checkbox bulk-checkbox-${currentMode}" value="${v.id}" onclick="event.stopPropagation(); event.stopImmediatePropagation();" style="display: block;" />
-                    ` : ''}
-                    <div class="poster-frame" onclick="openPlayer('${v.id}')">
-                      <img src="${v.thumbnail}" class="poster-img" />
-                      <div class="hover-overlay"><div class="play-glow-btn"><i class="fa-solid fa-play"></i></div></div>
-                      <span class="tag-badge ${isTv ? 'live-badge' : ''}">${isTv ? '🔴 LIVE TV' : (totalEps > 1 ? totalEps + ' EPS' : 'FILM')}</span>
-                    </div>
-                    <div class="poster-meta">
-                      <div class="poster-title" onclick="openPlayer('${v.id}')">${v.title}</div>
-                      <div class="poster-desc">${v.description}</div>
-                      ${isLoggedIn ? `
-                        <div class="admin-card-actions">
-                          <button type="button" class="btn-edit-card" onclick="editVid(event, '${v.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
-                          <button type="button" class="btn-delete-card" onclick="delVid(event, '${v.id}')"><i class="fa-solid fa-trash"></i> Hapus</button>
-                        </div>
-                      ` : ''}
-                      <div class="card-footer-stats">
-                        <span><i class="fa-solid fa-eye"></i> ${v.views || 0}</span>
-                        <span><i class="fa-solid fa-heart" style="color: var(--accent);"></i> ${v.likes || 0}</span>
-                        <span><i class="fa-solid fa-comment"></i> ${v.comments ? v.comments.length : 0}</span>
-                      </div>
-                    </div>
-                  </div>
-                `;
-              }).join('') : `<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada konten.</p>`}
+              ${items.length > 0 ? items.map(renderCard).join('') : `<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada konten.</p>`}
             </div>
           </div>
         `;
@@ -857,7 +840,10 @@
       document.getElementById('editSeriesId').value = v.id;
       document.getElementById('uType').value = v.type || 'film';
       document.getElementById('uTitle').value = v.title;
+      document.getElementById('uGenre').value = v.genre || 'Drakor';
       document.getElementById('uCat').value = v.category || 'Animasi';
+      document.getElementById('uYear').value = v.year || '2026';
+      document.getElementById('uCountry').value = v.country || 'Korea Selatan';
       document.getElementById('uDesc').value = v.description;
       document.getElementById('uThumb').value = v.thumbnail;
       
@@ -983,7 +969,10 @@
 
       const type = document.getElementById('uType').value;
       const title = document.getElementById('uTitle').value;
+      const genre = document.getElementById('uGenre').value;
       const category = document.getElementById('uCat').value;
+      const year = document.getElementById('uYear').value;
+      const country = document.getElementById('uCountry').value;
       const description = document.getElementById('uDesc').value;
       const thumbnail = document.getElementById('uThumb').value;
       const id = document.getElementById('editSeriesId').value;
@@ -1017,7 +1006,10 @@
         id: id || undefined,
         type,
         title,
+        genre,
         category,
+        year,
+        country,
         description,
         thumbnail,
         episodes: episodesList
