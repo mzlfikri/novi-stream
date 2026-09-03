@@ -6,10 +6,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data.json');
 
-app.use(express.json());
+// Memperbesar limit payload agar import file M3U ukuran besar tidak error
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Fungsi helper baca/tulis data database lokal
 function readData() {
   if (!fs.existsSync(DATA_FILE)) {
     const initial = {
@@ -25,7 +26,7 @@ function saveData(data) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
 
-// 1. API Login
+// API Login
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
   const db = readData();
@@ -38,7 +39,7 @@ app.post('/api/login', (req, res) => {
   }
 });
 
-// 2. API Buat Admin Baru (Khusus Owner)
+// API Buat Admin Baru
 app.post('/api/create-admin', (req, res) => {
   const { newUsername, newPassword } = req.body;
   const db = readData();
@@ -52,19 +53,18 @@ app.post('/api/create-admin', (req, res) => {
   res.json({ success: true, message: `Akun admin ${newUsername} berhasil dibuat!` });
 });
 
-// 3. API Ambil Semua Video
+// API Ambil Video
 app.get('/api/videos', (req, res) => {
   const db = readData();
   res.json(db.videos);
 });
 
-// 4. API Upload / Edit Konten
+// API Upload / Edit Konten
 app.post('/api/upload', (req, res) => {
   const { id, type, title, category, description, thumbnail, episodes } = req.body;
   const db = readData();
 
   if (id) {
-    // Mode Edit
     const index = db.videos.findIndex(v => String(v.id) === String(id));
     if (index !== -1) {
       db.videos[index] = {
@@ -81,7 +81,6 @@ app.post('/api/upload', (req, res) => {
     }
   }
 
-  // Mode Tambah Baru
   const newVideo = {
     id: Date.now().toString(),
     type: type || 'film',
@@ -100,7 +99,7 @@ app.post('/api/upload', (req, res) => {
   res.json({ success: true, message: 'Konten berhasil ditambahkan!' });
 });
 
-// 5. API Hapus Video Satuan
+// API Hapus Satuan
 app.delete('/api/videos/:id', (req, res) => {
   const { id } = req.params;
   const db = readData();
@@ -109,7 +108,7 @@ app.delete('/api/videos/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// 6. API Hapus Video Massal (Bulk Delete / Hapus All yang Dipilih)
+// API Hapus Massal (Bulk Delete)
 app.post('/api/videos/bulk-delete', (req, res) => {
   const { ids } = req.body;
   if (!ids || !Array.isArray(ids)) {
@@ -121,7 +120,7 @@ app.post('/api/videos/bulk-delete', (req, res) => {
   res.json({ success: true, message: `Berhasil menghapus ${ids.length} konten terpilih!` });
 });
 
-// 7. API Tambah View
+// API Views & Likes & Comments
 app.post('/api/videos/:id/view', (req, res) => {
   const { id } = req.params;
   const db = readData();
@@ -135,7 +134,6 @@ app.post('/api/videos/:id/view', (req, res) => {
   }
 });
 
-// 8. API Like Video
 app.post('/api/videos/:id/like', (req, res) => {
   const { id } = req.params;
   const db = readData();
@@ -149,7 +147,6 @@ app.post('/api/videos/:id/like', (req, res) => {
   }
 });
 
-// 9. API Komentar Video
 app.post('/api/videos/:id/comment', (req, res) => {
   const { id } = req.params;
   const { text } = req.body;
@@ -169,7 +166,7 @@ app.post('/api/videos/:id/comment', (req, res) => {
   }
 });
 
-// 10. API Import M3U Playlist
+// API Import M3U
 app.post('/api/import-m3u', (req, res) => {
   const { channels } = req.body;
   if (!channels || !Array.isArray(channels)) {
@@ -200,7 +197,7 @@ app.post('/api/import-m3u', (req, res) => {
   res.json({ success: true, message: `Berhasil mengimport ${count} channel siaran TV!` });
 });
 
-// 11. API PROXY STREAM (Menjembatani link m3u8 agar terhindar dari CORS)
+// API Proxy Stream
 app.get('/api/proxy-stream', async (req, res) => {
   const targetUrl = req.query.url;
   if (!targetUrl) {
