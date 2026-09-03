@@ -109,7 +109,7 @@ app.delete('/api/videos/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// 6. API Hapus Video Massal (Bulk Delete)
+// 6. API Hapus Video Massal (Bulk Delete / Hapus All yang Dipilih)
 app.post('/api/videos/bulk-delete', (req, res) => {
   const { ids } = req.body;
   if (!ids || !Array.isArray(ids)) {
@@ -181,7 +181,7 @@ app.post('/api/import-m3u', (req, res) => {
 
   channels.forEach(ch => {
     const newChannel = {
-      id: 'm3u_' + Date.now() + '_' + Math.random().toString(36.substring(2, 7)),
+      id: 'm3u_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
       type: 'tv',
       title: ch.title || 'Live Channel',
       category: ch.category || 'Live TV',
@@ -200,7 +200,7 @@ app.post('/api/import-m3u', (req, res) => {
   res.json({ success: true, message: `Berhasil mengimport ${count} channel siaran TV!` });
 });
 
-// 11. API PROXY STREAM (Untuk mengatasi masalah CORS / loading link m3u8 worker)
+// 11. API PROXY STREAM (Menjembatani link m3u8 agar terhindar dari CORS)
 app.get('/api/proxy-stream', async (req, res) => {
   const targetUrl = req.query.url;
   if (!targetUrl) {
