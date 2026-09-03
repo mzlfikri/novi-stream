@@ -211,18 +211,13 @@
 
   <div class="modal-backdrop" id="loginModal">
     <div class="modal-box-wide" style="max-width: 380px; padding: 24px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <h3 style="font-size: 1.2rem; font-weight: 800;">Login Owner / Admin</h3>
         <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.2rem; color: var(--text-muted);" onclick="closeModal('loginModal')"></i>
       </div>
-      <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.4;">
-        Gunakan akun utama:<br>
-        • Username: <strong style="color: #fff;">owner</strong><br>
-        • Password: <strong style="color: #fff;">123</strong>
-      </p>
       <form id="loginForm">
-        <input type="text" id="userInput" class="form-input-dark" placeholder="Masukkan Username" required />
-        <input type="password" id="passInput" class="form-input-dark" placeholder="Masukkan Password" required />
+        <input type="text" id="userInput" class="form-input-dark" placeholder="Username" required />
+        <input type="password" id="passInput" class="form-input-dark" placeholder="Password" required />
         <button type="submit" class="btn" style="width: 100%; justify-content: center; margin-top: 6px;">Masuk</button>
       </form>
     </div>
