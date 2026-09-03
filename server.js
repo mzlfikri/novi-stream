@@ -197,7 +197,7 @@ app.post('/api/import-m3u', (req, res) => {
   res.json({ success: true, message: `Berhasil mengimport ${count} channel siaran TV!` });
 });
 
-// ROUTE PROXY UNTUK MENGATASI BLOKIR CORS PADA LINK M3U8
+// PROXY STREAM YANG DISEMPURNAKAN UNTUK MENGATASI M3U8 & TS SEGMENT
 app.get('/api/proxy-stream', async (req, res) => {
   const targetUrl = req.query.url;
   if (!targetUrl) {
@@ -216,11 +216,33 @@ app.get('/api/proxy-stream', async (req, res) => {
       return res.status(response.status).send('Failed to fetch stream source');
     }
 
-    res.setHeader('Content-Type', response.headers.get('content-type') || 'application/vnd.apple.mpegurl');
+    const contentType = response.headers.get('content-type') || '';
     res.setHeader('Access-Control-Allow-Origin', '*');
 
-    const buffer = await response.arrayBuffer();
-    res.send(Buffer.from(buffer));
+    // Jika yang direquest adalah file playlist .m3u8, rewrite link di dalamnya agar melewati proxy juga
+    if (targetUrl.includes('.m3u8') || contentType.includes('mpegurl')) {
+      res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+      let textContent = await response.text();
+      
+      const baseUrl = targetUrl.substring(0, targetUrl.lastIndexOf('/') + 1);
+
+      // Ubah setiap baris fragment atau sub-playlist menjadi melalui proxy
+      const rewrittenLines = textContent.split('\n').map(line => {
+        let trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#')) {
+          let absoluteUrl = trimmed.startsWith('http') ? trimmed : new URL(trimmed, baseUrl).toString();
+          return `/api/proxy-stream?url=` + encodeURIComponent(absoluteUrl);
+        }
+        return line;
+      });
+
+      return res.send(rewrittenLines.join('\n'));
+    } else {
+      // Untuk file segmen video (.ts / .m4s / dll)
+      res.setHeader('Content-Type', contentType);
+      const buffer = await response.arrayBuffer();
+      return res.send(Buffer.from(buffer));
+    }
 
   } catch (error) {
     console.error('Proxy stream error:', error);
