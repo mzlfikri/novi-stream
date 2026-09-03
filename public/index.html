@@ -755,7 +755,7 @@
       }
     };
 
-    // PENGAMAN MUTLAK: Menghentikan event bubbling agar tidak tembus ke pemutar video
+    // PENGAMAN MUTLAK: Menggunakan penanganan string yang aman dari error tag iframe
     function editVid(event, id) {
       if (event) {
         event.stopPropagation();
@@ -776,7 +776,10 @@
       episodeInputsContainer.innerHTML = '';
       if (v.episodes && v.episodes.length > 0) {
         v.episodes.forEach(eps => {
-          addEpisodeInput(eps.title, eps.src);
+          // Bersihkan string dari karakter kutipan yang merusak HTML input form
+          const safeSrc = eps.src ? eps.src.replace(/"/g, '&quot;') : '';
+          const safeTitle = eps.title ? eps.title.replace(/"/g, '&quot;') : 'Episode';
+          addEpisodeInput(safeTitle, safeSrc);
         });
       } else {
         addEpisodeInput('Episode 1', '');
@@ -894,8 +897,18 @@
       const epsRows = episodeInputsContainer.querySelectorAll('div');
       let episodesList = [];
       epsRows.forEach(row => {
-        const epsTitle = row.querySelector('.eps-title').value.trim();
-        const epsSrc = row.querySelector('.eps-src').value.trim();
+        let epsTitle = row.querySelector('.eps-title').value.trim();
+        let epsSrc = row.querySelector('.eps-src').value.trim();
+        
+        // PEMBERSIHAN OTOMATIS: Jika user menempelkan kode lengkap <iframe ... src="URL"> ...</iframe>
+        // Kita otomatis ambil URL di dalam atribut src="..." nya agar pemutar video tidak error!
+        if (epsSrc.includes('<iframe')) {
+          const match = epsSrc.match(/src="([^"]+)"/);
+          if (match && match[1]) {
+            epsSrc = match[1];
+          }
+        }
+
         if (epsSrc) {
           episodesList.push({ title: epsTitle || 'Episode', src: epsSrc });
         }
