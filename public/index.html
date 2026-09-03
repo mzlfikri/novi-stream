@@ -167,9 +167,7 @@
       <button class="btn btn-owner" id="btnCreateAdmin" style="display: none;" onclick="openCreateAdminModal()"><i class="fa-solid fa-user-plus"></i></button>
       <button class="btn btn-delete-bulk" id="btnDeleteBulk" onclick="deleteSelectedVideos()"><i class="fa-solid fa-trash-can"></i> Hapus Terpilih</button>
       <button class="btn btn-import" id="btnImport" style="display: none;" onclick="openImportModal()"><i class="fa-solid fa-file-arrow-up"></i> Import M3U</button>
-      
       <button class="btn" id="btnUpload" style="display: none;" onclick="openUploadModal()"><i class="fa-solid fa-plus"></i> Tambah</button>
-      
       <button class="btn btn-glass" id="btnAdmin" onclick="handleAdminLoginToggle()"><i class="fa-solid fa-user-lock"></i> Login</button>
     </div>
   </header>
@@ -289,7 +287,7 @@
             <input type="text" id="uYear" class="form-input-dark" placeholder="Tahun (Cth: 2026)" required />
           </div>
           <div>
-            <input type="text" id="uCountry" class="form-input-dark" placeholder="Negara (Cth: Korea Selatan)" required />
+            <input type="text" id="uCountry" class="form-input-dark" placeholder="Negara (Cth: Korea Selatan, Jepang, AS)" required />
           </div>
         </div>
 
@@ -390,7 +388,22 @@
       fetchVideos();
     }
 
-    // Fungsi Global untuk Tombol-Tombol Modal agar pasti terpanggil
+    // Fungsi otomatis mengubah nama negara menjadi emoji bendera
+    function getFlagEmoji(countryName) {
+      if (!countryName) return '🏳️';
+      const c = countryName.toLowerCase().trim();
+      if (c.includes('korea') || c.includes('south korea')) return '🇰🇷';
+      if (c.includes('jepang') || c.includes('japan')) return '🇯🇵';
+      if (c.includes('amerika') || c.includes('us') || c.includes('usa') || c.includes('barat')) return '🇺🇸';
+      if (c.includes('indonesia')) return '🇮🇩';
+      if (c.includes('china') || c.includes('tiongkok') || c.includes('tibet')) return '🇨🇳';
+      if (c.includes('thailand')) return '🇹🇭';
+      if (c.includes(' Inggris') || c.includes('uk')) return '🇬🇧';
+      if (c.includes('india')) return '🇮🇳';
+      if (c.includes('prancis') || c.includes('france')) return '🇫🇷';
+      return '🌍'; // Default bendera global
+    }
+
     function openUploadModal() {
       const uploadForm = document.getElementById('uploadForm');
       if (uploadForm) uploadForm.reset();
@@ -596,7 +609,8 @@
       const totalEps = v.episodes ? v.episodes.length : 0;
       const genre = v.genre || 'Film';
       const year = v.year || '2026';
-      const country = v.country || 'Indonesia';
+      const countryText = v.country || 'Indonesia';
+      const flag = getFlagEmoji(countryText);
 
       return `
         <div class="poster-card">
@@ -614,7 +628,7 @@
             <div class="poster-info-tags">
               <span>${genre}</span>
               <span>${year}</span>
-              <span>${country}</span>
+              <span>${flag} ${countryText}</span>
             </div>
 
             <div class="poster-desc">${v.description}</div>
@@ -899,89 +913,6 @@
         .then(res => { if (res.ok) fetchVideos(); else alert("Gagal menghapus."); })
         .catch(() => alert("Gagal menghapus."));
       return false;
-    }
-
-    function processImportM3U() {
-      const fileInput = document.getElementById('m3uFile');
-      if (!fileInput.files || fileInput.files.length === 0) {
-        alert('Pilih file M3U terlebih dahulu!');
-        return;
-      }
-
-      const file = fileInput.files[0];
-      const reader = new FileReader();
-
-      reader.onload = async function(e) {
-        try {
-          const content = e.target.result;
-          const lines = content.split('\n');
-          let channelsToImport = [];
-
-          let currentTitle = 'Live Channel';
-          let currentLogo = '';
-          let currentGroup = 'Live TV';
-
-          for (let i = 0; i < lines.length; i++) {
-            let line = lines[i].trim();
-            if (line.startsWith('#EXTINF:')) {
-              let tvgLogoMatch = line.match(/tvg-logo="([^"]*)"/);
-              if (tvgLogoMatch) currentLogo = tvgLogoMatch[1];
-
-              let groupMatch = line.match(/group-title="([^"]*)"/);
-              if (groupMatch) currentGroup = groupMatch[1];
-
-              let parts = line.split(',');
-              if (parts.length > 1) {
-                currentTitle = parts[parts.length - 1].trim();
-              }
-            } else if (line && !line.startsWith('#')) {
-              let streamUrl = line;
-              
-              if (channelsToImport.length < 500) {
-                channelsToImport.push({
-                  title: currentTitle,
-                  category: currentGroup,
-                  thumbnail: currentLogo,
-                  url: streamUrl
-                });
-              }
-
-              currentTitle = 'Live Channel';
-              currentLogo = '';
-              currentGroup = 'Live TV';
-            }
-          }
-
-          if (channelsToImport.length === 0) {
-            alert('Tidak ada link streaming yang ditemukan di dalam file M3U ini.');
-            return;
-          }
-
-          const res = await fetch('/api/import-m3u', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ channels: channelsToImport })
-          });
-
-          const data = await res.json();
-          if (res.ok && data.success) {
-            alert(data.message);
-            closeModal('importModal');
-            fetchVideos();
-          } else {
-            alert('Gagal memproses import: ' + (data.message || 'Kesalahan server'));
-          }
-        } catch (err) {
-          console.error(err);
-          alert('Terjadi kesalahan jaringan atau format file M3U tidak valid.');
-        }
-      };
-
-      reader.onerror = function() {
-        alert('Gagal membaca file dari komputer Anda.');
-      };
-
-      reader.readAsText(file);
     }
 
     const uploadFormEl = document.getElementById('uploadForm');
