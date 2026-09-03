@@ -259,37 +259,39 @@
           <option value="tv">Siaran TV Live Streaming (.m3u8 / .mpd / Worker)</option>
         </select>
 
-        <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Film atau Serial" required />
+        <input type="text" id="uTitle" class="form-input-dark" placeholder="Judul Film atau Siaran TV" required />
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <div>
-            <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Jenis Tontonan:</label>
-            <select id="uGenre" class="form-input-dark">
-              <option value="Drakor">Drakor (Drama Korea)</option>
-              <option value="Anime">Anime</option>
-              <option value="Series Barat">Series Barat</option>
-              <option value="Film Bioskop">Film Bioskop</option>
-              <option value="Anime Movie">Anime Movie</option>
-              <option value="Lainnya">Lainnya</option>
-            </select>
+        <div id="filmFieldsContainer">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Jenis Tontonan:</label>
+              <select id="uGenre" class="form-input-dark">
+                <option value="Drakor">Drakor (Drama Korea)</option>
+                <option value="Anime">Anime</option>
+                <option value="Series Barat">Series Barat</option>
+                <option value="Film Bioskop">Film Bioskop</option>
+                <option value="Anime Movie">Anime Movie</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Kategori Genre:</label>
+              <select id="uCat" class="form-input-dark">
+                <option value="Animasi">Animasi</option>
+                <option value="Drama">Drama</option>
+                <option value="Action">Action</option>
+                <option value="Hiburan">Hiburan</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Kategori Genre:</label>
-            <select id="uCat" class="form-input-dark">
-              <option value="Animasi">Animasi</option>
-              <option value="Drama">Drama</option>
-              <option value="Action">Action</option>
-              <option value="Hiburan">Hiburan</option>
-            </select>
-          </div>
-        </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <div>
-            <input type="text" id="uYear" class="form-input-dark" placeholder="Tahun (Cth: 2026)" required />
-          </div>
-          <div>
-            <input type="text" id="uCountry" class="form-input-dark" placeholder="Negara (Cth: Korea Selatan, Jepang, Amerika, Indonesia)" required />
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <input type="text" id="uYear" class="form-input-dark" placeholder="Tahun (Cth: 2026)" />
+            </div>
+            <div>
+              <input type="text" id="uCountry" class="form-input-dark" placeholder="Negara (Cth: Korea Selatan, Jepang)" />
+            </div>
           </div>
         </div>
 
@@ -300,8 +302,8 @@
         
         <div id="episodeSection">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="font-size: 0.85rem; font-weight: 700;">Daftar Link Episode (Eps 1, Eps 2, dst.):</label>
-            <button type="button" class="btn-small-action" onclick="addEpisodeInput()"><i class="fa-solid fa-plus"></i> Tambah Episode</button>
+            <label style="font-size: 0.85rem; font-weight: 700;" id="labelStreamUrl">Daftar Link Video / Episode:</label>
+            <button type="button" id="btnAddEps" class="btn-small-action" onclick="addEpisodeInput()"><i class="fa-solid fa-plus"></i> Tambah Episode</button>
           </div>
           <div id="episodeInputsContainer" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; margin-bottom: 16px; padding-right: 4px;"></div>
         </div>
@@ -462,30 +464,48 @@
       filterVideos();
     }
 
+    // FUNGSI UNTUK MENYEMBUNYIKAN FIELD TAHUN/NEGARA JIKA SIARAN TV DIPILIH
     function toggleUploadType() {
       const type = document.getElementById('uType').value;
-      const catGroup = document.getElementById('catFieldGroup');
-      const episodeSec = document.getElementById('episodeSection');
+      const filmFields = document.getElementById('filmFieldsContainer');
+      const labelStreamUrl = document.getElementById('labelStreamUrl');
+      const btnAddEps = document.getElementById('btnAddEps');
 
       if (type === 'tv') {
-        if (catGroup) catGroup.style.display = 'none';
-        if (episodeSec) episodeSec.style.display = 'block';
+        if (filmFields) filmFields.style.display = 'none';
+        if (labelStreamUrl) labelStreamUrl.innerText = 'Link Siaran Langsung (Live Stream URL):';
+        if (btnAddEps) btnAddEps.style.display = 'none';
+        // Sisakan hanya 1 input untuk siaran TV
+        if (episodeInputsContainer.children.length === 0) {
+          addEpisodeInput('Live Stream', '');
+        }
       } else {
-        if (catGroup) catGroup.style.display = 'block';
-        if (episodeSec) episodeSec.style.display = 'block';
+        if (filmFields) filmFields.style.display = 'block';
+        if (labelStreamUrl) labelStreamUrl.innerText = 'Daftar Link Video / Episode:';
+        if (btnAddEps) btnAddEps.style.display = 'inline-flex';
+        if (episodeInputsContainer.children.length === 0) {
+          addEpisodeInput('Episode 1', '');
+        }
       }
     }
 
     function addEpisodeInput(titleVal = '', srcVal = '') {
       if (!episodeInputsContainer) return;
+      const type = document.getElementById('uType').value;
+      
+      // Jika jenis TV, hanya boleh 1 input URL
+      if (type === 'tv') {
+        episodeInputsContainer.innerHTML = '';
+      }
+
       const count = episodeInputsContainer.children.length + 1;
       const row = document.createElement('div');
       row.style.cssText = 'display: flex; gap: 8px; align-items: center; background: var(--bg-base); padding: 8px; border-radius: 8px; border: 1px solid var(--border);';
       
       row.innerHTML = `
-        <input type="text" class="form-input-dark eps-title" placeholder="Nama/No Eps (Cth: Episode ${count})" value="${titleVal || 'Episode ' + count}" style="margin:0; width: 120px; font-size: 0.8rem;" />
-        <input type="text" class="form-input-dark eps-src" placeholder="Tempel URL Video / Embed di sini" value="${srcVal}" required style="margin:0; flex:1; font-size: 0.8rem;" />
-        <button type="button" class="btn-small-action" style="background: rgba(231,76,60,0.2); color: #e74c3c; border-color: rgba(231,76,60,0.4);" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>
+        <input type="text" class="form-input-dark eps-title" placeholder="Nama/No Eps" value="${type === 'tv' ? 'Live Stream' : (titleVal || 'Episode ' + count)}" ${type === 'tv' ? 'readonly style="display:none;"' : 'style="margin:0; width: 120px; font-size: 0.8rem;"'} />
+        <input type="text" class="form-input-dark eps-src" placeholder="Tempel URL Video / Embed / M3U8 di sini" value="${srcVal}" required style="margin:0; flex:1; font-size: 0.8rem;" />
+        ${type !== 'tv' ? `<button type="button" class="btn-small-action" style="background: rgba(231,76,60,0.2); color: #e74c3c; border-color: rgba(231,76,60,0.4);" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>` : ''}
       `;
       episodeInputsContainer.appendChild(row);
     }
@@ -609,8 +629,8 @@
       const isTv = v.type === 'tv';
       const totalEps = v.episodes ? v.episodes.length : 0;
       const genre = v.genre || 'Film';
-      const year = v.year || '2026';
-      const countryText = v.country || 'Indonesia';
+      const year = v.year || '';
+      const countryText = v.country || '';
       const code = getCountryCode(countryText);
       const flagUrl = `https://flagcdn.com/w20/${code}.png`;
 
@@ -628,9 +648,10 @@
             <div class="poster-title" onclick="openPlayer('${v.id}')">${v.title}</div>
             
             <div class="poster-info-tags">
-              <span>${genre}</span>
-              <span>${year}</span>
-              <span><img src="${flagUrl}" class="flag-img" alt="${countryText}"> ${countryText}</span>
+              ${!isTv && genre ? `<span>${genre}</span>` : ''}
+              ${!isTv && year ? `<span>${year}</span>` : ''}
+              ${!isTv && countryText ? `<span><img src="${flagUrl}" class="flag-img" alt="${countryText}"> ${countryText}</span>` : ''}
+              ${isTv ? `<span>🔴 Live TV</span>` : ''}
             </div>
 
             <div class="poster-desc">${v.description}</div>
@@ -762,7 +783,6 @@
       playerModal.style.display = 'flex';
     }
 
-    // PEMUTAR M3U8 DENGAN PROXY UNTUK MENGATASI BLOKIR CORS
     function loadEpisodePlayer(src) {
       let finalSrc = src;
       if (src.includes('.m3u8')) {
@@ -888,8 +908,8 @@
       document.getElementById('uTitle').value = v.title;
       document.getElementById('uGenre').value = v.genre || 'Drakor';
       document.getElementById('uCat').value = v.category || 'Animasi';
-      document.getElementById('uYear').value = v.year || '2026';
-      document.getElementById('uCountry').value = v.country || 'Korea Selatan';
+      document.getElementById('uYear').value = v.year || '';
+      document.getElementById('uCountry').value = v.country || '';
       document.getElementById('uDesc').value = v.description;
       document.getElementById('uThumb').value = v.thumbnail;
       
@@ -1019,10 +1039,10 @@
 
         const type = document.getElementById('uType').value;
         const title = document.getElementById('uTitle').value;
-        const genre = document.getElementById('uGenre').value;
-        const category = document.getElementById('uCat').value;
-        const year = document.getElementById('uYear').value;
-        const country = document.getElementById('uCountry').value;
+        const genre = type === 'tv' ? 'Live TV' : document.getElementById('uGenre').value;
+        const category = type === 'tv' ? 'Live TV' : document.getElementById('uCat').value;
+        const year = type === 'tv' ? '' : document.getElementById('uYear').value;
+        const country = type === 'tv' ? '' : document.getElementById('uCountry').value;
         const description = document.getElementById('uDesc').value;
         const thumbnail = document.getElementById('uThumb').value;
         const id = document.getElementById('editSeriesId').value;
@@ -1032,9 +1052,9 @@
         epsRows.forEach(row => {
           const tInp = row.querySelector('.eps-title');
           const sInp = row.querySelector('.eps-src');
-          if (!tInp || !sInp) return;
+          if (!sInp) return;
 
-          let epsTitle = tInp.value.trim();
+          let epsTitle = tInp ? tInp.value.trim() : 'Live Stream';
           let epsSrc = sInp.value.trim();
           
           if (epsSrc.includes('<iframe')) {
@@ -1045,12 +1065,12 @@
           }
 
           if (epsSrc) {
-            episodesList.push({ title: epsTitle || 'Episode', src: epsSrc });
+            episodesList.put ? null : episodesList.push({ title: epsTitle || 'Episode', src: epsSrc });
           }
         });
 
         if (episodesList.length === 0) {
-          alert('Minimal harus ada 1 link video episode yang diisi!');
+          alert('Minimal harus ada 1 link video / siaran yang diisi!');
           if (submitBtn) {
             submitBtn.innerText = 'Simpan Konten';
             submitBtn.disabled = false;
