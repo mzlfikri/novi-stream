@@ -762,7 +762,13 @@
       playerModal.style.display = 'flex';
     }
 
+    // PEMUTAR M3U8 DENGAN PROXY UNTUK MENGATASI BLOKIR CORS
     function loadEpisodePlayer(src) {
+      let finalSrc = src;
+      if (src.includes('.m3u8')) {
+        finalSrc = `/api/proxy-stream?url=` + encodeURIComponent(src);
+      }
+
       if (src.includes('.mpd')) {
         videoContainer.innerHTML = `<video src="${src}" controls autoplay style="width:100%; height:100%; position:absolute; inset:0; background:#000;"></video>`;
       } else if (src.includes('.m3u8') || src.includes('workers.dev')) {
@@ -771,36 +777,36 @@
         
         if (Hls.isSupported()) {
           const hls = new Hls();
-          hls.loadSource(src);
+          hls.loadSource(finalSrc);
           hls.attachMedia(videoElement);
         } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-          videoElement.src = src;
+          videoElement.src = finalSrc;
         }
       } else if (src.includes('mediadelivery.net') || src.includes('youtube.com') || src.includes('youtu.be') || src.includes('<iframe')) {
-        let finalSrc = src;
+        let embedSrc = src;
 
         if (src.includes('<iframe')) {
           const match = src.match(/src="([^"]+)"/);
           if (match && match[1]) {
-            finalSrc = match[1];
+            embedSrc = match[1];
           }
         }
 
         if (src.includes('youtu.be/')) {
-          const id = src.split('youtu.be/')[1].split('?')[0];
-          finalSrc = `https://www.youtube.com/embed/${id}`;
+          const ytId = src.split('youtu.be/')[1].split('?')[0];
+          embedSrc = `https://www.youtube.com/embed/${ytId}`;
         } else if (src.includes('/watch?v=')) {
-          const id = src.split('watch?v=')[1].split('&')[0];
-          finalSrc = `https://www.youtube.com/embed/${id}`;
+          const ytId = src.split('watch?v=')[1].split('&')[0];
+          embedSrc = `https://www.youtube.com/embed/${ytId}`;
         }
 
-        if (finalSrc.includes('mediadelivery.net') && finalSrc.includes('muted=true')) {
-          finalSrc = finalSrc.replace('muted=true', 'muted=false');
+        if (embedSrc.includes('mediadelivery.net') && embedSrc.includes('muted=true')) {
+          embedSrc = embedSrc.replace('muted=true', 'muted=false');
         }
 
         videoContainer.innerHTML = `
           <iframe 
-            src="${finalSrc}" 
+            src="${embedSrc}" 
             style="width:100%; height:100%; border:none; position:absolute; inset:0;" 
             allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen" 
             allowfullscreen="true">

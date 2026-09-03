@@ -197,6 +197,7 @@ app.post('/api/import-m3u', (req, res) => {
   res.json({ success: true, message: `Berhasil mengimport ${count} channel siaran TV!` });
 });
 
+// ROUTE PROXY UNTUK MENGATASI BLOKIR CORS PADA LINK M3U8
 app.get('/api/proxy-stream', async (req, res) => {
   const targetUrl = req.query.url;
   if (!targetUrl) {
