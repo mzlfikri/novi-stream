@@ -390,7 +390,6 @@
       fetchVideos();
     }
 
-    // Fungsi otomatis mengubah nama negara menjadi kode ISO 2 huruf untuk gambar bendera CDN
     function getCountryCode(countryName) {
       if (!countryName) return 'id';
       const c = countryName.toLowerCase().trim();
@@ -403,7 +402,7 @@
       if (c.includes('inggris') || c.includes('uk')) return 'gb';
       if (c.includes('india')) return 'in';
       if (c.includes('prancis') || c.includes('france')) return 'fr';
-      return 'un'; // Default bendera PBB / Global
+      return 'un';
     }
 
     function openUploadModal() {
@@ -918,6 +917,89 @@
       return false;
     }
 
+    function processImportM3U() {
+      const fileInput = document.getElementById('m3uFile');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Pilih file M3U terlebih dahulu!');
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = async function(e) {
+        try {
+          const content = e.target.result;
+          const lines = content.split('\n');
+          let channelsToImport = [];
+
+          let currentTitle = 'Live Channel';
+          let currentLogo = '';
+          let currentGroup = 'Live TV';
+
+          for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].trim();
+            if (line.startsWith('#EXTINF:')) {
+              let tvgLogoMatch = line.match(/tvg-logo="([^"]*)"/);
+              if (tvgLogoMatch) currentLogo = tvgLogoMatch[1];
+
+              let groupMatch = line.match(/group-title="([^"]*)"/);
+              if (groupMatch) currentGroup = groupMatch[1];
+
+              let parts = line.split(',');
+              if (parts.length > 1) {
+                currentTitle = parts[parts.length - 1].trim();
+              }
+            } else if (line && !line.startsWith('#')) {
+              let streamUrl = line;
+              
+              if (channelsToImport.length < 500) {
+                channelsToImport.push({
+                  title: currentTitle,
+                  category: currentGroup,
+                  thumbnail: currentLogo,
+                  url: streamUrl
+                });
+              }
+
+              currentTitle = 'Live Channel';
+              currentLogo = '';
+              currentGroup = 'Live TV';
+            }
+          }
+
+          if (channelsToImport.length === 0) {
+            alert('Tidak ada link streaming yang ditemukan di dalam file M3U ini.');
+            return;
+          }
+
+          const res = await fetch('/api/import-m3u', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channels: channelsToImport })
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            alert(data.message);
+            closeModal('importModal');
+            fetchVideos();
+          } else {
+            alert('Gagal memproses import: ' + (data.message || 'Kesalahan server'));
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Terjadi kesalahan jaringan atau format file M3U tidak valid.');
+        }
+      };
+
+      reader.onerror = function() {
+        alert('Gagal membaca file dari komputer Anda.');
+      };
+
+      reader.readAsText(file);
+    }
+
     const uploadFormEl = document.getElementById('uploadForm');
     if (uploadFormEl) {
       uploadFormEl.addEventListener('submit', async function(e) {
@@ -963,7 +1045,7 @@
 
         if (episodesList.length === 0) {
           alert('Minimal harus ada 1 link video episode yang diisi!');
-          if `submitBtn` {
+          if (submitBtn) {
             submitBtn.innerText = 'Simpan Konten';
             submitBtn.disabled = false;
           }
