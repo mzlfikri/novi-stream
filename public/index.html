@@ -30,7 +30,7 @@
 
     header {
       background: rgba(5, 6, 8, 0.95); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border);
-      padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;
+      padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 999;
       flex-wrap: wrap; gap: 12px;
     }
 
@@ -42,7 +42,7 @@
     .nav-menu a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.88rem; transition: color 0.2s; cursor: pointer; }
     .nav-menu a:hover, .nav-menu a.active { color: #fff; }
 
-    .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; position: relative; z-index: 102; }
+    .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; position: relative; z-index: 1000; }
 
     .search-input-group {
       display: flex; align-items: center; background: var(--bg-surface); border: 1px solid var(--border);
@@ -52,8 +52,8 @@
 
     .btn {
       background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 30px; font-weight: 700;
-      cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.25s ease; font-size: 0.82rem; box-shadow: 0 4px 15px var(--accent-glow);
-      white-space: nowrap; position: relative; z-index: 103;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.25s ease; font-size: 0.82rem; box-shadow: 0 4px 15px var(--accent-glow);
+      white-space: nowrap; position: relative; z-index: 1001; pointer-events: auto !important;
     }
     .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
     .btn-glass { background: rgba(255,255,255,0.06); border: 1px solid var(--border); box-shadow: none; }
@@ -123,7 +123,7 @@
       position: absolute; top: 10px; left: 10px; z-index: 25; width: 22px; height: 22px; cursor: pointer; accent-color: var(--accent); display: none; border-radius: 4px;
     }
 
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 12px; overflow-y: auto; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 2000; padding: 12px; overflow-y: auto; }
     .modal-box-wide { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 900px; max-height: 92vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
     
     .video-viewport { width: 100%; background: #000; position: relative; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; }
@@ -164,11 +164,13 @@
         <input type="text" id="searchInput" placeholder="Cari..." oninput="filterVideos()">
       </div>
 
-      <button class="btn btn-owner" id="btnCreateAdmin" style="display: none;"><i class="fa-solid fa-user-plus"></i></button>
+      <button class="btn btn-owner" id="btnCreateAdmin" style="display: none;" onclick="openCreateAdminModal()"><i class="fa-solid fa-user-plus"></i></button>
       <button class="btn btn-delete-bulk" id="btnDeleteBulk" onclick="deleteSelectedVideos()"><i class="fa-solid fa-trash-can"></i> Hapus Terpilih</button>
-      <button class="btn btn-import" id="btnImport" style="display: none;"><i class="fa-solid fa-file-arrow-up"></i> Import M3U</button>
-      <button class="btn" id="btnUpload" style="display: none;"><i class="fa-solid fa-plus"></i> Tambah</button>
-      <button class="btn btn-glass" id="btnAdmin"><i class="fa-solid fa-user-lock"></i> Login</button>
+      <button class="btn btn-import" id="btnImport" style="display: none;" onclick="openImportModal()"><i class="fa-solid fa-file-arrow-up"></i> Import M3U</button>
+      
+      <button class="btn" id="btnUpload" style="display: none;" onclick="openUploadModal()"><i class="fa-solid fa-plus"></i> Tambah</button>
+      
+      <button class="btn btn-glass" id="btnAdmin" onclick="handleAdminLoginToggle()"><i class="fa-solid fa-user-lock"></i> Login</button>
     </div>
   </header>
 
@@ -346,11 +348,6 @@
     const btnImport = document.getElementById('btnImport');
     const btnDeleteBulk = document.getElementById('btnDeleteBulk');
     const btnCreateAdmin = document.getElementById('btnCreateAdmin');
-    const btnAdmin = document.getElementById('btnAdmin');
-    const loginModal = document.getElementById('loginModal');
-    const createAdminModal = document.getElementById('createAdminModal');
-    const uploadModal = document.getElementById('uploadModal');
-    const importModal = document.getElementById('importModal');
     const roleBadge = document.getElementById('roleBadge');
     const modalUploadTitle = document.getElementById('modalUploadTitle');
     const heroBanner = document.getElementById('heroBanner');
@@ -364,31 +361,72 @@
 
     function renderUI() {
       if (isLoggedIn) {
-        btnUpload.style.display = 'flex';
-        btnImport.style.display = 'flex';
-        btnAdmin.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i>';
+        if (btnUpload) btnUpload.style.display = 'inline-flex';
+        if (btnImport) btnImport.style.display = 'inline-flex';
+        const btnAdmin = document.getElementById('btnAdmin');
+        if (btnAdmin) btnAdmin.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i>';
         
         if (userRole === 'owner') {
-          btnCreateAdmin.style.display = 'flex';
-          btnDeleteBulk.style.display = 'flex';
+          if (btnCreateAdmin) btnCreateAdmin.style.display = 'inline-flex';
+          if (btnDeleteBulk) btnDeleteBulk.style.display = 'inline-flex';
           roleBadge.innerText = 'STATUS: OWNER UTAMA';
           roleBadge.style.background = '#8e44ad';
         } else {
-          btnCreateAdmin.style.display = 'none';
-          btnDeleteBulk.style.display = 'none';
+          if (btnCreateAdmin) btnCreateAdmin.style.display = 'none';
+          if (btnDeleteBulk) btnDeleteBulk.style.display = 'none';
           roleBadge.innerText = 'STATUS: ADMIN';
           roleBadge.style.background = '#e67e22';
         }
       } else {
-        btnUpload.style.display = 'none';
-        btnImport.style.display = 'none';
-        btnDeleteBulk.style.display = 'none';
-        btnCreateAdmin.style.display = 'none';
-        btnAdmin.innerHTML = '<i class="fa-solid fa-user-lock"></i>';
+        if (btnUpload) btnUpload.style.display = 'none';
+        if (btnImport) btnImport.style.display = 'none';
+        if (btnDeleteBulk) btnDeleteBulk.style.display = 'none';
+        if (btnCreateAdmin) btnCreateAdmin.style.display = 'none';
+        const btnAdmin = document.getElementById('btnAdmin');
+        if (btnAdmin) btnAdmin.innerHTML = '<i class="fa-solid fa-user-lock"></i>';
         roleBadge.innerText = 'STATUS: PENGUNJUNG';
         roleBadge.style.background = 'var(--accent)';
       }
       fetchVideos();
+    }
+
+    // Fungsi Global untuk Tombol-Tombol Modal agar pasti terpanggil
+    function openUploadModal() {
+      const uploadForm = document.getElementById('uploadForm');
+      if (uploadForm) uploadForm.reset();
+      const editSeriesId = document.getElementById('editSeriesId');
+      if (editSeriesId) editSeriesId.value = '';
+      if (episodeInputsContainer) episodeInputsContainer.innerHTML = '';
+      if (modalUploadTitle) modalUploadTitle.innerText = 'Tambah Konten Baru';
+      toggleUploadType();
+      addEpisodeInput('Episode 1', '');
+      const uploadModal = document.getElementById('uploadModal');
+      if (uploadModal) uploadModal.style.display = 'flex';
+    }
+
+    function openImportModal() {
+      const m3uFile = document.getElementById('m3uFile');
+      if (m3uFile) m3uFile.value = '';
+      const importModal = document.getElementById('importModal');
+      if (importModal) importModal.style.display = 'flex';
+    }
+
+    function openCreateAdminModal() {
+      const createAdminModal = document.getElementById('createAdminModal');
+      if (createAdminModal) createAdminModal.style.display = 'flex';
+    }
+
+    function handleAdminLoginToggle() {
+      if (isLoggedIn) {
+        isLoggedIn = false;
+        userRole = 'guest';
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userRole');
+        renderUI();
+      } else {
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) loginModal.style.display = 'flex';
+      }
     }
 
     function navTo(mode, e) {
@@ -399,13 +437,13 @@
 
       if (mode === 'home') {
         document.getElementById('navHome').classList.add('active');
-        heroBanner.style.display = 'flex';
+        if (heroBanner) heroBanner.style.display = 'flex';
       } else if (mode === 'film') {
         document.getElementById('navFilm').classList.add('active');
-        heroBanner.style.display = 'none';
+        if (heroBanner) heroBanner.style.display = 'none';
       } else if (mode === 'tv') {
         document.getElementById('navTv').classList.add('active');
-        heroBanner.style.display = 'none';
+        if (heroBanner) heroBanner.style.display = 'none';
       }
       filterVideos();
     }
@@ -416,15 +454,16 @@
       const episodeSec = document.getElementById('episodeSection');
 
       if (type === 'tv') {
-        catGroup.style.display = 'none';
-        episodeSec.style.display = 'block';
+        if (catGroup) catGroup.style.display = 'none';
+        if (episodeSec) episodeSec.style.display = 'block';
       } else {
-        catGroup.style.display = 'block';
-        episodeSec.style.display = 'block';
+        if (catGroup) catGroup.style.display = 'block';
+        if (episodeSec) episodeSec.style.display = 'block';
       }
     }
 
     function addEpisodeInput(titleVal = '', srcVal = '') {
+      if (!episodeInputsContainer) return;
       const count = episodeInputsContainer.children.length + 1;
       const row = document.createElement('div');
       row.style.cssText = 'display: flex; gap: 8px; align-items: center; background: var(--bg-base); padding: 8px; border-radius: 8px; border: 1px solid var(--border);';
@@ -437,50 +476,6 @@
       episodeInputsContainer.appendChild(row);
     }
 
-    btnAdmin.onclick = () => {
-      if (isLoggedIn) {
-        isLoggedIn = false;
-        userRole = 'guest';
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userRole');
-        renderUI();
-      } else {
-        loginModal.style.display = 'flex';
-      }
-    };
-
-    // PERBAIKAN UTAMA: Tombol Tambah dipasang event listener terarah via JS
-    if (btnUpload) {
-      btnUpload.onclick = function(e) {
-        e.preventDefault();
-        const uploadForm = document.getElementById('uploadForm');
-        if (uploadForm) uploadForm.reset();
-        const editSeriesId = document.getElementById('editSeriesId');
-        if (editSeriesId) editSeriesId.value = '';
-        if (episodeInputsContainer) episodeInputsContainer.innerHTML = '';
-        if (modalUploadTitle) modalUploadTitle.innerText = 'Tambah Konten Baru';
-        toggleUploadType();
-        addEpisodeInput('Episode 1', '');
-        if (uploadModal) uploadModal.style.display = 'flex';
-      };
-    }
-
-    if (btnImport) {
-      btnImport.onclick = function(e) {
-        e.preventDefault();
-        const m3uFile = document.getElementById('m3uFile');
-        if (m3uFile) m3uFile.value = '';
-        if (importModal) importModal.style.display = 'flex';
-      };
-    }
-
-    if (btnCreateAdmin) {
-      btnCreateAdmin.onclick = function(e) {
-        e.preventDefault();
-        if (createAdminModal) createAdminModal.style.display = 'flex';
-      };
-    }
-
     function closeModal(id) {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
@@ -490,58 +485,64 @@
       }
     }
 
-    document.getElementById('loginForm').onsubmit = async (e) => {
-      e.preventDefault();
-      const u = document.getElementById('userInput').value;
-      const p = document.getElementById('passInput').value;
+    const loginFormEl = document.getElementById('loginForm');
+    if (loginFormEl) {
+      loginFormEl.onsubmit = async (e) => {
+        e.preventDefault();
+        const u = document.getElementById('userInput').value;
+        const p = document.getElementById('passInput').value;
 
-      try {
-        const res = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: u, password: p })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          isLoggedIn = true;
-          userRole = data.role;
-          localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('userRole', data.role);
-          closeModal('loginModal');
-          document.getElementById('loginForm').reset();
-          renderUI();
-          alert('Login Berhasil!');
-        } else {
-          alert(data.message || 'Login gagal!');
+        try {
+          const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: u, password: p })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            isLoggedIn = true;
+            userRole = data.role;
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('userRole', data.role);
+            closeModal('loginModal');
+            loginFormEl.reset();
+            renderUI();
+            alert('Login Berhasil!');
+          } else {
+            alert(data.message || 'Login gagal!');
+          }
+        } catch (err) {
+          alert('Kesalahan koneksi.');
         }
-      } catch (err) {
-        alert('Kesalahan koneksi.');
-      }
-    };
+      };
+    }
 
-    document.getElementById('createAdminForm').onsubmit = async (e) => {
-      e.preventDefault();
-      const newU = document.getElementById('newUserInput').value;
-      const newP = document.getElementById('newPassInput').value;
+    const createAdminFormEl = document.getElementById('createAdminForm');
+    if (createAdminFormEl) {
+      createAdminFormEl.onsubmit = async (e) => {
+        e.preventDefault();
+        const newU = document.getElementById('newUserInput').value;
+        const newP = document.getElementById('newPassInput').value;
 
-      try {
-        const res = await fetch('/api/create-admin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ newUsername: newU, newPassword: newP })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          alert(data.message);
-          closeModal('createAdminModal');
-          document.getElementById('createAdminForm').reset();
-        } else {
-          alert(data.message || 'Gagal membuat akun.');
+        try {
+          const res = await fetch('/api/create-admin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ newUsername: newU, newPassword: newP })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            alert(data.message);
+            closeModal('createAdminModal');
+            createAdminFormEl.reset();
+          } else {
+            alert(data.message || 'Gagal membuat akun.');
+          }
+        } catch (err) {
+          alert('Kesalahan koneksi.');
         }
-      } catch (err) {
-        alert('Kesalahan koneksi.');
-      }
-    };
+      };
+    }
 
     async function fetchVideos() {
       try {
@@ -807,42 +808,48 @@
       });
     }
 
-    document.getElementById('btnLike').onclick = async () => {
-      if (!activeVid) return;
-      try {
-        const res = await fetch(`/api/videos/${activeVid.id}/like`, { method: 'POST' });
-        const data = await res.json();
-        if (data.success) {
-          activeVid.likes = data.likes;
-          likeNum.innerText = data.likes;
+    const btnLikeEl = document.getElementById('btnLike');
+    if (btnLikeEl) {
+      btnLikeEl.onclick = async () => {
+        if (!activeVid) return;
+        try {
+          const res = await fetch(`/api/videos/${activeVid.id}/like`, { method: 'POST' });
+          const data = await res.json();
+          if (data.success) {
+            activeVid.likes = data.likes;
+            likeNum.innerText = data.likes;
+          }
+        } catch (err) {
+          console.error(err);
         }
-      } catch (err) {
-        console.error(err);
-      }
-    };
+      };
+    }
 
-    document.getElementById('commentForm').onsubmit = async (e) => {
-      e.preventDefault();
-      if (!activeVid) return;
-      const input = document.getElementById('cInput');
-      const text = input.value;
+    const commentFormEl = document.getElementById('commentForm');
+    if (commentFormEl) {
+      commentFormEl.onsubmit = async (e) => {
+        e.preventDefault();
+        if (!activeVid) return;
+        const input = document.getElementById('cInput');
+        const text = input.value;
 
-      try {
-        const res = await fetch(`/api/videos/${activeVid.id}/comment`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text })
-        });
-        const data = await res.json();
-        if (data.success) {
-          activeVid.comments = data.comments;
-          renderComments(activeVid.comments);
-          input.value = '';
+        try {
+          const res = await fetch(`/api/videos/${activeVid.id}/comment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text })
+          });
+          const data = await res.json();
+          if (data.success) {
+            activeVid.comments = data.comments;
+            renderComments(activeVid.comments);
+            input.value = '';
+          }
+        } catch (err) {
+          console.error(err);
         }
-      } catch (err) {
-        console.error(err);
-      }
-    };
+      };
+    }
 
     function editVid(event, id) {
       if (event) {
