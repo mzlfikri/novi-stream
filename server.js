@@ -9,13 +9,8 @@ app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 app.use(express.static('public'));
 
-const uploadDir = path.join(__dirname, 'uploads');
 const metadataFile = path.join(__dirname, 'metadata.json');
 const adminsFile = path.join(__dirname, 'admins.json');
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
 
 function loadMetadata() {
   try {
@@ -34,7 +29,7 @@ function saveMetadata(videosArray) {
   try {
     fs.writeFileSync(metadataFile, JSON.stringify(videosArray, null, 2));
   } catch (e) {
-    console.error("Gagal menyimpan ke metadata.json:", e);
+    console.error("Gagal menyimpan metadata.json:", e);
   }
 }
 
@@ -55,7 +50,7 @@ function saveAdmins(adminsArray) {
   try {
     fs.writeFileSync(adminsFile, JSON.stringify(adminsArray, null, 2));
   } catch (e) {
-    console.error("Gagal menyimpan ke admins.json:", e);
+    console.error("Gagal menyimpan admins.json:", e);
   }
 }
 
@@ -104,8 +99,7 @@ app.post('/api/upload', (req, res) => {
     saveMetadata(videos);
     res.json({ success: true, message: 'Konten berhasil ditambahkan!' });
   } catch (err) {
-    console.error("Error pada /api/upload:", err);
-    res.status(500).json({ success: false, message: 'Kesalahan server saat menyimpan: ' + err.message });
+    res.status(500).json({ success: false, message: 'Kesalahan server: ' + err.message });
   }
 });
 
@@ -114,7 +108,7 @@ app.post('/api/import-m3u', (req, res) => {
     let videos = loadMetadata();
     const { channels } = req.body;
     if (!channels || !Array.isArray(channels) || channels.length === 0) {
-      return res.status(400).json({ success: false, message: 'File M3U kosong atau format tidak valid.' });
+      return res.status(400).json({ success: false, message: 'File M3U kosong.' });
     }
 
     let addedCount = 0;
@@ -124,7 +118,7 @@ app.post('/api/import-m3u', (req, res) => {
         type: 'tv',
         title: ch.title || 'Live Channel',
         category: ch.category || 'Live TV',
-        description: 'Imported via M3U File Playlist',
+        description: 'Imported via M3U Playlist',
         thumbnail: ch.thumbnail || 'https://images.unsplash.com/photo-1593784991095-a205069470b6?auto=format&fit=crop&w=400&q=80',
         episodes: [{ title: 'Live Stream', src: ch.url }],
         views: 0,
@@ -136,10 +130,9 @@ app.post('/api/import-m3u', (req, res) => {
     });
 
     saveMetadata(videos);
-    res.json({ success: true, message: `Berhasil mengimport ${addedCount} channel siaran TV dari file!` });
+    res.json({ success: true, message: `Berhasil mengimport ${addedCount} channel!` });
   } catch (err) {
-    console.error("Error pada /api/import-m3u:", err);
-    res.status(500).json({ success: false, message: 'Gagal memproses file M3U di server: ' + err.message });
+    res.status(500).json({ success: false, message: 'Gagal memproses file M3U.' });
   }
 });
 
@@ -156,17 +149,15 @@ app.post('/api/videos/bulk-delete', (req, res) => {
     let videos = loadMetadata();
     const { ids } = req.body; 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return res.status(400).json({ success: false, message: 'Tidak ada data yang dipilih untuk dihapus.' });
+      return res.status(400).json({ success: false, message: 'Tidak ada data dipilih.' });
     }
 
     const stringIds = ids.map(id => String(id));
     videos = videos.filter(v => !stringIds.includes(String(v.id)));
-    
     saveMetadata(videos);
-    res.json({ success: true, message: `Berhasil menghapus ${ids.length} konten terpilih!` });
+    res.json({ success: true, message: `Berhasil menghapus ${ids.length} konten!` });
   } catch (err) {
-    console.error("Error pada bulk-delete:", err);
-    res.status(500).json({ success: false, message: 'Gagal menghapus data secara massal.' });
+    res.status(500).json({ success: false, message: 'Gagal menghapus data.' });
   }
 });
 
@@ -208,20 +199,12 @@ app.post('/api/videos/:id/comment', (req, res) => {
 
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
-  
-  if (username === 'owner' && password === '123') {
-    return res.json({ success: true, role: 'owner' });
-  } 
-  
-  if (username === 'admin' && password === '123') {
-    return res.json({ success: true, role: 'admin' });
-  }
+  if (username === 'owner' && password === '123') return res.json({ success: true, role: 'owner' });
+  if (username === 'admin' && password === '123') return res.json({ success: true, role: 'admin' });
 
   const customAdmins = loadAdmins();
   const foundAdmin = customAdmins.find(a => a.username === username && a.password === password);
-  if (foundAdmin) {
-    return res.json({ success: true, role: 'admin' });
-  }
+  if (foundAdmin) return res.json({ success: true, role: 'admin' });
 
   res.json({ success: false, message: 'Username atau Password salah!' });
 });
@@ -229,9 +212,7 @@ app.post('/api/login', (req, res) => {
 app.post('/api/create-admin', (req, res) => {
   try {
     const { newUsername, newPassword } = req.body;
-    if (!newUsername || !newPassword) {
-      return res.status(400).json({ success: false, message: 'Username dan Password baru wajib diisi!' });
-    }
+    if (!newUsername || !newPassword) return res.status(400).json({ success: false, message: 'Wajib diisi!' });
 
     let customAdmins = loadAdmins();
     if (customAdmins.some(a => a.username === newUsername) || newUsername === 'owner') {
@@ -240,10 +221,9 @@ app.post('/api/create-admin', (req, res) => {
 
     customAdmins.push({ username: newUsername, password: newPassword });
     saveAdmins(customAdmins);
-
-    res.json({ success: true, message: `Akun admin baru "${newUsername}" berhasil dibuat!` });
+    res.json({ success: true, message: `Admin "${newUsername}" berhasil dibuat!` });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Gagal membuat akun admin.' });
+    res.status(500).json({ success: false, message: 'Gagal membuat admin.' });
   }
 });
 
