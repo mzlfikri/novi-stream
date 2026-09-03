@@ -241,7 +241,6 @@
     </div>
   </div>
 
-  <!-- MODAL UPLOAD / EDIT DENGAN INPUT TAHUN, NEGARA, & JENIS FILM -->
   <div class="modal-backdrop" id="uploadModal">
     <div class="modal-box-wide" style="max-width: 550px; padding: 24px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -450,6 +449,7 @@
       }
     };
 
+    // PERBAIKAN: Tombol tambah dipastikan memicu modal upload dengan benar
     btnUpload.onclick = () => {
       document.getElementById('uploadForm').reset();
       document.getElementById('editSeriesId').value = '';
