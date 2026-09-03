@@ -42,7 +42,7 @@
     .nav-menu a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.88rem; transition: color 0.2s; cursor: pointer; }
     .nav-menu a:hover, .nav-menu a.active { color: #fff; }
 
-    .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; position: relative; z-index: 102; }
 
     .search-input-group {
       display: flex; align-items: center; background: var(--bg-surface); border: 1px solid var(--border);
@@ -53,7 +53,7 @@
     .btn {
       background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 30px; font-weight: 700;
       cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.25s ease; font-size: 0.82rem; box-shadow: 0 4px 15px var(--accent-glow);
-      white-space: nowrap;
+      white-space: nowrap; position: relative; z-index: 103;
     }
     .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
     .btn-glass { background: rgba(255,255,255,0.06); border: 1px solid var(--border); box-shadow: none; }
@@ -449,28 +449,43 @@
       }
     };
 
-    // PERBAIKAN: Tombol tambah dipastikan memicu modal upload dengan benar
-    btnUpload.onclick = () => {
-      document.getElementById('uploadForm').reset();
-      document.getElementById('editSeriesId').value = '';
-      episodeInputsContainer.innerHTML = '';
-      modalUploadTitle.innerText = 'Tambah Konten Baru';
-      toggleUploadType();
-      addEpisodeInput('Episode 1', '');
-      uploadModal.style.display = 'flex';
-    };
+    // PERBAIKAN UTAMA: Tombol Tambah dipasang event listener terarah via JS
+    if (btnUpload) {
+      btnUpload.onclick = function(e) {
+        e.preventDefault();
+        const uploadForm = document.getElementById('uploadForm');
+        if (uploadForm) uploadForm.reset();
+        const editSeriesId = document.getElementById('editSeriesId');
+        if (editSeriesId) editSeriesId.value = '';
+        if (episodeInputsContainer) episodeInputsContainer.innerHTML = '';
+        if (modalUploadTitle) modalUploadTitle.innerText = 'Tambah Konten Baru';
+        toggleUploadType();
+        addEpisodeInput('Episode 1', '');
+        if (uploadModal) uploadModal.style.display = 'flex';
+      };
+    }
 
-    btnImport.onclick = () => {
-      document.getElementById('m3uFile').value = '';
-      importModal.style.display = 'flex';
-    };
+    if (btnImport) {
+      btnImport.onclick = function(e) {
+        e.preventDefault();
+        const m3uFile = document.getElementById('m3uFile');
+        if (m3uFile) m3uFile.value = '';
+        if (importModal) importModal.style.display = 'flex';
+      };
+    }
 
-    btnCreateAdmin.onclick = () => { createAdminModal.style.display = 'flex'; };
+    if (btnCreateAdmin) {
+      btnCreateAdmin.onclick = function(e) {
+        e.preventDefault();
+        if (createAdminModal) createAdminModal.style.display = 'flex';
+      };
+    }
 
     function closeModal(id) {
-      document.getElementById(id).style.display = 'none';
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
       if (id === 'playerModal') {
-        videoContainer.innerHTML = '';
+        if (videoContainer) videoContainer.innerHTML = '';
         fetchVideos();
       }
     }
@@ -621,7 +636,9 @@
     }
 
     function filterVideos() {
-      const q = document.getElementById('searchInput').value.toLowerCase();
+      const searchInput = document.getElementById('searchInput');
+      const q = searchInput ? searchInput.value.toLowerCase() : '';
+      if (!mainContainer) return;
       mainContainer.innerHTML = '';
 
       if (currentMode === 'home') {
@@ -960,85 +977,98 @@
       reader.readAsText(file);
     }
 
-    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      
-      const submitBtn = document.getElementById('btnSubmitUpload');
-      submitBtn.innerText = 'Sedang Menyimpan...';
-      submitBtn.disabled = true;
-
-      const type = document.getElementById('uType').value;
-      const title = document.getElementById('uTitle').value;
-      const genre = document.getElementById('uGenre').value;
-      const category = document.getElementById('uCat').value;
-      const year = document.getElementById('uYear').value;
-      const country = document.getElementById('uCountry').value;
-      const description = document.getElementById('uDesc').value;
-      const thumbnail = document.getElementById('uThumb').value;
-      const id = document.getElementById('editSeriesId').value;
-
-      const epsRows = episodeInputsContainer.querySelectorAll('div');
-      let episodesList = [];
-      epsRows.forEach(row => {
-        let epsTitle = row.querySelector('.eps-title').value.trim();
-        let epsSrc = row.querySelector('.eps-src').value.trim();
+    const uploadFormEl = document.getElementById('uploadForm');
+    if (uploadFormEl) {
+      uploadFormEl.addEventListener('submit', async function(e) {
+        e.preventDefault();
         
-        if (epsSrc.includes('<iframe')) {
-          const match = epsSrc.match(/src="([^"]+)"/);
-          if (match && match[1]) {
-            epsSrc = match[1];
+        const submitBtn = document.getElementById('btnSubmitUpload');
+        if (submitBtn) {
+          submitBtn.innerText = 'Sedang Menyimpan...';
+          submitBtn.disabled = true;
+        }
+
+        const type = document.getElementById('uType').value;
+        const title = document.getElementById('uTitle').value;
+        const genre = document.getElementById('uGenre').value;
+        const category = document.getElementById('uCat').value;
+        const year = document.getElementById('uYear').value;
+        const country = document.getElementById('uCountry').value;
+        const description = document.getElementById('uDesc').value;
+        const thumbnail = document.getElementById('uThumb').value;
+        const id = document.getElementById('editSeriesId').value;
+
+        const epsRows = episodeInputsContainer.querySelectorAll('div');
+        let episodesList = [];
+        epsRows.forEach(row => {
+          const tInp = row.querySelector('.eps-title');
+          const sInp = row.querySelector('.eps-src');
+          if (!tInp || !sInp) return;
+
+          let epsTitle = tInp.value.trim();
+          let epsSrc = sInp.value.trim();
+          
+          if (epsSrc.includes('<iframe')) {
+            const match = epsSrc.match(/src="([^"]+)"/);
+            if (match && match[1]) {
+              epsSrc = match[1];
+            }
+          }
+
+          if (epsSrc) {
+            episodesList.push({ title: epsTitle || 'Episode', src: epsSrc });
+          }
+        });
+
+        if (episodesList.length === 0) {
+          alert('Minimal harus ada 1 link video episode yang diisi!');
+          if (submitBtn) {
+            submitBtn.innerText = 'Simpan Konten';
+            submitBtn.disabled = false;
+          }
+          return;
+        }
+
+        const payload = {
+          id: id || undefined,
+          type,
+          title,
+          genre,
+          category,
+          year,
+          country,
+          description,
+          thumbnail,
+          episodes: episodesList
+        };
+
+        try {
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          
+          const data = await res.json();
+          if (res.ok && data.success) {
+            alert('Konten Berhasil Disimpan!');
+            closeModal('uploadModal');
+            uploadFormEl.reset();
+            fetchVideos();
+          } else {
+            alert('Gagal: ' + (data.message || 'Kesalahan server'));
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Terjadi kesalahan koneksi.');
+        } finally {
+          if (submitBtn) {
+            submitBtn.innerText = 'Simpan Konten';
+            submitBtn.disabled = false;
           }
         }
-
-        if (epsSrc) {
-          episodesList.push({ title: epsTitle || 'Episode', src: epsSrc });
-        }
       });
-
-      if (episodesList.length === 0) {
-        alert('Minimal harus ada 1 link video episode yang diisi!');
-        submitBtn.innerText = 'Simpan Konten';
-        submitBtn.disabled = false;
-        return;
-      }
-
-      const payload = {
-        id: id || undefined,
-        type,
-        title,
-        genre,
-        category,
-        year,
-        country,
-        description,
-        thumbnail,
-        episodes: episodesList
-      };
-
-      try {
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        
-        const data = await res.json();
-        if (res.ok && data.success) {
-          alert('Konten Berhasil Disimpan!');
-          closeModal('uploadModal');
-          document.getElementById('uploadForm').reset();
-          fetchVideos();
-        } else {
-          alert('Gagal: ' + (data.message || 'Kesalahan server'));
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Terjadi kesalahan koneksi.');
-      } finally {
-        submitBtn.innerText = 'Simpan Konten';
-        submitBtn.disabled = false;
-      }
-    });
+    }
 
     renderUI();
   </script>
