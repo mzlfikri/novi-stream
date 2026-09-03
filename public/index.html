@@ -211,10 +211,18 @@
 
   <div class="modal-backdrop" id="loginModal">
     <div class="modal-box-wide" style="max-width: 380px; padding: 24px;">
-      <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800;">Login Owner / Admin</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="font-size: 1.2rem; font-weight: 800;">Login Owner / Admin</h3>
+        <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.2rem; color: var(--text-muted);" onclick="closeModal('loginModal')"></i>
+      </div>
+      <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.4;">
+        Gunakan akun utama:<br>
+        • Username: <strong style="color: #fff;">owner</strong><br>
+        • Password: <strong style="color: #fff;">123</strong>
+      </p>
       <form id="loginForm">
-        <input type="text" id="userInput" class="form-input-dark" placeholder="Username (Cth: owner)" required />
-        <input type="password" id="passInput" class="form-input-dark" placeholder="Password (Cth: 123)" required />
+        <input type="text" id="userInput" class="form-input-dark" placeholder="Masukkan Username" required />
+        <input type="password" id="passInput" class="form-input-dark" placeholder="Masukkan Password" required />
         <button type="submit" class="btn" style="width: 100%; justify-content: center; margin-top: 6px;">Masuk</button>
       </form>
     </div>
@@ -222,7 +230,10 @@
 
   <div class="modal-backdrop" id="createAdminModal">
     <div class="modal-box-wide" style="max-width: 380px; padding: 24px;">
-      <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800; color: #8e44ad;">Buat Akun Admin Baru</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.2rem; font-weight: 800; color: #8e44ad;">Buat Akun Admin Baru</h3>
+        <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.2rem; color: var(--text-muted);" onclick="closeModal('createAdminModal')"></i>
+      </div>
       <form id="createAdminForm">
         <input type="text" id="newUserInput" class="form-input-dark" placeholder="Username Admin Baru" required />
         <input type="password" id="newPassInput" class="form-input-dark" placeholder="Password Admin Baru" required />
@@ -233,7 +244,11 @@
 
   <div class="modal-backdrop" id="uploadModal">
     <div class="modal-box-wide" style="max-width: 550px; padding: 24px;">
-      <h3 id="modalUploadTitle" style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800;">Tambah Konten Baru</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 id="modalUploadTitle" style="font-size: 1.2rem; font-weight: 800;">Tambah Konten Baru</h3>
+        <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.3rem; color: var(--text-muted);" onclick="closeModal('uploadModal')"></i>
+      </div>
+      
       <form id="uploadForm">
         <input type="hidden" id="editSeriesId" value="" />
         
@@ -267,14 +282,20 @@
           <div id="episodeInputsContainer" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; margin-bottom: 16px; padding-right: 4px;"></div>
         </div>
 
-        <button type="submit" class="btn" id="btnSubmitUpload" style="width: 100%; justify-content: center; margin-top: 10px;">Simpan Konten</button>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn btn-glass" style="flex: 1; justify-content: center;" onclick="closeModal('uploadModal')">Batal</button>
+          <button type="submit" class="btn" id="btnSubmitUpload" style="flex: 2; justify-content: center;">Simpan Konten</button>
+        </div>
       </form>
     </div>
   </div>
 
   <div class="modal-backdrop" id="importModal">
     <div class="modal-box-wide" style="max-width: 480px; padding: 24px;">
-      <h3 style="margin-bottom: 16px; font-size: 1.2rem; font-weight: 800; color: #27ae60;">Import Playlist M3U / M3U8</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.2rem; font-weight: 800; color: #27ae60;">Import Playlist M3U / M3U8</h3>
+        <i class="fa-solid fa-xmark" style="cursor: pointer; font-size: 1.2rem; color: var(--text-muted);" onclick="closeModal('importModal')"></i>
+      </div>
       <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">Pilih file playlist dari komputer Anda untuk memasukkan banyak channel siaran TV sekaligus.</p>
       
       <input type="file" id="m3uFile" accept=".m3u,.m3u8" class="form-input-dark" style="padding: 12px; cursor: pointer;" />
@@ -755,7 +776,6 @@
       }
     };
 
-    // PENGAMAN MUTLAK: Menggunakan penanganan string yang aman dari error tag iframe
     function editVid(event, id) {
       if (event) {
         event.stopPropagation();
@@ -776,7 +796,6 @@
       episodeInputsContainer.innerHTML = '';
       if (v.episodes && v.episodes.length > 0) {
         v.episodes.forEach(eps => {
-          // Bersihkan string dari karakter kutipan yang merusak HTML input form
           const safeSrc = eps.src ? eps.src.replace(/"/g, '&quot;') : '';
           const safeTitle = eps.title ? eps.title.replace(/"/g, '&quot;') : 'Episode';
           addEpisodeInput(safeTitle, safeSrc);
@@ -900,8 +919,6 @@
         let epsTitle = row.querySelector('.eps-title').value.trim();
         let epsSrc = row.querySelector('.eps-src').value.trim();
         
-        // PEMBERSIHAN OTOMATIS: Jika user menempelkan kode lengkap <iframe ... src="URL"> ...</iframe>
-        // Kita otomatis ambil URL di dalam atribut src="..." nya agar pemutar video tidak error!
         if (epsSrc.includes('<iframe')) {
           const match = epsSrc.match(/src="([^"]+)"/);
           if (match && match[1]) {
