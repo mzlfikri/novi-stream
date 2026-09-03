@@ -80,7 +80,7 @@
     .hero-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; }
     .hero-subtitle { color: var(--text-muted); font-size: 0.85rem; max-width: 500px; line-height: 1.4; }
 
-    .section-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .section-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .section-block { margin-bottom: 40px; }
 
     .poster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
@@ -116,7 +116,7 @@
     .card-footer-stats { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); }
 
     .bulk-checkbox {
-      position: absolute; top: 10px; left: 10px; z-index: 25; width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent); display: none;
+      position: absolute; top: 10px; left: 10px; z-index: 25; width: 22px; height: 22px; cursor: pointer; accent-color: var(--accent); display: none; border-radius: 4px;
     }
 
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 12px; overflow-y: auto; }
@@ -544,6 +544,13 @@
       `;
     }
 
+    function toggleSelectAll(sectionType, masterCheckbox) {
+      const checkboxes = document.querySelectorAll(`.bulk-checkbox-${sectionType}`);
+      checkboxes.forEach(cb => {
+        cb.checked = masterCheckbox.checked;
+      });
+    }
+
     async function deleteSelectedVideos() {
       const checkboxes = document.querySelectorAll('.bulk-checkbox:checked');
       if (checkboxes.length === 0) {
@@ -551,7 +558,7 @@
         return;
       }
 
-      if (!confirm(`Yakin ingin menghapus ${checkboxes.length} video yang dipilih?`)) return;
+      if (!confirm(`Yakin ingin menghapus ${checkboxes.length} video yang dipilih sekaligus?`)) return;
 
       const selectedIds = Array.from(checkboxes).map(cb => cb.value);
 
@@ -590,43 +597,143 @@
         let html = '';
         html += `
           <div class="section-block">
-            <div class="section-title"><i class="fa-solid fa-film" style="color: var(--accent);"></i> Koleksi Film & Series</div>
+            <div class="section-title">
+              <span><i class="fa-solid fa-film" style="color: var(--accent);"></i> Koleksi Film & Series</span>
+              ${userRole === 'owner' && films.length > 0 ? `
+                <label style="font-size: 0.78rem; font-weight: 600; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                  <input type="checkbox" onchange="toggleSelectAll('film', this)" style="accent-color: var(--accent); width: 16px; height: 16px;" /> Pilih Semua Film
+                </label>
+              ` : ''}
+            </div>
             <div class="poster-grid">
-              ${films.length > 0 ? films.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada film.</p>'}
+              ${films.length > 0 ? films.map(v => {
+                const isTv = v.type === 'tv';
+                const totalEps = v.episodes ? v.episodes.length : 0;
+                return `
+                  <div class="poster-card">
+                    ${userRole === 'owner' ? `
+                      <input type="checkbox" class="bulk-checkbox bulk-checkbox-film" value="${v.id}" onclick="event.stopPropagation(); event.stopImmediatePropagation();" style="display: block;" />
+                    ` : ''}
+                    <div class="poster-frame" onclick="openPlayer('${v.id}')">
+                      <img src="${v.thumbnail}" class="poster-img" />
+                      <div class="hover-overlay"><div class="play-glow-btn"><i class="fa-solid fa-play"></i></div></div>
+                      <span class="tag-badge ${isTv ? 'live-badge' : ''}">${isTv ? '🔴 LIVE TV' : (totalEps > 1 ? totalEps + ' EPS' : 'FILM')}</span>
+                    </div>
+                    <div class="poster-meta">
+                      <div class="poster-title" onclick="openPlayer('${v.id}')">${v.title}</div>
+                      <div class="poster-desc">${v.description}</div>
+                      ${isLoggedIn ? `
+                        <div class="admin-card-actions">
+                          <button type="button" class="btn-edit-card" onclick="editVid(event, '${v.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                          <button type="button" class="btn-delete-card" onclick="delVid(event, '${v.id}')"><i class="fa-solid fa-trash"></i> Hapus</button>
+                        </div>
+                      ` : ''}
+                      <div class="card-footer-stats">
+                        <span><i class="fa-solid fa-eye"></i> ${v.views || 0}</span>
+                        <span><i class="fa-solid fa-heart" style="color: var(--accent);"></i> ${v.likes || 0}</span>
+                        <span><i class="fa-solid fa-comment"></i> ${v.comments ? v.comments.length : 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada film.</p>'}
             </div>
           </div>
         `;
+        
         html += `
           <div class="section-block">
-            <div class="section-title"><i class="fa-solid fa-tv" style="color: var(--accent);"></i> Siaran TV Langsung (Live)</div>
+            <div class="section-title">
+              <span><i class="fa-solid fa-tv" style="color: var(--accent);"></i> Siaran TV Langsung (Live)</span>
+              ${userRole === 'owner' && tvs.length > 0 ? `
+                <label style="font-size: 0.78rem; font-weight: 600; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                  <input type="checkbox" onchange="toggleSelectAll('tv', this)" style="accent-color: var(--accent); width: 16px; height: 16px;" /> Pilih Semua TV
+                </label>
+              ` : ''}
+            </div>
             <div class="poster-grid">
-              ${tvs.length > 0 ? tvs.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada siaran TV.</p>'}
+              ${tvs.length > 0 ? tvs.map(v => {
+                const isTv = v.type === 'tv';
+                const totalEps = v.episodes ? v.episodes.length : 0;
+                return `
+                  <div class="poster-card">
+                    ${userRole === 'owner' ? `
+                      <input type="checkbox" class="bulk-checkbox bulk-checkbox-tv" value="${v.id}" onclick="event.stopPropagation(); event.stopImmediatePropagation();" style="display: block;" />
+                    ` : ''}
+                    <div class="poster-frame" onclick="openPlayer('${v.id}')">
+                      <img src="${v.thumbnail}" class="poster-img" />
+                      <div class="hover-overlay"><div class="play-glow-btn"><i class="fa-solid fa-play"></i></div></div>
+                      <span class="tag-badge ${isTv ? 'live-badge' : ''}">${isTv ? '🔴 LIVE TV' : (totalEps > 1 ? totalEps + ' EPS' : 'FILM')}</span>
+                    </div>
+                    <div class="poster-meta">
+                      <div class="poster-title" onclick="openPlayer('${v.id}')">${v.title}</div>
+                      <div class="poster-desc">${v.description}</div>
+                      ${isLoggedIn ? `
+                        <div class="admin-card-actions">
+                          <button type="button" class="btn-edit-card" onclick="editVid(event, '${v.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                          <button type="button" class="btn-delete-card" onclick="delVid(event, '${v.id}')"><i class="fa-solid fa-trash"></i> Hapus</button>
+                        </div>
+                      ` : ''}
+                      <div class="card-footer-stats">
+                        <span><i class="fa-solid fa-eye"></i> ${v.views || 0}</span>
+                        <span><i class="fa-solid fa-heart" style="color: var(--accent);"></i> ${v.likes || 0}</span>
+                        <span><i class="fa-solid fa-comment"></i> ${v.comments ? v.comments.length : 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada siaran TV.</p>'}
             </div>
           </div>
         `;
         mainContainer.innerHTML = html;
 
-      } else if (currentMode === 'film') {
-        let films = allVideos.filter(v => v.type === 'film' || !v.type);
-        if (q) films = films.filter(v => v.title.toLowerCase().includes(q));
+      } else if (currentMode === 'film' || currentMode === 'tv') {
+        let items = allVideos.filter(v => currentMode === 'tv' ? v.type === 'tv' : (v.type === 'film' || !v.type));
+        if (q) items = items.filter(v => v.title.toLowerCase().includes(q));
 
         mainContainer.innerHTML = `
           <div class="section-block">
-            <div class="section-title"><i class="fa-solid fa-film" style="color: var(--accent);"></i> Koleksi Film & Series</div>
-            <div class="poster-grid">
-              ${films.length > 0 ? films.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada film.</p>'}
+            <div class="section-title">
+              <span><i class="fa-solid fa-${currentMode === 'tv' ? 'tv' : 'film'}" style="color: var(--accent);"></i> ${currentMode === 'tv' ? 'Siaran TV Langsung (Live)' : 'Koleksi Film & Series'}</span>
+              ${userRole === 'owner' && items.length > 0 ? `
+                <label style="font-size: 0.78rem; font-weight: 600; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                  <input type="checkbox" onchange="toggleSelectAll('${currentMode}', this)" style="accent-color: var(--accent); width: 16px; height: 16px;" /> Pilih Semua
+                </label>
+              ` : ''}
             </div>
-          </div>
-        `;
-      } else if (currentMode === 'tv') {
-        let tvs = allVideos.filter(v => v.type === 'tv');
-        if (q) tvs = tvs.filter(v => v.title.toLowerCase().includes(q));
-
-        mainContainer.innerHTML = `
-          <div class="section-block">
-            <div class="section-title"><i class="fa-solid fa-tv" style="color: var(--accent);"></i> Siaran TV Langsung (Live)</div>
             <div class="poster-grid">
-              ${tvs.length > 0 ? tvs.map(createCardHTML).join('') : '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada siaran TV.</p>'}
+              ${items.length > 0 ? items.map(v => {
+                const isTv = v.type === 'tv';
+                const totalEps = v.episodes ? v.episodes.length : 0;
+                return `
+                  <div class="poster-card">
+                    ${userRole === 'owner' ? `
+                      <input type="checkbox" class="bulk-checkbox bulk-checkbox-${currentMode}" value="${v.id}" onclick="event.stopPropagation(); event.stopImmediatePropagation();" style="display: block;" />
+                    ` : ''}
+                    <div class="poster-frame" onclick="openPlayer('${v.id}')">
+                      <img src="${v.thumbnail}" class="poster-img" />
+                      <div class="hover-overlay"><div class="play-glow-btn"><i class="fa-solid fa-play"></i></div></div>
+                      <span class="tag-badge ${isTv ? 'live-badge' : ''}">${isTv ? '🔴 LIVE TV' : (totalEps > 1 ? totalEps + ' EPS' : 'FILM')}</span>
+                    </div>
+                    <div class="poster-meta">
+                      <div class="poster-title" onclick="openPlayer('${v.id}')">${v.title}</div>
+                      <div class="poster-desc">${v.description}</div>
+                      ${isLoggedIn ? `
+                        <div class="admin-card-actions">
+                          <button type="button" class="btn-edit-card" onclick="editVid(event, '${v.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                          <button type="button" class="btn-delete-card" onclick="delVid(event, '${v.id}')"><i class="fa-solid fa-trash"></i> Hapus</button>
+                        </div>
+                      ` : ''}
+                      <div class="card-footer-stats">
+                        <span><i class="fa-solid fa-eye"></i> ${v.views || 0}</span>
+                        <span><i class="fa-solid fa-heart" style="color: var(--accent);"></i> ${v.likes || 0}</span>
+                        <span><i class="fa-solid fa-comment"></i> ${v.comments ? v.comments.length : 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('') : `<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada konten.</p>`}
             </div>
           </div>
         `;
@@ -676,6 +783,7 @@
       if (src.includes('.mpd')) {
         videoContainer.innerHTML = `<video src="${src}" controls autoplay style="width:100%; height:100%; position:absolute; inset:0; background:#000;"></video>`;
       } else if (src.includes('.m3u8') || src.includes('workers.dev')) {
+        // Otomatis menggunakan proxy stream backend jika diperlukan atau direct m3u8
         videoContainer.innerHTML = `<video id="hlsVideo" controls autoplay style="width:100%; height:100%; position:absolute; inset:0;"></video>`;
         const videoElement = document.getElementById('hlsVideo');
         
